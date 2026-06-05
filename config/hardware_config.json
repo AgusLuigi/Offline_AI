@@ -1,0 +1,10 @@
+{
+    "device_type": "Notebook / Laptop",
+    "os_name": "Darwin",
+    "architecture": "arm64",
+    "cores": 8,
+    "ram_gb": 16.0,
+    "os_release": "25.2.0",
+    "processor": "arm",
+    "physical_cores": 8
+}

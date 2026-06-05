@@ -1,0 +1,16 @@
+{
+    "root": "/Users/cristallagus/Desktop/GitHub/Offline_KI",
+    "config": "/Users/cristallagus/Desktop/GitHub/Offline_KI/config",
+    "data": "/Users/cristallagus/Desktop/GitHub/Offline_KI/data",
+    "knowledge": "/Users/cristallagus/Desktop/GitHub/Offline_KI/knowledge",
+    "logs": "/Users/cristallagus/Desktop/GitHub/Offline_KI/logs",
+    "notebooks": "/Users/cristallagus/Desktop/GitHub/Offline_KI/notebooks",
+    "privacy": "/Users/cristallagus/Desktop/GitHub/Offline_KI/privacy",
+    "src": "/Users/cristallagus/Desktop/GitHub/Offline_KI/src",
+    "temp": "/Users/cristallagus/Desktop/GitHub/Offline_KI/temp",
+    "docker": "/Users/cristallagus/Desktop/GitHub/Offline_KI/docker",
+    ".idea": "/Users/cristallagus/Desktop/GitHub/Offline_KI/.idea",
+    "inspectionProfiles": "/Users/cristallagus/Desktop/GitHub/Offline_KI/.idea/inspectionProfiles",
+    "Install": "/Users/cristallagus/Desktop/GitHub/Offline_KI/src/Install",
+    "docker_py": "/Users/cristallagus/Desktop/GitHub/Offline_KI/src/docker_py"
+}
