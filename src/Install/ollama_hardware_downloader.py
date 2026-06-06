@@ -7,7 +7,7 @@ import re
 
 def get_project_root() -> str:
     """
-    Ermittelt das Stammverzeichnis über den festen Anker 'Offline_KI'.
+    Ermittelt das Stammverzeichnis über den festen Anker 'Offline_AI'.
     Verhindert das Ausbrechen aus der Projektstruktur.
     """
     if "__file__" in globals():
@@ -16,8 +16,8 @@ def get_project_root() -> str:
         current_path = os.path.abspath(os.getcwd())
     
     path_parts = current_path.split(os.sep)
-    if "Offline_KI" in path_parts:
-        ki_index = path_parts.index("Offline_KI")
+    if "Offline_AI" in path_parts:
+        ki_index = path_parts.index("Offline_AI")
         if os.name == 'nt':
             root_path = path_parts[0] + os.sep + os.path.join(*path_parts[1:ki_index + 1])
         else:
@@ -25,7 +25,7 @@ def get_project_root() -> str:
         return os.path.abspath(root_path)
 
     while current_path != os.path.dirname(current_path):
-        if os.path.basename(current_path) == "Offline_KI":
+        if os.path.basename(current_path) == "Offline_AI":
             return current_path
         current_path = os.path.dirname(current_path)
     return os.path.abspath(os.getcwd())
@@ -197,7 +197,7 @@ def analyze_system_and_select_model(models: list):
 # DOWNLOAD AUSFÜHRUNG
 # ==============================================================================
 def smart_hardware_downloader():
-    logger.info("=== Start der automatisierten Ollama-Hardware-Analyse ===")
+    logger.info("=== Start der automatisisierten Ollama-Hardware-Analyse ===")
     
     raw_models = fetch_online_model_library()
     total_ram, safe_budget, fit_models = analyze_system_and_select_model(raw_models)

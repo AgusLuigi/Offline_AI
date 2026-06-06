@@ -2131,3 +2131,29 @@ ollama._types.ResponseError: max retries exceeded: read tcp 192.168.68.102:56856
 2026-06-04 22:56:20,035 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_KI/config/project_paths.json
 2026-06-04 22:56:20,036 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
 
+2026-06-06 03:07:59,782 - [INFO] - --- Stochastische Projekt-Initialisierung gestartet ---
+2026-06-06 03:07:59,784 - [INFO] - Bestätigtes Hauptverzeichnis (Root): /Users/cristallagus/Desktop/GitHub/Offline_AI
+2026-06-06 03:07:59,784 - [INFO] - [OK - GESCHÜTZT] Begriff 'root' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI
+2026-06-06 03:07:59,785 - [INFO] - [OK - GESCHÜTZT] Begriff 'config' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/config
+2026-06-06 03:07:59,786 - [INFO] - [OK - GESCHÜTZT] Begriff 'data' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/data
+2026-06-06 03:07:59,786 - [INFO] - [OK - GESCHÜTZT] Begriff 'knowledge' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/knowledge
+2026-06-06 03:07:59,787 - [INFO] - [OK - GESCHÜTZT] Begriff 'logs' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/logs
+2026-06-06 03:07:59,787 - [INFO] - [OK - GESCHÜTZT] Begriff 'notebooks' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/notebooks
+2026-06-06 03:07:59,788 - [INFO] - [OK - GESCHÜTZT] Begriff 'privacy' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/privacy
+2026-06-06 03:07:59,788 - [INFO] - [OK - GESCHÜTZT] Begriff 'src' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/src
+2026-06-06 03:07:59,789 - [INFO] - [OK - GESCHÜTZT] Begriff 'temp' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/temp
+2026-06-06 03:07:59,790 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/docker
+2026-06-06 03:07:59,791 - [INFO] - [OK - GESCHÜTZT] Begriff 'Install' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/src/Install
+2026-06-06 03:07:59,792 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker_py' bereits aktiv --> Pfad: /Users/cristallagus/Desktop/GitHub/Offline_AI/src/docker_py
+2026-06-06 03:07:59,793 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/project_paths.json
+2026-06-06 03:07:59,794 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
+
+2026-06-06 03:12:30,885 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-06-06 03:12:30,985 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/python_library_config.json
+2026-06-06 03:20:14,843 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-06-06 03:20:14,844 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-06-06 03:20:18,364 - [INFO] - Geräte-Leistungs-Check: 16.0 GB RAM erkannt.
+2026-06-06 03:20:18,365 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.2 GB.
+2026-06-06 03:20:18,367 - [INFO] - Starte automatisisierten Download für: 'Codestral'
+2026-06-06 03:20:19,356 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
+2026-06-06 03:20:19,364 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/active_model.json

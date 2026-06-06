@@ -1,5 +1,9 @@
 [
     {
+        "library": "annotated-types",
+        "version": "0.7.0"
+    },
+    {
         "library": "anyio",
         "version": "4.13.0"
     },
@@ -70,6 +74,10 @@
     {
         "library": "defusedxml",
         "version": "0.7.1"
+    },
+    {
+        "library": "docker",
+        "version": "7.1.0"
     },
     {
         "library": "exceptiongroup",
@@ -232,6 +240,10 @@
         "version": "0.2.4"
     },
     {
+        "library": "ollama",
+        "version": "0.6.2"
+    },
+    {
         "library": "overrides",
         "version": "7.7.0"
     },
@@ -282,6 +294,14 @@
     {
         "library": "pycparser",
         "version": "3.0"
+    },
+    {
+        "library": "pydantic",
+        "version": "2.13.4"
+    },
+    {
+        "library": "pydantic_core",
+        "version": "2.46.4"
     },
     {
         "library": "pygments",
@@ -366,6 +386,10 @@
     {
         "library": "traitlets",
         "version": "5.15.1"
+    },
+    {
+        "library": "typing-inspection",
+        "version": "0.4.2"
     },
     {
         "library": "typing_extensions",
