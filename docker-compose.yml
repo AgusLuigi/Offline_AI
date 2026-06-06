@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik_gateway
+    restart: always
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # DuckDNS & Let's Encrypt SSL-Konfiguration (auskommentiert für lokale Entwicklung)
+      # - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      # - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=duckdns"
+      # - "--certificatesresolvers.myresolver.acme.email=${SSL_EMAIL}"
+      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - "DUCKDNS_TOKEN=${DUCKDNS_TOKEN}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    networks:
+      - ai_platform_network
+    labels:
+      - "traefik.enable=true"
+      
+      # 1. Definieren der Forward-Auth-Middleware
+      - "traefik.http.middlewares.oauth-auth.forwardauth.address=http://oauth2-proxy:4180"
+      - "traefik.http.middlewares.oauth-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth-auth.forwardauth.authResponseHeaders=X-Forwarded-User,X-Forwarded-Email,X-Forwarded-Access-Token"
+
+      # 2. Catch-All-Router für unauthentifizierte Nutzer (fordert Login an)
+      - "traefik.http.routers.catchall.rule=Host(`platform.local`, `${DOMAIN_NAME}`)"
+      - "traefik.http.routers.catchall.entrypoints=web"
+      - "traefik.http.routers.catchall.middlewares=oauth-auth"
+      # Dummy-Service für den Catch-All-Router (Traefik benötigt einen Service für jeden Router)
+      - "traefik.http.routers.catchall.service=noop@internal"
+      - "traefik.http.routers.catchall.priority=1"
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.4.0
+    container_name: oauth2_proxy
+    restart: always
+    environment:
+      OAUTH2_PROXY_PROVIDER: "google"
+      OAUTH2_PROXY_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      OAUTH2_PROXY_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
+      OAUTH2_PROXY_COOKIE_SECRET: "${COOKIE_SECRET}"
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*" # Erlaubt allen Google-Nutzern den Zugriff (hier ggf. einschränken)
+      OAUTH2_PROXY_UPSTREAMS: "file:///dev/null"
+      OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180"
+      OAUTH2_PROXY_REDIRECT_URL: "http://platform.local/oauth2/callback" # Lokaler Fallback
+      # Für Live-Betrieb anpassen: "https://${DOMAIN_NAME}/oauth2/callback"
+      OAUTH2_PROXY_COOKIE_SECURE: "false" # Auf 'true' setzen, wenn HTTPS/SSL aktiv ist
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_PASS_USER_HEADERS: "true"
+      OAUTH2_PROXY_COOKIE_DOMAINS: "platform.local,${DOMAIN_NAME}"
+      OAUTH2_PROXY_WHITELIST_DOMAINS: "platform.local,${DOMAIN_NAME}"
+    networks:
+      - ai_platform_network
+    labels:
+      - "traefik.enable=true"
+      # Dieser Router umgeht das Forward-Auth, damit der Login-Prozess laufen kann!
+      - "traefik.http.routers.oauth2-proxy.rule=Host(`platform.local`, `${DOMAIN_NAME}`) && PathPrefix(`/oauth2`)"
+      - "traefik.http.routers.oauth2-proxy.entrypoints=web"
+      - "traefik.http.routers.oauth2-proxy.service=oauth2-proxy"
+      - "traefik.http.routers.oauth2-proxy.priority=100"
+      - "traefik.http.services.oauth2-proxy.loadbalancer.server.port=4180"
+
+networks:
+  ai_platform_network:
+    name: ai_platform_network
+    driver: bridge
+    attachable: true

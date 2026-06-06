@@ -1,82 +1,132 @@
-PROJEKT-SPEZIFIKATION: MAI_AI / MAIOMNI PLATFORM
-Ziel des Dokuments: Zusammenfassung der Systemarchitektur, des Datenflusses und 
-der Sicherheits-Infrastruktur für ein lokales, datenschutzkonformes 
-Multi-User-KI-System (analog zum Konzept von nexttoken.co, eine form von javes).
+[<img src="https://cdn-icons-png.flaticon.com/512/6295/6295417.png" align="left" width="15%" padding="20">]()
 
-1. DIE VISION & DAS MAI-PRINZIP (OFFLINE-FIRST AI)
-Das Projekt "Mai_AI" (oder "MaiOmni") ist eine private, hochperformante und 
-vollständig selbstgehostete KI-Plattform. Der Fokus liegt auf absoluter 
-Datensouveränität und Unabhängigkeit von Cloud-Anbietern.
+## &nbsp;&nbsp; OFFLINE AI (MAIOMNI PLATFORM)
 
-Kern-Eigenschaften:
-* Lokale Berechnung: Alle KI-Modelle (z. B. Ollama / Codestral) laufen lokal 
-  auf der eigenen Hardware (NVIDIA-Infrastruktur).
-* Datenschutz: Keine Übermittlung von sensiblen, privaten Daten an externe 
-  Server. Das System arbeitet im Kern "Offline-First".
-* Best-Practice-Entwicklung: Das System wird über Jupyter Notebooks geplant 
-  und mittels Python, Docker und Streamlit modular aufgebaut.
+&nbsp;&nbsp;&nbsp;&nbsp; *Autonomous, Generative, and Fully Private Jarvis Platform*
 
-2. MULTI-USER ARCHITEKTUR & OBERFLÄCHE (NEXTTOKEN-STYLE)
-Die Plattform soll eine Benutzeroberfläche bieten, die funktional und visuell 
-an "nexttoken.co" angelehnt ist. Mehrere Benutzer müssen gleichzeitig auf der 
-Plattform arbeiten können, ohne sich gegenseitig zu beeinflussen.
+<p align="left">&nbsp;&nbsp;
+    <img src="https://img.shields.io/github/license/AgusLuigi/Offline_AI?style=flat&logo=opensourceinitiative&logoColor=white&color=526CFE" alt="license">
+    <img src="https://img.shields.io/github/last-commit/AgusLuigi/Offline_AI?style=flat&logo=git&logoColor=white&color=526CFE" alt="last-commit">
+    <img src="https://img.shields.io/github/languages/top/AgusLuigi/Offline_AI?style=flat&logo=python&logoColor=white&color=526CFE" alt="repo-top-language">
+    <img src="https://img.shields.io/github/languages/count/AgusLuigi/Offline_AI?style=flat&color=526CFE" alt="repo-language-count">
+</p>
+<br>
 
-Isolations-Prinzip (Sandbox):
-* Jeder Benutzer, der sich auf der Webseite anmeldet (z. B. via Google OAuth2 
-  Schnittstelle), bekommt vom System dynamisch eine komplett isolierte 
-  Docker-Container-Instanz zugewiesen (z. B. `ai_user_benutzername`).
-* Jeder Container läuft auf einem eigenen, separaten Port und ist strikt vom 
-  Rest des Netzwerks getrennt.
-* Die Benutzer arbeiten parallel, können jedoch niemals die Daten, Sessions 
-  oder Chat-Verläufe der anderen Benutzer einsehen oder stören.
+<details><summary>Table of Contents</summary>
 
-3. REVERSE PROXY & ONLINE-ZUGANG (DUCK DNS & TRAEFIK)
-Damit die Plattform sicher aus dem Internet erreichbar ist, ohne den Host-Rechner 
-angreifbar zu machen, wird eine strikte Netzwerk-Infrastruktur vorgeschaltet:
+- [📍 Overview](#-overview)
+- [👾 Features](#-features)
+- [📁 Project Structure](#-project-structure)
+  - [🗂️ Module Index](#%EF%B8%8F-module-index)
+- [🚀 Getting Started](#-getting-started)
+  - [📋 Prerequisites](#-prerequisites)
+  - [⚙️ Setup & Installation](#%EF%B8%8F-setup--installation)
+  - [💻 Running the Platform](#-running-the-platform)
+- [🛡️ Security & Privacy](#%EF%B8%8F-security--privacy)
+- [🤝 Community & Synchronization](#-community--synchronization)
+- [📜 License](#-license)
 
-* Dynamische DNS (Duck DNS): Ermöglicht die Erreichbarkeit der lokalen Webseite 
-  über eine feste Domain von außen.
-* Reverse Proxy (Traefik / Nginx): Der Proxy nimmt alle Anfragen aus dem Internet 
-  entgegen. Er ist der *einzige* Punkt, der nach außen geöffnet ist.
-* Google-Authentifizierung: Ein vorgeschalteter "OAuth2-Proxy" fängt Anfragen ab 
-  und zwingt den Nutzer zum Google-Login. Erst nach erfolgreicher Erkennung 
-  reicht Traefik den Traffic mit dem Header `X-Forwarded-User` an den passenden 
-  User-Container weiter.
+</details>
+<hr>
 
-4. DATENFLUSS, KOMMUNIKATION & RECHTE-STRUKTUR
-Der Datenfluss ist so konzipiert, dass die KI selbst keine unkontrollierten 
-Rechte auf dem Host-System besitzt.
+## 📍 Overview
 
-Kommunikations-Schritte:
-1. Der Benutzer gibt Text/Anweisungen in der Docker-Weboberfläche ein.
-2. Die Oberfläche schreibt die Eingabe/Daten in eine Datei innerhalb des 
-   isolierten Benutzer-Verzeichnisses.
-3. Die lokale KI-Logik (Python) erkennt die Änderung, liest die Datei, bereitet 
-   die Daten vor und kommuniziert intern (über `host.docker.internal`) mit dem 
-   lokalen Ollama-Programm.
-4. Die KI berechnet die Antwort/das Projekt auf der lokalen Hardware und 
-   schreibt das Ergebnis in das Benutzerverzeichnis zurück.
-5. Der Docker-Container liest das Ergebnis und visualisiert es für den Benutzer 
-   auf der Webseite.
+Offline AI (MaiOmni) ist eine private, hochperformante und vollständig selbstgehostete **Jarvis-Schnittstelle**. Inspiriert von den modernen Software-Design-Richtlinien von **OpenHuman** und **GitHub Spec-Kit** bricht diese Plattform mit dem herkömmlichen Konzept starrer App-Stores. Statt hunderte datenhungriger Apps herunterzuladen, generiert und testet deine persönliche Jarvis-Maschine maßgeschneiderte App-Module live und offline in isolierten Docker-Sandboxes auf deiner eigenen Hardware (NVIDIA-Infrastruktur).
 
-Datenhoheit des Hauptbenutzers:
-* Obwohl die Benutzer isoliert arbeiten, liegen alle Daten physikalisch auf dem 
-  Rechner des Hauptbenutzers (Host-System) im Verzeichnis `/app/users/{username}/`.
-* Der Hauptbenutzer hat somit die volle Kontrolle und Einsicht in alle 
-  generierten Daten, während die einzelnen Docker-Container untereinander 
-  gesperrt sind (Data Residency).
-* Ein integriertes Sicherheits-Wächter-Modul im Docker-Orchestrator überwacht 
-  alle Dateizugriffe, um "Path Traversal" (Ausbrechen aus dem Ordner) zu verhindern.
+---
 
-5. TECHNISCHER STACK & RESSOURCEN-KONTROLLE
-* Backend & Steuerung: Python Docker SDK (zur dynamischen Container-Verwaltung).
-* Frontend: Streamlit / Web-Oberfläche im Docker-Image verpackt.
-* Modell-Schnittstelle: Ollama (lokal auf dem Host-Rechner installiert, Zugriff 
-  aus Docker nur über gesicherte interne Brücken).
-* Ressourcen-Limits: Um den Host-Rechner vor Überlastung zu schützen, wird 
-  jeder User-Container streng limitiert (z. B. max. 512MB RAM, max. 0.5 CPU-Kerne).
-  Die schwere KI-Rechenarbeit (Inferenz) wird ohnehin zentral auf der Host-GPU 
-  ausgeführt und blockiert nicht die Container.
-STATUS: Planungsstruktur in Jupyter Notebook (`.ipynb`) integriert. 
-Nächster Schritt: Bereitstellung der `orchestrator.py` und der 
-zentralen `docker-compose.yml` für Traefik- und Proxy-Infrastruktur.
+## 👾 Features
+
+|   | Feature-Kategorie | Beschreibung & Technische Implementierung |
+| :--- | :--- | :--- |
+| 🗣️ | **Geführtes Onboarding** | Personalisierung von Name, Jarvis-Name, Weckruf-Methoden (z. B. Händeklatschen) und Visual Grounding direkt beim Systemstart. |
+| 🐳 | **Sandbox-Isolation** | Jeder Google-authentifizierte Benutzer arbeitet in einem physisch isolierten Docker-Container mit streng begrenztem RAM und CPU-Ressourcen. |
+| 🛡️ | **Vision & Screen Capture** | Native und plattformübergreifende Bildschirmanalyse (Windows, macOS, Linux, Android) zur visuellen Unterstützung. |
+| ⚙️ | **Self-Healing-Dienst** | Automatische Fehlerbehebung bei Systemstart (Dienstaktivierung, Port-Ausweich-Scans bei Konflikten, Datei-Integritätsprüfungen). |
+| 📖 | **Wissens-Schnittstelle** | SQLite-gestützte Validierung (`knowledge/app_standards.db`) zur Gewährleistung globaler App-Qualitätsstandards (z. B. Navigation, Dateimanager). |
+| 🔒 | **Clientseitige Privacy** | Lokale Maskierung und Tokenisierung sensibler Daten (IBANs, Namen) vor einer optionalen Synchronisation. |
+
+---
+
+## 📁 Project Structure
+
+```text
+Offline_AI/
+├── config/              # Single Source of Truth für globale Variablen & Jarvis-Profile
+├── data/                # Isolierte Workspaces der registrierten Benutzer
+├── docker/              # Dockerfiles und Build-Vorgaben für die Containerisierung
+├── knowledge/           # SQLite-Datenbanken mit Spezifikationsvorgaben
+├── logs/                # Erfassung aller Laufzeitfehler für die nächtliche Optimierung
+├── notebooks/           # Ausführbare Knotenstellen (01 bis 04) & Steuerungs-Cockpits
+├── privacy/             # Skripte zur clientseitigen Datenanonymisierung
+├── src/                 # Festes Python-Quellcode-Fundament (Bootstrapper)
+└── temp/                # Temporärer Speicher, asynchroner Sync-Puffer & Trainingsdaten
+```
+
+### 🗂️ Module Index
+
+*   **[Start_AI.py](file:src/docker_py/Start_AI.py):** Der zentrale System-Bootstrapper. Führt Onboarding durch, prüft Docker und fährt die Traefik-Proxy-Infrastruktur hoch.
+*   **[jarvis_agent.py](file:src/Jarvis/jarvis_agent.py):** Kognitiver Kern. Verwaltet Benutzeranfragen, Datenbankprüfungen und Vision-Grounding.
+*   **[screen_grabber.py](file:src/Jarvis/screen_grabber.py):** Selbstheilende Bildschirmanalyse mit Unterstützung von nativen Schnittstellen und simulierten Fallbacks.
+*   **[jarvis_onboarding.py](file:src/Jarvis/jarvis_onboarding.py):** Geführtes Setup des KI-Begleiters zur Erzeugung des individuellen System-Prompts.
+*   **[app_docker.py](file:src/docker_py/app_docker.py):** Interaktive Benutzeroberfläche zur Systemsteuerung und Live-Visualisierung der Containerlandschaft.
+
+---
+
+## 🚀 Getting Started
+
+### 📋 Prerequisites
+
+*   **Betriebssystem:** Windows 10/11, macOS oder Linux.
+*   **Umgebung:** Python 3.10+ (Empfohlen: Anaconda/Miniconda).
+*   **Containerisierung:** Docker Desktop / Docker Engine aktiv.
+*   **KI-Modell-Server:** Ollama lokal auf dem Host-Rechner installiert.
+
+### ⚙️ Setup & Installation
+
+1.  **Conda-Umgebung aufbauen & Abhängigkeiten laden:**
+    Führe das Notebook `01_install.ipynb` oder die modularisierte Spezifikation aus:
+    ```bash
+    # Erstellt das Conda-Environment "MaiOmni"
+    python src/Install/install.py
+    ```
+
+2.  **Konfiguration vorbereiten:**
+    Kopiere die Umgebungsvariablen-Schablone und trage deine Domain und Google OAuth-Keys ein:
+    ```bash
+    cp .env.example .env
+    ```
+
+### 💻 Running the Platform
+
+Starte die gesamte Plattform mit einem einzigen Befehl:
+```bash
+python src/docker_py/Start_AI.py
+```
+*Folge den interaktiven Onboarding-Anweisungen in deiner Konsole, um deinen Jarvis einzurichten!*
+
+Für die interaktive, schrittweise Verifikation und das Härtungstraining stehen dir die **ausführbaren Knotenstellen** im `notebooks/`-Ordner zur Verfügung (von `01_installation.ipynb` bis `04_sicherheit.ipynb`).
+
+---
+
+## 🛡️ Security & Privacy
+
+Offline AI stellt deine Datensouveränität in den Mittelpunkt:
+*   **Data Residency:** Alle Benutzer-Workspaces liegen physikalisch auf deiner lokalen Hardware unter `/app/users/{username}/`.
+*   **Clientseitige Tokenisierung:** Das `privacy/`-Modul anonymisiert sensible Texte lokal auf dem Endgerät vor jeglicher Übertragung.
+*   **FileGuard-Schutz:** Verhindert Path-Traversal-Angriffe und isoliert Benutzer-Dockerinstanzen voneinander.
+
+---
+
+## 🤝 Community & Synchronization
+
+Das System unterstützt einen asynchronen Synchronisationsfluss. Unterwegs aufgezeichnete Sprachnotizen und Feature-Requests werden verschlüsselt zwischengespeichert und im Heimnetzwerk auf deinen NVIDIA-Server hochgeladen. In inaktiven Systemstunden (Idle-Time) generiert und verifiziert der Server die gewünschten Applikationsknöpfe und synchronisiert sie zurück auf dein Gerät.
+
+---
+
+## 📜 License
+
+Dieses Projekt ist unter der **MIT-Lizenz** lizenziert. Weitere Details findest du im Repository.
+
+---
+*Generated with 💙 and inspired by readme-ai guidelines.*

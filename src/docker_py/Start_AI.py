@@ -47,6 +47,12 @@ def main():
     logger.info("Schritt 1: Initialisiere Projektstruktur...")
     initialize_project()
 
+    # Ersteinrichtung / Onboarding falls nicht vorhanden (Jarvis Best Practices)
+    if not os.path.exists("config/jarvis_config.json"):
+        logger.info("Starte geführtes Jarvis-Onboarding...")
+        from src.Jarvis.jarvis_onboarding import run_guided_onboarding
+        run_guided_onboarding()
+
     # 2. Schritt: Docker-Verfügbarkeit prüfen
     logger.info("Schritt 2: Prüfe Docker-Umgebung...")
     download_and_install_docker_smart()

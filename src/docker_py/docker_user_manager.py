@@ -18,10 +18,12 @@ class MultiUserManager:
         os.makedirs(user_workspace, exist_ok=True)
 
         # Traefik Labels für dynamisches Routing basierend auf dem OAuth2 Header
+        domain_name = os.getenv("DOMAIN_NAME", "mai-ai.duckdns.org")
         labels = {
             "traefik.enable": "true",
             "traefik.http.routers.{}.rule".format(container_name): 
-                f"Host(`platform.local`) && Header(`X-Forwarded-User`, `{user_id}`)",
+                f"(Host(`platform.local`) || Host(`{domain_name}`)) && Header(`X-Forwarded-User`, `{user_id}`)",
+            "traefik.http.routers.{}.priority".format(container_name): "10",
             "traefik.http.services.{}.loadbalancer.server.port".format(container_name): "8000"
         }
 
