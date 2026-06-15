@@ -2272,3 +2272,17 @@ ollama._types.ResponseError: max retries exceeded: read tcp 192.168.68.102:56856
 2026-06-15 19:05:23,048 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/project_paths.json
 2026-06-15 19:05:23,050 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
 
+2026-06-15 19:10:42,217 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-06-15 19:10:42,218 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-06-15 19:10:43,998 - [INFO] - Geräte-Leistungs-Check: 16.0 GB RAM erkannt.
+2026-06-15 19:10:43,998 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.2 GB.
+2026-06-15 19:10:44,000 - [INFO] - Starte automatisisierten Download für: 'Codestral'
+2026-06-15 19:10:44,942 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
+2026-06-15 19:10:44,943 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/model_active_config.json
+2026-06-15 19:13:14,408 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-06-15 19:13:14,408 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-06-15 19:13:16,178 - [INFO] - Geräte-Leistungs-Check: 16.0 GB RAM erkannt.
+2026-06-15 19:13:16,179 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.2 GB.
+2026-06-15 19:13:16,180 - [INFO] - Starte automatisisierten Download für: 'Codestral'
+2026-06-15 19:13:16,960 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
+2026-06-15 19:13:16,962 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/active_model_config.json

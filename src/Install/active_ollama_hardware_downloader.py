@@ -249,7 +249,7 @@ def smart_hardware_downloader():
         print("\n")
         logger.info(f"Erfolgreich! '{perfect_match['name']}' wurde hardwarekonform installiert.")
         
-        active_config = os.path.join(PATHS["config"], "model_active.json")
+        active_config = os.path.join(PATHS["config"], "active_model_config.json")
         with open(active_config, "w", encoding="utf-8") as f:
             json.dump({
                 "model_name": perfect_match['name'],
