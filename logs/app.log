@@ -2186,3 +2186,14 @@ ollama._types.ResponseError: max retries exceeded: read tcp 192.168.68.102:56856
 2026-06-15 17:54:49,122 - [INFO] - Starte automatisisierten Download für: 'Codestral'
 2026-06-15 17:54:49,955 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
 2026-06-15 17:54:49,956 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/active_model.json
+2026-06-15 18:04:12,682 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-06-15 18:04:12,782 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/python_library_config.json
+2026-06-15 18:10:38,722 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-06-15 18:10:38,722 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-06-15 18:10:47,421 - [INFO] - Geräte-Leistungs-Check: 16.0 GB RAM erkannt.
+2026-06-15 18:10:47,422 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.2 GB.
+2026-06-15 18:10:47,423 - [INFO] - Starte automatisisierten Download für: 'Codestral'
+2026-06-15 18:10:48,491 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
+2026-06-15 18:10:48,493 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/model_active.json
+2026-06-15 18:14:21,886 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-06-15 18:14:21,965 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/python_library_config.json
