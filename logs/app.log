@@ -2304,3 +2304,12 @@ ollama._types.ResponseError: max retries exceeded: read tcp 192.168.68.102:56856
 2026-06-18 17:46:05,149 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/project_paths.json
 2026-06-18 17:46:05,149 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
 
+2026-06-18 17:54:28,791 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-06-18 17:54:28,887 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/python_library_config.json
+2026-06-18 17:54:29,092 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-06-18 17:54:29,093 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-06-18 17:54:30,661 - [INFO] - Geräte-Leistungs-Check: 16.0 GB RAM erkannt.
+2026-06-18 17:54:30,662 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.2 GB.
+2026-06-18 17:54:30,664 - [INFO] - Starte automatisisierten Download für: 'Codestral'
+2026-06-18 17:54:31,474 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
+2026-06-18 17:54:31,476 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/active_model_config.json
