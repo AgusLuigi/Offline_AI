@@ -1,5 +1,5 @@
 {
-    "model_name": "Codestral",
+    "model_name": "llama3.1",
     "allocated_size_gb": 4.0,
-    "detected_ram_gb": 16.0
+    "detected_ram_gb": 15.85
 }
