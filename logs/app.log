@@ -2313,3 +2313,387 @@ ollama._types.ResponseError: max retries exceeded: read tcp 192.168.68.102:56856
 2026-06-18 17:54:30,664 - [INFO] - Starte automatisisierten Download für: 'Codestral'
 2026-06-18 17:54:31,474 - [INFO] - Erfolgreich! 'Codestral' wurde hardwarekonform installiert.
 2026-06-18 17:54:31,476 - [INFO] - Aktiver System-Status gesichert in: /Users/cristallagus/Desktop/GitHub/Offline_AI/config/active_model_config.json
+2026-08-20 13:27:01,747 - [INFO] - --- Stochastische Projekt-Initialisierung gestartet ---
+2026-08-20 13:27:01,748 - [INFO] - Bestätigtes Hauptverzeichnis (Root): c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 13:27:01,749 - [INFO] - [OK - GESCHÜTZT] Begriff 'root' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 13:27:01,751 - [INFO] - [OK - GESCHÜTZT] Begriff 'config' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config
+2026-08-20 13:27:01,752 - [INFO] - [OK - GESCHÜTZT] Begriff 'data' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\data
+2026-08-20 13:27:01,753 - [INFO] - [OK - GESCHÜTZT] Begriff 'knowledge' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge
+2026-08-20 13:27:01,754 - [INFO] - [OK - GESCHÜTZT] Begriff 'logs' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\logs
+2026-08-20 13:27:01,755 - [INFO] - [OK - GESCHÜTZT] Begriff 'notebooks' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\notebooks
+2026-08-20 13:27:01,757 - [INFO] - [OK - GESCHÜTZT] Begriff 'privacy' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\privacy
+2026-08-20 13:27:01,757 - [INFO] - [OK - GESCHÜTZT] Begriff 'src' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src
+2026-08-20 13:27:01,758 - [INFO] - [OK - GESCHÜTZT] Begriff 'temp' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\temp
+2026-08-20 13:27:01,759 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\docker
+2026-08-20 13:27:01,760 - [INFO] - [OK - GESCHÜTZT] Begriff 'research' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge\research
+2026-08-20 13:27:01,761 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker_py' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\docker_py
+2026-08-20 13:27:01,763 - [INFO] - [OK - GESCHÜTZT] Begriff 'Install' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install
+2026-08-20 13:27:01,764 - [INFO] - [OK - GESCHÜTZT] Begriff 'Jarvis' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Jarvis
+2026-08-20 13:27:01,767 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\project_paths.json
+2026-08-20 13:27:01,768 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
+
+2026-08-20 13:28:33,401 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-08-20 13:28:33,504 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\python_library_config.json
+2026-08-20 13:28:33,544 - [WARNING] - Fehlende Abhängigkeit erkannt: Das Paket 'ollama' ist nicht bereit.
+2026-08-20 13:28:33,545 - [INFO] - Starte automatische Hintergrund-Installation via pip...
+2026-08-20 13:28:46,400 - [INFO] - Abhängigkeiten erfolgreich nachinstalliert. Erneuter Import-Versuch...
+2026-08-20 13:28:46,947 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 13:28:46,947 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 13:28:49,290 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 13:28:49,291 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 13:28:49,294 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 13:28:51,365 - [ERROR] - Kritischer Fehler beim Pull-Vorgang: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+Traceback (most recent call last):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install\active_ollama_hardware_downloader.py", line 230, in smart_hardware_downloader
+    for progress in client.pull(model=perfect_match['name'], stream=True):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\ollama\_client.py", line 184, in inner
+    with self._client.stream(*args, **kwargs) as r:
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 868, in stream
+    response = self.send(
+               ^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+2026-08-20 17:24:38,306 - [INFO] - --- Stochastische Projekt-Initialisierung gestartet ---
+2026-08-20 17:24:38,306 - [INFO] - Bestätigtes Hauptverzeichnis (Root): c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 17:24:38,313 - [INFO] - [OK - GESCHÜTZT] Begriff 'root' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 17:24:38,314 - [INFO] - [OK - GESCHÜTZT] Begriff 'config' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config
+2026-08-20 17:24:38,315 - [INFO] - [OK - GESCHÜTZT] Begriff 'data' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\data
+2026-08-20 17:24:38,317 - [INFO] - [OK - GESCHÜTZT] Begriff 'knowledge' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge
+2026-08-20 17:24:38,319 - [INFO] - [OK - GESCHÜTZT] Begriff 'logs' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\logs
+2026-08-20 17:24:38,321 - [INFO] - [OK - GESCHÜTZT] Begriff 'notebooks' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\notebooks
+2026-08-20 17:24:38,323 - [INFO] - [OK - GESCHÜTZT] Begriff 'privacy' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\privacy
+2026-08-20 17:24:38,324 - [INFO] - [OK - GESCHÜTZT] Begriff 'src' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src
+2026-08-20 17:24:38,326 - [INFO] - [OK - GESCHÜTZT] Begriff 'temp' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\temp
+2026-08-20 17:24:38,327 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\docker
+2026-08-20 17:24:38,329 - [INFO] - [OK - GESCHÜTZT] Begriff 'research' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge\research
+2026-08-20 17:24:38,332 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker_py' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\docker_py
+2026-08-20 17:24:38,337 - [INFO] - [OK - GESCHÜTZT] Begriff 'Install' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install
+2026-08-20 17:24:38,341 - [INFO] - [OK - GESCHÜTZT] Begriff 'Jarvis' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Jarvis
+2026-08-20 17:24:38,344 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\project_paths.json
+2026-08-20 17:24:38,346 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
+
+2026-08-20 17:24:40,891 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-08-20 17:24:41,025 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\python_library_config.json
+2026-08-20 17:24:42,036 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 17:24:42,036 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 17:24:43,182 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 17:24:43,184 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 17:24:43,189 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 17:24:45,229 - [ERROR] - Kritischer Fehler beim Pull-Vorgang: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+Traceback (most recent call last):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install\active_ollama_hardware_downloader.py", line 230, in smart_hardware_downloader
+    for progress in client.pull(model=perfect_match['name'], stream=True):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\ollama\_client.py", line 184, in inner
+    with self._client.stream(*args, **kwargs) as r:
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 868, in stream
+    response = self.send(
+               ^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+2026-08-20 17:27:13,915 - [INFO] - --- Stochastische Projekt-Initialisierung gestartet ---
+2026-08-20 17:27:13,917 - [INFO] - Bestätigtes Hauptverzeichnis (Root): c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 17:27:13,919 - [INFO] - [OK - GESCHÜTZT] Begriff 'root' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 17:27:13,921 - [INFO] - [OK - GESCHÜTZT] Begriff 'config' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config
+2026-08-20 17:27:13,922 - [INFO] - [OK - GESCHÜTZT] Begriff 'data' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\data
+2026-08-20 17:27:13,924 - [INFO] - [OK - GESCHÜTZT] Begriff 'knowledge' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge
+2026-08-20 17:27:13,925 - [INFO] - [OK - GESCHÜTZT] Begriff 'logs' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\logs
+2026-08-20 17:27:13,926 - [INFO] - [OK - GESCHÜTZT] Begriff 'notebooks' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\notebooks
+2026-08-20 17:27:13,928 - [INFO] - [OK - GESCHÜTZT] Begriff 'privacy' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\privacy
+2026-08-20 17:27:13,930 - [INFO] - [OK - GESCHÜTZT] Begriff 'src' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src
+2026-08-20 17:27:13,931 - [INFO] - [OK - GESCHÜTZT] Begriff 'temp' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\temp
+2026-08-20 17:27:13,933 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\docker
+2026-08-20 17:27:13,934 - [INFO] - [OK - GESCHÜTZT] Begriff 'research' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge\research
+2026-08-20 17:27:13,936 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker_py' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\docker_py
+2026-08-20 17:27:13,937 - [INFO] - [OK - GESCHÜTZT] Begriff 'Install' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install
+2026-08-20 17:27:13,939 - [INFO] - [OK - GESCHÜTZT] Begriff 'Jarvis' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Jarvis
+2026-08-20 17:27:13,940 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\project_paths.json
+2026-08-20 17:27:13,941 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
+
+2026-08-20 17:27:14,773 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-08-20 17:27:14,875 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\python_library_config.json
+2026-08-20 17:27:14,902 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 17:27:14,903 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 17:27:16,469 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 17:27:16,470 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 17:27:16,473 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 17:27:18,504 - [ERROR] - Kritischer Fehler beim Pull-Vorgang: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+Traceback (most recent call last):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install\active_ollama_hardware_downloader.py", line 230, in smart_hardware_downloader
+    for progress in client.pull(model=perfect_match['name'], stream=True):
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\ollama\_client.py", line 184, in inner
+    with self._client.stream(*args, **kwargs) as r:
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 868, in stream
+    response = self.send(
+               ^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+2026-08-20 18:30:14,680 - [INFO] - --- Stochastische Projekt-Initialisierung gestartet ---
+2026-08-20 18:30:14,682 - [INFO] - Bestätigtes Hauptverzeichnis (Root): c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 18:30:14,684 - [INFO] - [OK - GESCHÜTZT] Begriff 'root' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI
+2026-08-20 18:30:14,686 - [INFO] - [OK - GESCHÜTZT] Begriff 'config' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config
+2026-08-20 18:30:14,687 - [INFO] - [OK - GESCHÜTZT] Begriff 'data' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\data
+2026-08-20 18:30:14,689 - [INFO] - [OK - GESCHÜTZT] Begriff 'knowledge' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge
+2026-08-20 18:30:14,690 - [INFO] - [OK - GESCHÜTZT] Begriff 'logs' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\logs
+2026-08-20 18:30:14,692 - [INFO] - [OK - GESCHÜTZT] Begriff 'notebooks' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\notebooks
+2026-08-20 18:30:14,693 - [INFO] - [OK - GESCHÜTZT] Begriff 'privacy' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\privacy
+2026-08-20 18:30:14,695 - [INFO] - [OK - GESCHÜTZT] Begriff 'src' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src
+2026-08-20 18:30:14,696 - [INFO] - [OK - GESCHÜTZT] Begriff 'temp' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\temp
+2026-08-20 18:30:14,698 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\docker
+2026-08-20 18:30:14,699 - [INFO] - [OK - GESCHÜTZT] Begriff 'research' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\knowledge\research
+2026-08-20 18:30:14,700 - [INFO] - [OK - GESCHÜTZT] Begriff 'docker_py' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\docker_py
+2026-08-20 18:30:14,702 - [INFO] - [OK - GESCHÜTZT] Begriff 'Install' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install
+2026-08-20 18:30:14,703 - [INFO] - [OK - GESCHÜTZT] Begriff 'Jarvis' bereits aktiv --> Pfad: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Jarvis
+2026-08-20 18:30:14,706 - [INFO] - Globale Pfad-Begriffe erfolgreich gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\project_paths.json
+2026-08-20 18:30:14,708 - [INFO] - --- Projekt-Initialisierung erfolgreich beendet ---
+
+2026-08-20 18:30:22,708 - LibraryChecker - INFO - Analysiere installierte Python-Bibliotheken...
+2026-08-20 18:30:23,091 - LibraryChecker - INFO - Erfolgreich! Gespeichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\python_library_config.json
+2026-08-20 18:30:23,173 - [WARNING] - Fehlende Abhängigkeit erkannt: Das Paket 'ollama' ist nicht bereit.
+2026-08-20 18:30:23,175 - [INFO] - Starte automatische Hintergrund-Installation via pip...
+2026-08-20 18:30:28,693 - [INFO] - Abhängigkeiten erfolgreich nachinstalliert. Erneuter Import-Versuch...
+2026-08-20 18:30:29,510 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 18:30:29,511 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 18:30:30,112 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 18:30:30,113 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 18:30:30,117 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 18:30:32,207 - [ERROR] - Kritischer Fehler beim Pull-Vorgang: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+Traceback (most recent call last):
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_sync\connection.py", line 101, in handle_request
+    raise exc
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_backends\sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MacBookAir\Desktop\GitHub\Offline_AI\src\Install\active_ollama_hardware_downloader.py", line 230, in smart_hardware_downloader
+    for progress in client.pull(model=perfect_match['name'], stream=True):
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\ollama\_client.py", line 184, in inner
+    with self._client.stream(*args, **kwargs) as r:
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_client.py", line 868, in stream
+    response = self.send(
+               ^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [WinError 10061] Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte
+2026-08-20 18:51:46,973 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 18:51:46,984 - [WARNING] - Ollama ist auf dem System nicht installiert. Starte automatische Installation...
+2026-08-20 18:51:46,985 - [INFO] - Lade Windows-Installer von https://ollama.com/download/OllamaSetup.exe nach C:\Users\MACBOO~1\AppData\Local\Temp\OllamaSetup.exe...
+2026-08-20 18:53:08,021 - [INFO] - Starte Ollama-Installer auf Windows...
+2026-08-20 18:54:40,253 - [INFO] - Ollama erfolgreich installiert: C:\Users\MacBookAir\AppData\Local\Programs\Ollama\ollama.exe
+2026-08-20 18:54:41,763 - [INFO] - Starte Ollama-Hintergrunddienst (Windows) via 'C:\Users\MacBookAir\AppData\Local\Programs\Ollama\ollama.exe'...
+2026-08-20 18:54:44,338 - [INFO] - Ollama-Dienst erfolgreich gestartet und bereit.
+2026-08-20 18:54:44,338 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 18:54:45,177 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 18:54:45,177 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 18:54:45,182 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 19:02:09,426 - [INFO] - Erfolgreich! 'llama3.1' wurde hardwarekonform installiert.
+2026-08-20 19:02:09,427 - [INFO] - Aktiver System-Status gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\active_model_config.json
+2026-08-20 19:02:39,012 - [INFO] - Starte Ollama-Hintergrunddienst (Windows) via 'C:\Users\MacBookAir\AppData\Local\Programs\Ollama\ollama.exe'...
+2026-08-20 19:02:41,142 - [INFO] - Ollama-Dienst erfolgreich gestartet und bereit.
+2026-08-20 19:03:25,397 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 19:03:25,428 - [INFO] - Ollama ist auf dem System installiert: C:\Users\MacBookAir\AppData\Local\Programs\Ollama\ollama.exe
+2026-08-20 19:03:26,937 - [INFO] - Starte Ollama-Hintergrunddienst (Windows) via 'C:\Users\MacBookAir\AppData\Local\Programs\Ollama\ollama.exe'...
+2026-08-20 19:03:29,463 - [INFO] - Ollama-Dienst erfolgreich gestartet und bereit.
+2026-08-20 19:03:29,465 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 19:03:31,675 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 19:03:31,676 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 19:03:31,681 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 19:03:33,198 - [INFO] - Erfolgreich! 'llama3.1' wurde hardwarekonform installiert.
+2026-08-20 19:03:33,203 - [INFO] - Aktiver System-Status gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\active_model_config.json
+2026-08-20 19:10:43,633 - [INFO] - === Start der automatisisierten Ollama-Hardware-Analyse ===
+2026-08-20 19:10:43,637 - [INFO] - Installation verifiziert: C:\Users\MacBookAir\AppData\Local\Programs\Ollama\ollama.exe
+2026-08-20 19:10:43,642 - [INFO] - Dienst ist aktiv und erreichbar (Port 11434).
+2026-08-20 19:10:43,643 - [INFO] - Rufe aktuelle Modell-Bibliothek aus dem Internet ab...
+2026-08-20 19:10:44,158 - [INFO] - Geräte-Leistungs-Check: 15.85 GB RAM erkannt.
+2026-08-20 19:10:44,160 - [INFO] - Berechnete maximale Obergrenze für Modellgröße: 11.1 GB.
+2026-08-20 19:10:44,165 - [INFO] - Starte automatisisierten Download für: 'llama3.1'
+2026-08-20 19:10:44,862 - [INFO] - Erfolgreich! 'llama3.1' wurde hardwarekonform installiert.
+2026-08-20 19:10:44,865 - [INFO] - Aktiver System-Status gesichert in: c:\Users\MacBookAir\Desktop\GitHub\Offline_AI\config\active_model_config.json
