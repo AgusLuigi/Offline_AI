@@ -9,8 +9,20 @@
     "src": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\src",
     "temp": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\temp",
     "docker": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\docker",
+    "users": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users",
+    "user_alice_mai-ai_local": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_alice_mai-ai_local",
+    "user_test_mai-ai_local": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_test_mai-ai_local",
+    "history": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_alice_mai-ai_local\\history",
+    "inbox": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_alice_mai-ai_local\\inbox",
+    "output": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_alice_mai-ai_local\\output",
+    "workspace": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_alice_mai-ai_local\\workspace",
+    "user_test_mai-ai_local_history": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_test_mai-ai_local\\history",
+    "user_test_mai-ai_local_inbox": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_test_mai-ai_local\\inbox",
+    "user_test_mai-ai_local_output": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_test_mai-ai_local\\output",
+    "user_test_mai-ai_local_workspace": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\data\\users\\user_test_mai-ai_local\\workspace",
     "research": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\knowledge\\research",
     "docker_py": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\src\\docker_py",
     "Install": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\src\\Install",
-    "Jarvis": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\src\\Jarvis"
+    "Jarvis": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\src\\Jarvis",
+    "Security": "c:\\Users\\MacBookAir\\Desktop\\GitHub\\Offline_AI\\src\\Security"
 }
