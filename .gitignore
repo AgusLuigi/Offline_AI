@@ -2,3 +2,14 @@ src/Install/__pycache__/active_ollama_hardware_downloader.cpython-311.pyc
 config/python_library_config.json
 config/project_paths.json
 config/active_model_config.json
+src/docker_py/__pycache__/docker_user_manager.cpython-311.pyc
+src/docker_py/__pycache__/docker_sqlite_inbox.cpython-311.pyc
+src/docker_py/__pycache__/docker_hardening_lifecycle.cpython-311.pyc
+src/docker_py/__pycache__/docker_orchestrator.cpython-311.pyc
+src/docker_py/__pycache__/docker_user_isolation.cpython-311.pyc
+src/docker_py/__pycache__/docker_connection.cpython-311.pyc
+src/docker_py/__pycache__/docker_config.cpython-311.pyc
+src/docker_py/__pycache__/__init__.cpython-311.pyc
+data/users/user_test_mai-ai_local/inbox/user_inbox.db
+data/users/user_alice_mai-ai_local/inbox/user_inbox.db
+src/docker_py/__pycache__/docker_network_volumes.cpython-311.pyc
