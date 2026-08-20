@@ -88,7 +88,7 @@ DEFAULT_FALLBACK_CONFIG: Dict[str, Any] = {
         "db_filename": "user_inbox.db",
         "shared_db_filename": "platform_inbox.db",
         "default_priority": 1,
-        "default_model": "Codestral"
+        "default_model": "codestral"
     }
 }
 

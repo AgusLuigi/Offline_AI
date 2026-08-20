@@ -11,6 +11,26 @@ import shutil
 import urllib.request
 import platform
 
+try:
+    from src.Install.ollama_model_utils import sanitize_ollama_model_name, is_valid_ollama_model_name
+except ImportError:
+    try:
+        from ollama_model_utils import sanitize_ollama_model_name, is_valid_ollama_model_name
+    except ImportError:
+        def sanitize_ollama_model_name(raw_name: str, default_fallback: str = "custom-model") -> str:
+            if not raw_name or not isinstance(raw_name, str):
+                return default_fallback
+            clean = raw_name.strip().lower()
+            clean = re.sub(r"[^a-z0-9._-:]+", "-", clean)
+            clean = re.sub(r"[-._]{2,}", "-", clean).strip("-._")
+            return clean or default_fallback
+
+        def is_valid_ollama_model_name(name: str) -> bool:
+            if not name or not isinstance(name, str):
+                return False
+            return bool(re.match(r"^(?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)?([a-z0-9]+(?:[._-][a-z0-9]+)*)(?::([a-z0-9]+(?:[._-][a-z0-9]+)*))?$", name.strip()))
+
+
 # Absicherung der Konsolenausgabe gegen Windows-Encoding-Fehler (cp1252)
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
@@ -672,7 +692,8 @@ def analyze_system_and_select_model(models: list):
     """
     Prüft die tatsächliche Hardware-Leistung des Geräts und filtert 
     vollautomatisch das mathematisch stabilste Modell heraus.
-    Validiert Namen via RegEx gegen Text-Metadaten und Dokumentations-Fragmente.
+    Bereinigt und validiert Modellnamen strikt nach Ollama-Konventionen
+    (keine Großbuchstaben, keine Sonderzeichen), um HTTP 400 Fehler zu verhindern.
     """
     print("[INFO] Starte Hardware-Leistungs-Check...")
     total_ram_gb = round(psutil.virtual_memory().total / (1024**3), 2)
@@ -681,22 +702,20 @@ def analyze_system_and_select_model(models: list):
     logger.info(f"Geräte-Leistungs-Check: {total_ram_gb} GB RAM erkannt.")
     logger.info(f"Berechnete maximale Obergrenze für Modellgröße: {safe_ram_budget} GB.")
 
-    ollama_name_pattern = re.compile(r"^[a-zA-Z0-9.\-_]+(:[a-zA-Z0-9.\-_]+)?$")
-
     valid_models = []
     for m in models:
         if isinstance(m, str):
-            model_name = m.strip()
+            raw_name = m.strip()
             size = None
             description = "Lokales LLM-Modell (Direkt-Link)"
         elif isinstance(m, dict):
-            model_name = str(m.get("name", "unbekannt")).strip()
+            raw_name = str(m.get("name", "unbekannt")).strip()
             size = m.get("size_gb") or m.get("size", 0) / (1024**3) if isinstance(m.get("size"), (int, float)) else None
             description = m.get("description", m.get("blurb", "Lokales LLM-Modell"))
         else:
             continue
         
-        name_lower = model_name.lower()
+        name_lower = raw_name.lower()
         metadata_blacklist = [
             "scraped", "updated", "timestamp", "unbekannt", 
             "reference", "readme", "license", "manifest", "note"
@@ -704,19 +723,23 @@ def analyze_system_and_select_model(models: list):
         if any(indicator in name_lower for indicator in metadata_blacklist):
             continue
 
-        if not ollama_name_pattern.match(model_name):
+        # Bereinigung nach Ollama-Konventionen (lowercase, keine Sonderzeichen/Dateiendungen)
+        sanitized_name = sanitize_ollama_model_name(raw_name)
+
+        if not is_valid_ollama_model_name(sanitized_name):
+            logger.warning(f"Modellname '{raw_name}' entspricht nicht den Ollama-Konventionen (Bereinigt: '{sanitized_name}'). Überspringe.")
             continue
 
         if not size:
-            if "32b" in name_lower or "30b" in name_lower: size = 22.0
-            elif "14b" in name_lower: size = 11.0
-            elif "8b" in name_lower or "9b" in name_lower: size = 6.5
-            elif "3b" in name_lower or "4b" in name_lower: size = 3.5
+            if "32b" in sanitized_name or "30b" in sanitized_name: size = 22.0
+            elif "14b" in sanitized_name: size = 11.0
+            elif "8b" in sanitized_name or "9b" in sanitized_name: size = 6.5
+            elif "3b" in sanitized_name or "4b" in sanitized_name: size = 3.5
             else: size = 4.0
             
         if size <= safe_ram_budget:
             valid_models.append({
-                "name": model_name,
+                "name": sanitized_name,
                 "size_gb": round(size, 1),
                 "desc": description
             })
@@ -742,18 +765,19 @@ def smart_hardware_downloader():
         return
 
     perfect_match = fit_models[0]
+    pull_model_name = sanitize_ollama_model_name(perfect_match['name'])
     
     print("\n" + "="*80)
     print(f" SYSTEM-ANALYSE REPRODUZIERT:")
     print(f" -> VERFÜGGBARER ARBEITSSPEICHER : {total_ram} GB RAM")
     print(f" -> MAXIMALES SCHUTZ-BUDGET     : {safe_budget} GB")
-    print(f" -> GEWÄHLTES KI-OPTIMUM        : {perfect_match['name']} ({perfect_match['size_gb']} GB)")
+    print(f" -> GEWÄHLTES KI-OPTIMUM        : {pull_model_name} ({perfect_match['size_gb']} GB)")
     print("="*80)
     print(f" Einsatzbereich: {perfect_match['desc']}")
     print("="*80 + "\n")
     
-    print(f"[AUTOMATION] Starte direkten Download für Core-Modell: '{perfect_match['name']}'")
-    logger.info(f"Starte automatisisierten Download für: '{perfect_match['name']}'")
+    print(f"[AUTOMATION] Starte direkten Download für Core-Modell: '{pull_model_name}'")
+    logger.info(f"Starte automatisisierten Download für: '{pull_model_name}'")
 
     # Verbindungsprüfung und Pull mit Auto-Recovery
     client = None
@@ -767,7 +791,7 @@ def smart_hardware_downloader():
 
     try:
         current_digest = None
-        for progress in client.pull(model=perfect_match['name'], stream=True):
+        for progress in client.pull(model=pull_model_name, stream=True):
             status = progress.get('status', '')
             completed = progress.get('completed')
             
@@ -787,12 +811,12 @@ def smart_hardware_downloader():
                 sys.stdout.flush()
 
         print("\n")
-        logger.info(f"Erfolgreich! '{perfect_match['name']}' wurde hardwarekonform installiert.")
+        logger.info(f"Erfolgreich! '{pull_model_name}' wurde hardwarekonform installiert.")
         
         active_config = os.path.join(PATHS["config"], "active_model_config.json")
         with open(active_config, "w", encoding="utf-8") as f:
             json.dump({
-                "model_name": perfect_match['name'],
+                "model_name": pull_model_name,
                 "allocated_size_gb": perfect_match['size_gb'],
                 "detected_ram_gb": total_ram
             }, f, indent=4, ensure_ascii=False)

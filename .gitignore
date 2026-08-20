@@ -16,3 +16,7 @@ src/docker_py/__pycache__/docker_network_volumes.cpython-311.pyc
 logs/app.log
 notebooks/README.md
 .gitignore
+src/Install/__pycache__/ollama_model_utils.cpython-311.pyc
+data/models/huggingface/DeepSeek-V4-Flash-DSpark-support-0731.gguf
+src/Jarvis/__pycache__/jarvis_onboarding.cpython-311.pyc
+tests/__pycache__/test_ollama_model_sanitization.cpython-311.pyc

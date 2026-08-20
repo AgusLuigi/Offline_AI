@@ -22,6 +22,14 @@ from src.docker_py.docker_config import (
     find_project_root
 )
 
+try:
+    from src.Install.ollama_model_utils import sanitize_ollama_model_name
+except ImportError:
+    def sanitize_ollama_model_name(raw_name: str, default_fallback: str = "codestral") -> str:
+        if not raw_name or not isinstance(raw_name, str):
+            return default_fallback
+        return raw_name.strip().lower() or default_fallback
+
 logger = logging.getLogger("DockerSqliteInbox")
 
 
@@ -98,7 +106,7 @@ def init_inbox_database(db_path: str) -> bool:
                     request_id INTEGER NOT NULL,
                     user_id TEXT NOT NULL,
                     response_text TEXT NOT NULL,
-                    model_used TEXT DEFAULT 'Codestral',
+                    model_used TEXT DEFAULT 'codestral',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(request_id) REFERENCES incoming_requests(request_id)
                 )
@@ -222,7 +230,8 @@ def store_chat_response(
         int: Die generierte `response_id` (oder -1 bei Fehler).
     """
     inbox_cfg = get_sqlite_inbox_config(config)
-    eff_model = model_used or inbox_cfg.get("default_model", "Codestral")
+    raw_model = model_used or inbox_cfg.get("default_model", "codestral")
+    eff_model = sanitize_ollama_model_name(raw_model, default_fallback="codestral")
 
     try:
         with sqlite3.connect(db_path) as conn:
@@ -322,7 +331,8 @@ def run_step4_sqlite_inbox_test(
     
     # 4. Antwort simulieren & persistieren (Engine -> Chat-Antwort)
     inbox_cfg = get_sqlite_inbox_config(cfg)
-    default_model = inbox_cfg.get("default_model", "Codestral")
+    raw_default_model = inbox_cfg.get("default_model", "codestral")
+    default_model = sanitize_ollama_model_name(raw_default_model, default_fallback="codestral")
     mock_reply = "System aktiv: Deine isolierte Sandbox läuft geschützt im mai-ai_network."
     resp_id = store_chat_response(db_path, req_id, user_id, mock_reply, model_used=default_model, config=cfg)
     

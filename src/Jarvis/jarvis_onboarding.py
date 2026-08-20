@@ -2,6 +2,14 @@ import os
 import json
 import time
 
+try:
+    from src.Install.ollama_model_utils import sanitize_ollama_model_name
+except ImportError:
+    def sanitize_ollama_model_name(raw_name: str, default_fallback: str = "codestral") -> str:
+        if not raw_name or not isinstance(raw_name, str):
+            return default_fallback
+        return raw_name.strip().lower() or default_fallback
+
 CONFIG_DIR = "config"
 CONFIG_PATH = os.path.join(CONFIG_DIR, "jarvis_config.json")
 MODEL_PATH = os.path.join(CONFIG_DIR, "active_model.json")
@@ -93,8 +101,11 @@ Wenn {user_name} ein neues Programm oder ein Feature anfordert:
 3. Teste deine Entwürfe im Hintergrund in einer Docker-Sandbox auf Fehler.
 """
 
+    raw_model_name = existing_config.get("model_name", "codestral")
+    clean_model_name = sanitize_ollama_model_name(raw_model_name, default_fallback="codestral")
+
     model_config = {
-        "model_name": "Codestral",
+        "model_name": clean_model_name,
         "system_prompt": system_prompt,
         "temperature": 0.2
     }
