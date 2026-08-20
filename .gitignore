@@ -14,3 +14,5 @@ data/users/user_test_mai-ai_local/inbox/user_inbox.db
 data/users/user_alice_mai-ai_local/inbox/user_inbox.db
 src/docker_py/__pycache__/docker_network_volumes.cpython-311.pyc
 logs/app.log
+notebooks/README.md
+.gitignore
