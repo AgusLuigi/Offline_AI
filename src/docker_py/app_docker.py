@@ -8,20 +8,38 @@ import ipywidgets as widgets
 from IPython.display import display, clear_output, HTML
 
 # =============================================================================
-# 0. GLOBAL CONFIGURATION & FALLBACKS
+# 0. GLOBAL CONFIGURATION & FALLBACKS (FROM config/docker_global.json)
 # =============================================================================
-CONFIG = {
-    "DEFAULT_IMAGE": "python:3.11-slim",
-    "CONTAINER_WORK_DIR": "/docker",
-    "RESOURCES": {
-        "MIN_CPUS": 1,
-        "KEEP_FREE_CPU_PERCENT": 20
+try:
+    from src.docker_py.docker_config import (
+        load_docker_global_config,
+        get_containers_config,
+        get_resource_limits_config
+    )
+    _global_cfg = load_docker_global_config()
+    _containers_cfg = get_containers_config(_global_cfg)
+    _res_cfg = get_resource_limits_config(_global_cfg)
+    CONFIG = {
+        "DEFAULT_IMAGE": _containers_cfg.get("default_image", "python:3.11-slim"),
+        "CONTAINER_WORK_DIR": "/docker",
+        "RESOURCES": {
+            "MIN_CPUS": int(_res_cfg.get("cpu_cores", 1)),
+            "KEEP_FREE_CPU_PERCENT": 20
+        }
     }
-}
+except Exception:
+    CONFIG = {
+        "DEFAULT_IMAGE": "python:3.11-slim",
+        "CONTAINER_WORK_DIR": "/docker",
+        "RESOURCES": {
+            "MIN_CPUS": 1,
+            "KEEP_FREE_CPU_PERCENT": 20
+        }
+    }
 
 # Try to discover project root folder index if present
 try:
-    from folder_index import FOLDER_STRUCTURE, PROJECT_ROOT
+    from src.Install.install_folder_index import FOLDER_STRUCTURE, PROJECT_ROOT
 except ImportError:
     PROJECT_ROOT = os.path.abspath(os.getcwd())
     FOLDER_STRUCTURE = {"root": PROJECT_ROOT}

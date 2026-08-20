@@ -1,0 +1,81 @@
+{
+    "meta": {
+        "project": "Mai_AI",
+        "version": "2.0.0",
+        "description": "Zentrale globale Konfiguration für Docker, Ingress, Security, Quotas & Lifecycle"
+    },
+    "network": {
+        "name": "mai-ai_network",
+        "driver": "bridge",
+        "attachable": true,
+        "domain_name": "mai-ai.duckdns.org",
+        "local_domain": "platform.local",
+        "service_port": 8000,
+        "host_port": 8080,
+        "ollama_port": 11434,
+        "traefik_priority": "20"
+    },
+    "storage": {
+        "required_volumes": [
+            "mai_ai_local_models",
+            "mai_ai_db_data",
+            "mai_ai_config"
+        ],
+        "user_quota_max_mb": 500.0,
+        "base_users_dir": "data/users",
+        "base_inbox_dir": "data/inbox"
+    },
+    "containers": {
+        "default_image": "python:3.11-slim",
+        "mai_ai_image": "mai_ai_image:latest",
+        "ollama_image": "ollama/ollama:latest",
+        "engine_container_name": "mai_ai_ollama_engine",
+        "traefik_container_name": "traefik_gateway",
+        "oauth_container_name": "oauth2_proxy"
+    },
+    "security_hardening": {
+        "read_only": true,
+        "cap_drop": [
+            "ALL"
+        ],
+        "security_opt": [
+            "no-new-privileges:true"
+        ],
+        "user": "1000:1000",
+        "tmpfs": {
+            "/tmp": "rw,noexec,nosuid,size=64m",
+            "/run": "rw,noexec,nosuid,size=32m"
+        }
+    },
+    "resource_limits": {
+        "mem_limit": "1g",
+        "cpu_cores": 1.0,
+        "nano_cpus": 1000000000,
+        "memswap_limit": "1g",
+        "default_instance_mem": "512m",
+        "default_instance_cpu": 0.5
+    },
+    "lifecycle": {
+        "idle_timeout_minutes": 10.0,
+        "auto_shutdown_enabled": true,
+        "on_demand_wakeup_enabled": true,
+        "connection_timeout_seconds": 10.0,
+        "connection_retries": 3,
+        "connection_retry_delay_seconds": 3
+    },
+    "environment_variables": {
+        "required_keys": [
+            "GOOGLE_CLIENT_ID",
+            "GOOGLE_CLIENT_SECRET",
+            "COOKIE_SECRET",
+            "DOMAIN_NAME"
+        ],
+        "env_file_path": ".env"
+    },
+    "sqlite_inbox": {
+        "db_filename": "user_inbox.db",
+        "shared_db_filename": "platform_inbox.db",
+        "default_priority": 1,
+        "default_model": "Codestral"
+    }
+}

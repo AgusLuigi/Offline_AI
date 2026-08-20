@@ -2,9 +2,14 @@ import os
 import subprocess
 import sys
 import logging
-from src.Install.folder_index import initialize_project, FOLDER_STRUCTURE
+from src.Install.install_folder_index import initialize_project, FOLDER_STRUCTURE
 from src.Install.install_docker import download_and_install_docker_smart
 from src.Install.active_ollama_hardware_downloader import smart_hardware_downloader
+from src.docker_py.docker_config import (
+    load_docker_global_config,
+    get_network_config,
+    get_storage_config
+)
 
 # Zentrales Logging für den Startvorgang
 logger = logging.getLogger("AI_Orchestrator")
@@ -13,20 +18,26 @@ logging.basicConfig(level=logging.INFO)
 def verify_external_infrastructure():
     """
     Überprüft vor dem Compose-Start, ob die externen Notebook-Schnittstellen
-    (Netzwerk & Volumes) im Docker-Daemon vorhanden sind.
+    (Netzwerk & Volumes aus config/docker_global.json) im Docker-Daemon vorhanden sind.
     Falls nicht, werden sie automatisch angelegt, um Fehler zu vermeiden.
     """
-    logger.info("Überprüfe externe Infrastruktur-Kopplung...")
+    logger.info("Überprüfe externe Infrastruktur-Kopplung anhand config/docker_global.json...")
+    config = load_docker_global_config()
+    net_cfg = get_network_config(config)
+    storage_cfg = get_storage_config(config)
+
+    network_name = net_cfg.get("name", "mai-ai_network")
+    required_volumes = storage_cfg.get("required_volumes", ["mai_ai_local_models", "mai_ai_db_data", "mai_ai_config"])
+
     try:
         # 1. Netzwerk prüfen
-        net_check = subprocess.run(["docker", "network", "inspect", "mai-ai_network"], 
+        net_check = subprocess.run(["docker", "network", "inspect", network_name], 
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if net_check.returncode != 0:
-            logger.warning("Schnittstelle fehlt: Erstelle Netzwerk 'mai-ai_network'...")
-            subprocess.run(["docker", "network", "create", "mai-ai_network"], check=True)
+            logger.warning(f"Schnittstelle fehlt: Erstelle Netzwerk '{network_name}'...")
+            subprocess.run(["docker", "network", "create", network_name], check=True)
 
         # 2. Volumes prüfen
-        required_volumes = ["mai_ai_local_models", "mai_ai_db_data", "mai_ai_config"]
         for vol in required_volumes:
             vol_check = subprocess.run(["docker", "volume", "inspect", vol], 
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -100,21 +111,17 @@ def main():
         sys.exit(1)
 
     # 4. Schritt: Hardware-Analyse und Ollama-Modell-Setup
-    # Da Ollama nun stabil im Container 'mai_ai_ollama_engine' läuft,
-    # kann der Downloader die Rechen-Engine sauber ansteuern.
     logger.info("Schritt 4: Analysiere Hardware und bereite KI-Modelle vor...")
     try:
         smart_hardware_downloader()
     except Exception as e:
         logger.error(f"Fehler beim Modell-Download: {e}")
-        # Wir brechen hier nicht ab, da das Gateway und die Engine bereits laufen
 
     print("\n" + "="*60)
     print("   SYSTEM BEREIT: Greife via http://platform.local zu")
     print("="*60 + "\n")
 
 if __name__ == "__main__":
-    # Sicherstellen, dass .env Variablen (GOOGLE_CLIENT_ID etc.) geladen sind
     if not os.getenv("GOOGLE_CLIENT_ID"):
         logger.warning("HINWEIS: GOOGLE_CLIENT_ID Umgebungsvariable fehlt. Auth-Proxy wird ggf. nicht starten.")
     
