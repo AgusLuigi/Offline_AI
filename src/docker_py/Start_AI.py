@@ -4,7 +4,7 @@ import sys
 import logging
 from src.Install.folder_index import initialize_project, FOLDER_STRUCTURE
 from src.Install.install_docker import download_and_install_docker_smart
-from src.Install.ollama_hardware_downloader import smart_hardware_downloader
+from src.Install.active_ollama_hardware_downloader import smart_hardware_downloader
 
 # Zentrales Logging für den Startvorgang
 logger = logging.getLogger("AI_Orchestrator")
