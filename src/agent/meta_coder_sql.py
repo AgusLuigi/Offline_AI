@@ -209,14 +209,27 @@ class MetaCodeBase:
         domain = self._detect_domain(task_description)
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
+            
+            # 1. Domain-spezifische Fehler und Lösungsmuster laden
             cursor.execute(f"SELECT error_signature, solution_code FROM {domain} ORDER BY success_score DESC LIMIT 3")
             rows = cursor.fetchall()
             
-            # Lade auch permanente Core-Direktiven für den Kontext
+            # 2. Permanente Core-Direktiven laden
             cursor.execute("SELECT capability_name, description FROM core_directives LIMIT 5")
             directives = cursor.fetchall()
 
-        tips = [f"--- Relevant Past Solutions from [{domain}] ---"]
+            # 3. Pre-Execution Blueprints laden (Für die strukturierte Vorab-Planung deines Agenten)
+            try:
+                cursor.execute("SELECT execution_phase, agent_instruction FROM pre_execution_blueprint_generator WHERE is_active = 1 LIMIT 5")
+                blueprints = cursor.fetchall()
+            except sqlite3.OperationalError:
+                blueprints = []
+
+        tips = ["=================================================="]
+        tips.append(" [SYSTEM CORE MEMORY: SQL-DATABASE DEEP KNOWLEDGE]")
+        tips.append("==================================================")
+        
+        tips.append(f"\n--- Relevant Past Solutions from [{domain}] ---")
         for err, sol in rows:
             tips.append(f"- Bug: [{err}] -> Fix Code Pattern: {sol}")
             
@@ -225,7 +238,12 @@ class MetaCodeBase:
             for cap, desc in directives:
                 tips.append(f"- Capability: [{cap}] -> {desc}")
 
-        if len(tips) == 1:
+        if blueprints:
+            tips.append("\n--- Mandatory Pre-Execution Blueprints ---")
+            for phase, instruction in blueprints:
+                tips.append(f"- Phase [{phase}]: {instruction}")
+
+        if len(tips) <= 3:
             return f"No prior errors recorded in domain [{domain}]."
 
         return "\n".join(tips)
