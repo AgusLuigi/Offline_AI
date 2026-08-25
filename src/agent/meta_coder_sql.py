@@ -5,9 +5,18 @@ import sqlite3
 import time
 import urllib.request
 import socket
+import gc
+import threading
 from datetime import datetime
 from pathlib import Path
 from ollama import Client
+
+# Versuche psutil zu importieren (für den System-Check im Spinner)
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 
 # OLLAMA CHECK & START LOGIK (SEPARAT & IM SILENT-MODUS BEI ERFOLG)
 _OLLAMA_VERIFIED_CACHE = False
@@ -75,10 +84,50 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
     print("--> [HINWEIS] Ollama ist nach mehreren Versuchen nicht erreichbar.")
     return False
 
+def _llm_adapt_reserved_cores_from_usage(cpu_usage: float):
+    if cpu_usage > 85:
+        pass
+
 # META-CODEBASE & HIERARCHICAL ROUTING TREE AGENT
 class MetaCodeBase:
+    @staticmethod
+    def start_spinner(stop_event, is_de: bool = True):
+        """
+        VISUELLES FEEDBACK [UX-STANDARD]
+        Zeigt einen Spinner während der LLM-Verarbeitung und prüft RAM/CPU.
+        Nutzt die Messung, um die CPU-Reserve selbstständig anzupassen.
+        """
+        def perform_system_check():
+            if not HAS_PSUTIL:
+                return ""
+
+            ram_avail = psutil.virtual_memory().available / (1024**3)
+            cpu_usage = psutil.cpu_percent(interval=None)
+
+            _llm_adapt_reserved_cores_from_usage(cpu_usage)
+
+            status_msg = ""
+            if ram_avail < 1.5:
+                gc.collect()
+                status_msg = f"⚠️ RAM kritisch ({ram_avail:.2f}GB). GC ausgeführt."
+            if cpu_usage > 90:
+                cpu_alert = f" | 🔥 CPU Last hoch ({cpu_usage:.0f}%)."
+                status_msg = status_msg + cpu_alert if status_msg else cpu_alert
+            return status_msg
+
+        chars = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏']
+        msg = "Analysiere (Lokale GPU/CPU)..." if is_de else "Analyzing (Local GPU/CPU)..."
+        idx = 0
+        while not stop_event.is_set():
+            alert_msg = perform_system_check()
+            sys.stdout.write(f'\r{msg} {chars[idx % len(chars)]} {alert_msg}')
+            sys.stdout.flush()
+            idx += 1
+            time.sleep(1.0)
+        sys.stdout.write('\r' + ' ' * 100 + '\r')
+        sys.stdout.flush()
+        
     def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434"):
-        # Führe den Ollama-Check ganz zu Beginn aus (bleibt bei Erfolg leise)
         if not check_and_start_ollama(ollama_host):
             print("[KRITISCHER ABBRUCH] Ollama konnte nicht verifiziert oder gestartet werden.")
             sys.exit(1)
@@ -86,7 +135,6 @@ class MetaCodeBase:
         self.model_name = model_name
         self.ollama_host = ollama_host
         
-        # Verbindung zum Ollama Client herstellen und testen
         try:
             self.client = Client(host=ollama_host)
             self.client.list()
@@ -94,15 +142,10 @@ class MetaCodeBase:
             print(f"--> [KRITISCHER FEHLER] Verbindung zum Ollama Client fehlgeschlagen: {e}")
             sys.exit(1)
         
-        # Ordnerstruktur und DB initialisieren
         self.db_path = self.initialize_find_folder()
         self._init_db()
 
     def initialize_find_folder(self) -> Path:
-        """
-        Prüft, ob die notwendige Ordnerstruktur für den Knowledge Agent im Projekt vorhanden ist,
-        und gibt bei jedem Teilschritt ein klares Status-Print in der Konsole aus.
-        """
         ANKER_DIR = "Offline_AI"
         BASE_DIR = "Knowledge"
         AGENT_SUBDIR = "knowledge_agent_hierarchical_routing_tree_sql"
@@ -146,7 +189,6 @@ class MetaCodeBase:
         return db_path
 
     def _init_db(self):
-        """Erstellt spezialisierte Fehler-Domains inkl. Routing-Tree."""
         domains = ["script_errors", "jupyter_errors", "data_io_errors", "scope_global_errors", "routing_tree_errors"]
         
         with sqlite3.connect(self.db_path) as conn:
@@ -162,7 +204,6 @@ class MetaCodeBase:
                     )
                 """)
             
-            # NEU: Zusätzliche Tabelle für permanente Kern-Direktiven und Fähigkeiten
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS core_directives (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -175,11 +216,6 @@ class MetaCodeBase:
             conn.commit()
 
     def persist_new_capability(self, capability_name: str, code_snippet: str, description: str):
-        """
-        Zwingt den Agenten, eine neu erlernte Fähigkeit felsenfest in der 
-        SQLite-Datenbank (Tabelle 'core_directives') zu verewigen, 
-        damit sie beim nächsten Neustart zwingend geladen wird.
-        """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT INTO core_directives (capability_name, code_snippet, description)
@@ -210,15 +246,12 @@ class MetaCodeBase:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
-            # 1. Domain-spezifische Fehler und Lösungsmuster laden
             cursor.execute(f"SELECT error_signature, solution_code FROM {domain} ORDER BY success_score DESC LIMIT 3")
             rows = cursor.fetchall()
             
-            # 2. Permanente Core-Direktiven laden
             cursor.execute("SELECT capability_name, description FROM core_directives LIMIT 5")
             directives = cursor.fetchall()
 
-            # 3. Pre-Execution Blueprints laden (Für die strukturierte Vorab-Planung deines Agenten)
             try:
                 cursor.execute("SELECT execution_phase, agent_instruction FROM pre_execution_blueprint_generator WHERE is_active = 1 LIMIT 5")
                 blueprints = cursor.fetchall()
@@ -283,7 +316,15 @@ Task:
 Rewrite and improve this Python class (MetaCodeBase) so that it proactively checks for and prevents the above error. 
 Return the COMPLETE, executable Python code for the new MetaCodeBase script inside markdown code blocks (```python ... ```).
 """
-        response = self.client.generate(model=self.model_name, prompt=prompt)
+        stop_event = threading.Event()
+        spinner_thread = threading.Thread(target=self.start_spinner, args=(stop_event, True))
+        spinner_thread.start()
+        try:
+            response = self.client.generate(model=self.model_name, prompt=prompt)
+        finally:
+            stop_event.set()
+            spinner_thread.join()
+
         raw_text = response.get('response', '')
         new_code = self._extract_code_block(raw_text)
         with open(new_filename, "w", encoding="utf-8") as f:
@@ -313,7 +354,15 @@ Mandatory Rules:
 1. Return ONLY valid Python code inside standard markdown code blocks (```python ... ```).
 2. The script must be fully self-contained and runnable via `python`.
 """
-            response = self.client.generate(model=self.model_name, prompt=prompt)
+            stop_event = threading.Event()
+            spinner_thread = threading.Thread(target=self.start_spinner, args=(stop_event, True))
+            spinner_thread.start()
+            try:
+                response = self.client.generate(model=self.model_name, prompt=prompt)
+            finally:
+                stop_event.set()
+                spinner_thread.join()
+
             code = self._extract_code_block(response.get('response', ''))
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(code)
@@ -374,7 +423,6 @@ def query_meta_coder_sql(notebook_path: str, instruction: str):
     )
 
 if __name__ == "__main__":
-    # Initialisierung des Meta-Coders (lädt Ordner, DB, Ollama-Check)
     metacoder = boot_latest_metacoder()
     
     print("\n======================================================================")
@@ -392,14 +440,9 @@ if __name__ == "__main__":
                 print("\nAgent: Bis zum nächsten Mal!")
                 break
 
-            print("Agent durchsucht SQLite-Wissensbasis & denkt nach...", end="\r")
-
-            # 1. HIER GEHT DER MAGISCHE SCHRITT LOS: 
-            # Wir holen das relevante Wissen aus der SQLite-Datenbank für diesen Kontext!
             domain = metacoder._detect_domain(user_input)
             db_tips = metacoder._get_relevant_tips(user_input)
 
-            # 2. Wir bauen einen intelligenten System-Prompt, der das Langzeitgedächtnis einbindet
             system_prompt = f"""
 You are an autonomous AI Agent with an active SQLite Long-Term Memory (Knowledge Agent Routing Tree).
 Current Detected Domain: {domain}
@@ -411,19 +454,25 @@ Your Task: Answer the user's request in German, keeping any code or technical ke
 Acknowledge and make use of the SQLite database context if relevant.
 """
 
-            # 3. Chat-Anfrage an Ollama mit dem erweiterten Kontext senden
-            response = metacoder.client.chat(
-                model=metacoder.model_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ]
-            )
+            # Spinner im Hintergrund während der Ollama-Chat-Anfrage starten
+            stop_event = threading.Event()
+            spinner_thread = threading.Thread(target=metacoder.start_spinner, args=(stop_event, True))
+            spinner_thread.start()
+
+            try:
+                response = metacoder.client.chat(
+                    model=metacoder.model_name,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_input}
+                    ]
+                )
+            finally:
+                stop_event.set()
+                spinner_thread.join()
             
             answer = response.get('message', {}).get('content', '')
             
-            # ECHTER PERSISTENZ-BEFEHL: Zwingt das System zum physischen Schreiben in SQLite,
-            # sobald der Nutzer verlangt, etwas zu "verewigen" oder "in sql zu speichern".
             if "verewige" in user_input.lower() or "speichere in sql" in user_input.lower():
                 metacoder.persist_new_capability(
                     capability_name="Autonomous_Workspace_Scanner_and_Semantic_Abstraction",
@@ -432,12 +481,11 @@ Acknowledge and make use of the SQLite database context if relevant.
                 )
                 print("\n[SYSTEM-INFO] Die Fähigkeit wurde physisch in die SQLite-Tabelle 'core_directives' geschrieben!")
 
-            # 4. Automatisches Lernen / Speichern in die SQLite-DB bei allgemeinen Mustern
             elif "sql" in user_input.lower() or "fehler" in user_input.lower() or "code" in user_input.lower():
                 metacoder._save_solution_to_db(
                     task_description=user_input,
                     error_msg=f"User interaction pattern in domain [{domain}]",
-                    solution_code=answer[:200]  # Speichert einen Ausschnitt als Muster ab
+                    solution_code=answer[:200]
                 )
 
             print(f"\nCodestral [Domain: {domain} | DB aktiv]:\n{answer}\n" + "-"*70)
