@@ -21,3 +21,4 @@ data/models/huggingface/DeepSeek-V4-Flash-DSpark-support-0731.gguf
 src/Jarvis/__pycache__/jarvis_onboarding.cpython-311.pyc
 tests/__pycache__/test_ollama_model_sanitization.cpython-311.pyc
 knowledge/meta_coder_base/meta_coder_base_issue_solution.db
+src/agent/__pycache__/__ollama_runing.cpython-311.pyc
