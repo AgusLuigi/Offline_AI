@@ -19,11 +19,11 @@ def is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
 def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
     """
     Prüft autonom den Status von Ollama (inkl. RAM-Cache), startet den Dienst 
-    bei Bedarf automatisch und bleibt im Erfolgsfall komplett stumm (Silent Mode).
+    bei Bedarf im Hintergrund und gibt absolut KEINE Meldungen bei Erfolg aus.
     """
     global _OLLAMA_VERIFIED_CACHE
 
-    # 0. Schritt: RAM-Cache prüfen – Wenn in dieser Session bereits erfolgreich, direkt abbrechen (still)
+    # 0. Schritt: RAM-Cache prüfen – Wenn in dieser Session bereits erfolgreich, sofort still abbrechen
     if _OLLAMA_VERIFIED_CACHE:
         return True
 
@@ -42,20 +42,21 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
         except Exception:
             pass
 
-    # 2. Schritt: Mittlerer Aufwand – Versuche, den Dienst automatisch zu starten (ohne Print bei Erfolg)
+    # 2. Schritt: Mittlerer Aufwand – Versuche, den Dienst im Hintergrund zu starten (ohne Ausgaben)
     try:
         if os.name == 'nt':
             subprocess.Popen(["ollama", "serve"], creationflags=subprocess.CREATE_NO_WINDOW)
         else:
             subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
-        # Fehlerfall: Das Programm ist nicht vorhanden
+        # Nur im echten Fehlerfall (Ollama nicht gefunden) Logs ausgeben
         print("--- [OLLAMA CHECK] Fehler-Protokoll ---")
         print("--> [FEHLER] Der Befehl 'ollama' wurde im System nicht gefunden.")
         print("--> [HINWEIS] Ollama scheint nicht installiert zu sein oder der Pfad stimmt nicht.")
         print("--> Bitte installiere Ollama (https://ollama.com/download) oder löse den Start manuell aus.")
         return False
     except Exception as sub_err:
+        # Nur im echten Fehlerfall Logs ausgeben
         print("--- [OLLAMA CHECK] Fehler-Protokoll ---")
         print(f"--> [FEHLER] Konnte den Ollama-Prozess nicht automatisch starten: {sub_err}")
         return False
@@ -68,12 +69,12 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
                 req = urllib.request.Request(f"{ollama_host}/api/tags")
                 with urllib.request.urlopen(req, timeout=2) as response:
                     if response.status == 200:
-                        _OLLAMA_VERIFIED_CACHE = True  # Im RAM merken (ohne Print)
+                        _OLLAMA_VERIFIED_CACHE = True  # Erfolgreich im RAM merken – absolut still
                         return True
             except Exception:
                 pass
 
-    # Wenn nach mehreren Versuchen immer noch nichts erreichbar ist (Fehlerfall)
+    # Wenn nach mehreren Versuchen immer noch nichts erreichbar ist -> Erst jetzt das Fehler-Protokoll zeigen
     print("--- [OLLAMA CHECK] Fehler-Protokoll ---")
     print("--> [HINWEIS] Ollama ist nach mehreren Versuchen immer noch nicht erreichbar.")
     print("--> Bitte starte Ollama manuell oder prüfe deine Installation.")
