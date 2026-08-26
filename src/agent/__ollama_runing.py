@@ -37,7 +37,7 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
             req = urllib.request.Request(f"{ollama_host}/api/tags")
             with urllib.request.urlopen(req, timeout=2) as response:
                 if response.status == 200:
-                    _OLLAMA_VERIFIED_CACHE = True  # Im RAM merken (ohne Print)
+                    _OLLAMA_VERIFIED_CACHE = True
                     return True
         except Exception:
             pass

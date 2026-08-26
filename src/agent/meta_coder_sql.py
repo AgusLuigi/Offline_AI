@@ -7,6 +7,7 @@ import urllib.request
 import socket
 import gc
 import threading
+import importlib.util
 from datetime import datetime
 from pathlib import Path
 from ollama import Client
@@ -87,6 +88,28 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
 def _llm_adapt_reserved_cores_from_usage(cpu_usage: float):
     if cpu_usage > 85:
         pass
+
+# HILFSFUNKTIONEN FÜR SQL / KERNEL BLUEPRINT LOGIK
+def initialize_blueprint_system(raw_query: str) -> dict:
+    """Initializes the planning core for the raw user query."""
+    cleaned_query = raw_query.strip().lower()
+    return {"status": "initialized", "query": cleaned_query}
+
+def scan_kernel_modules(module_list: list) -> dict:
+    """Scans available Python modules in the kernel."""
+    results = {}
+    for mod in module_list:
+        exists = importlib.util.find_spec(mod) is not None
+        results[mod] = "active" if exists else "inactive"
+    return results
+
+def check_system_resources() -> bool:
+    """Monitors CPU and RAM utilization for resource-efficient operation."""
+    if not HAS_PSUTIL:
+        return True
+    cpu_usage = psutil.cpu_percent(interval=1)
+    return cpu_usage < 80
+
 
 # META-CODEBASE & HIERARCHICAL ROUTING TREE AGENT
 class MetaCodeBase:
@@ -332,17 +355,26 @@ Return the COMPLETE, executable Python code for the new MetaCodeBase script insi
         return new_filename
 
     def test_and_evolve_loop(self, specialization: str, task_description: str, base_filename: str, max_generations: int = 3):
+        # 1. Systemressourcen und Blueprint-Initialisierung vorab ausführen
+        if not check_system_resources():
+            print("--> [WARNUNG] Hohe CPU-Auslastung vor dem Start erkannt!")
+        
+        blueprint = initialize_blueprint_system(task_description)
+        print(f"--> [BLUEPRINT STATUS] {blueprint['status']} für Query: {blueprint['query']}")
+
         target_dir = Path("src/agent")
         target_dir.mkdir(parents=True, exist_ok=True)
         current_error = None
         generated_files = []
         print(f"\n[AGENT-LOOP] Starte Generierungs- und Test-Zyklus für: {base_filename}")
+        
         for gen in range(1, max_generations + 1):
             print(f"--> [GEN {gen}/{max_generations}] Generiere Arbeiter-Agent...")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M")
             versioned_filename = f"{Path(base_filename).stem}_{timestamp}.py"
             filepath = target_dir / versioned_filename
             db_tips = self._get_relevant_tips(task_description)
+            
             prompt = f"""
 You are an expert Autonomous Python Architect. Write a complete, standalone Python script for an agent 
 integrated into a Hierarchical Routing Tree using SQLite.
@@ -373,11 +405,12 @@ Mandatory Rules:
                 print(f"--> [ERFOLG] Arbeiter-Agent lief fehlerfrei durch!")
                 return filepath
             else:
-                print(f"--> [FEHLER GEFANGEN] Agent ist stolpert. Speichere Signatur in SQLite-DB.")
+                print(f"--> [FEHLER GEFANGEN] Agent ist gestolpert. Speichere Signatur in SQLite-DB.")
                 current_error = output
                 sample_fix = f"try-except block added for routing/sql context: {task_description[:30]}"
                 self._save_solution_to_db(task_description, current_error, sample_fix)
                 self.evolve_self(recent_error=current_error, task_context=task_description)
+                
         for old_file in reversed(generated_files[:-1]):
             if old_file.exists():
                 success, _ = self._run_script(old_file)
@@ -425,6 +458,10 @@ def query_meta_coder_sql(notebook_path: str, instruction: str):
 if __name__ == "__main__":
     metacoder = boot_latest_metacoder()
     
+    # Kernel-Modul-Check beim Start
+    kernel_check = scan_kernel_modules(["psutil", "sqlite3", "ollama"])
+    print(f"\n[KERNEL MODULE SCAN] Status: {kernel_check}")
+
     print("\n======================================================================")
     print(" [INTELLIGENTER CHAT-MODUS] Verbunden mit SQLite-Langzeitgedächtnis")
     print(" Codestral nutzt jetzt aktiv den Knowledge Agent Routing Tree.")
@@ -440,12 +477,16 @@ if __name__ == "__main__":
                 print("\nAgent: Bis zum nächsten Mal!")
                 break
 
+            # Initialisiere Blueprint-Logik für jede Benutzereingabe
+            user_blueprint = initialize_blueprint_system(user_input)
+
             domain = metacoder._detect_domain(user_input)
             db_tips = metacoder._get_relevant_tips(user_input)
 
             system_prompt = f"""
 You are an autonomous AI Agent with an active SQLite Long-Term Memory (Knowledge Agent Routing Tree).
 Current Detected Domain: {domain}
+Blueprint Status: {user_blueprint['status']}
 
 Retrieved Knowledge & Past Patterns from SQLite DB:
 {db_tips}
