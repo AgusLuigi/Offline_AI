@@ -3,156 +3,190 @@ import sys
 import subprocess
 import sqlite3
 import time
-import urllib.request
-import socket
 import gc
 import threading
-import importlib.util
 from datetime import datetime
 from pathlib import Path
 from ollama import Client
 
-# Versuche psutil zu importieren (für den System-Check im Spinner)
-try:
-    import psutil
-    HAS_PSUTIL = True
-except ImportError:
-    HAS_PSUTIL = False
-
-# OLLAMA CHECK & START LOGIK (SEPARAT & IM SILENT-MODUS BEI ERFOLG)
+# Globale Einstellungen
 _OLLAMA_VERIFIED_CACHE = False
-def is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
-    try:
-        with socket.create_connection((host, port), timeout=timeout):
-            return True
-    except (socket.timeout, ConnectionRefusedError, OSError):
-        return False
 
-def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
+# Globale Einstellungen (Variablennamen wie gewünscht beibehalten/angepasst)
+ANKER_DIR = "Offline_AI"
+BASE_DIR = "knowledge"
+SUBFOLDER = "knowledge_agent_hierarchical_routing_tree_sql"
+DB_FILENAME = "knowledge_agent_routing_tree.db"
+OLLAMA_CHECKER_FILENAME = "__ollama_running.py"
+
+class ResourceAwareSpinner:
     """
-    Prüft autonom Ollama (inkl. RAM-Cache), startet den Dienst bei Bedarf 
-    im Hintergrund und bleibt im Erfolgsfall komplett stumm (Silent Mode).
+    Kapselt den visuellen Terminal-Spinner inklusive Live-Ressourcenüberwachung (CPU/RAM).
+    Läuft fehlertolerant im Hintergrund-Thread, ohne den Hauptprozess zu blockieren.
     """
-    global _OLLAMA_VERIFIED_CACHE
+    # Globale Schutz- und Mindesteinstellungen für den Agenten
+    MIN_RAM_MB = 2000          # Mindestens 2 GB RAM-Sicherheitspuffer
+    MAX_CPU_THRESHOLD = 90.0   # Warnschwelle bei CPU-Auslastung
+    SPINNER_INTERVAL = 1.0     # Taktung der Aktualisierung in Sekunden
 
-    if _OLLAMA_VERIFIED_CACHE:
-        return True
+    def __init__(self, agent_name: str = "Codestral-Agent"):
+        self.agent_name = agent_name
+        self.has_psutil = self._check_psutil()
 
-    host_ip = ollama_host.replace("http://", "").replace("https://", "").split(":")[0]
-    port = int(ollama_host.split(":")[-1]) if ":" in ollama_host else 11434
-
-    # 1. Schnelltest über Socket & API
-    if is_port_open(host_ip, port, timeout=1.0):
-        try:
-            req = urllib.request.Request(f"{ollama_host}/api/tags")
-            with urllib.request.urlopen(req, timeout=2) as response:
-                if response.status == 200:
-                    _OLLAMA_VERIFIED_CACHE = True
-                    return True
-        except Exception:
-            pass
-
-    # 2. Automatischer Start im Hintergrund (ohne störendes Konsolenfenster)
-    try:
-        if os.name == 'nt':
-            subprocess.Popen(["ollama", "serve"], creationflags=subprocess.CREATE_NO_WINDOW)
-        else:
-            subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except FileNotFoundError:
-        print("--- [OLLAMA CHECK] Fehler-Protokoll ---")
-        print("--> [FEHLER] Der Befehl 'ollama' wurde im System nicht gefunden.")
-        print("--> Bitte installiere Ollama (https://ollama.com/download).")
-        return False
-    except Exception as sub_err:
-        print("--- [OLLAMA CHECK] Fehler-Protokoll ---")
-        print(f"--> [FEHLER] Konnte den Ollama-Prozess nicht automatisch starten: {sub_err}")
-        return False
-
-    # 3. Warten und verifizieren nach dem Start
-    for attempt in range(1, 4):
-        time.sleep(3)
-        if is_port_open(host_ip, port, timeout=1.0):
-            try:
-                req = urllib.request.Request(f"{ollama_host}/api/tags")
-                with urllib.request.urlopen(req, timeout=2) as response:
-                    if response.status == 200:
-                        _OLLAMA_VERIFIED_CACHE = True
-                        return True
-            except Exception:
-                pass
-
-    print("--- [OLLAMA CHECK] Fehler-Protokoll ---")
-    print("--> [HINWEIS] Ollama ist nach mehreren Versuchen nicht erreichbar.")
-    return False
-
-def _llm_adapt_reserved_cores_from_usage(cpu_usage: float):
-    if cpu_usage > 85:
-        pass
-
-# HILFSFUNKTIONEN FÜR SQL / KERNEL BLUEPRINT LOGIK
-def initialize_blueprint_system(raw_query: str) -> dict:
-    """Initializes the planning core for the raw user query."""
-    cleaned_query = raw_query.strip().lower()
-    return {"status": "initialized", "query": cleaned_query}
-
-def scan_kernel_modules(module_list: list) -> dict:
-    """Scans available Python modules in the kernel."""
-    results = {}
-    for mod in module_list:
-        exists = importlib.util.find_spec(mod) is not None
-        results[mod] = "active" if exists else "inactive"
-    return results
-
-def check_system_resources() -> bool:
-    """Monitors CPU and RAM utilization for resource-efficient operation."""
-    if not HAS_PSUTIL:
-        return True
-    cpu_usage = psutil.cpu_percent(interval=1)
-    return cpu_usage < 80
-
-
-# META-CODEBASE & HIERARCHICAL ROUTING TREE AGENT
-class MetaCodeBase:
     @staticmethod
-    def start_spinner(stop_event, is_de: bool = True):
-        """
-        VISUELLES FEEDBACK [UX-STANDARD]
-        Zeigt einen Spinner während der LLM-Verarbeitung und prüft RAM/CPU.
-        Nutzt die Messung, um die CPU-Reserve selbstständig anzupassen.
-        """
-        def perform_system_check():
-            if not HAS_PSUTIL:
-                return ""
+    def _check_psutil() -> bool:
+        try:
+            import psutil
+            return True
+        except ImportError:
+            return False
 
+    def _get_system_metrics(self) -> str:
+        """Sammelt ressourcenschonend CPU- und RAM-Werte für die Live-Anzeige."""
+        if not self.has_psutil:
+            return ""
+        
+        try:
+            import psutil
             ram_avail = psutil.virtual_memory().available / (1024**3)
             cpu_usage = psutil.cpu_percent(interval=None)
 
-            _llm_adapt_reserved_cores_from_usage(cpu_usage)
-
-            status_msg = ""
-            if ram_avail < 1.5:
+            # Automatisches Aufräumen, falls der RAM unter das Limit fällt
+            if ram_avail < (self.MIN_RAM_MB / 1024):
                 gc.collect()
-                status_msg = f"⚠️ RAM kritisch ({ram_avail:.2f}GB). GC ausgeführt."
-            if cpu_usage > 90:
-                cpu_alert = f" | 🔥 CPU Last hoch ({cpu_usage:.0f}%)."
-                status_msg = status_msg + cpu_alert if status_msg else cpu_alert
-            return status_msg
+                return f"⚠️ RAM kritisch ({ram_avail:.2f}GB) | GC aktiv"
 
-        chars = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏']
-        msg = "Analysiere (Lokale GPU/CPU)..." if is_de else "Analyzing (Local GPU/CPU)..."
+            if cpu_usage > self.MAX_CPU_THRESHOLD:
+                return f"🔥 CPU Last hoch ({cpu_usage:.0f}%)"
+
+            return f"RAM frei: {ram_avail:.1f}GB | CPU: {cpu_usage:.0f}%"
+        except Exception:
+            return ""
+
+    def run(self, stop_event: threading.Event, is_de: bool = True):
+        """
+        Startet die Endlos-Visualisierung im Terminal, bis das `stop_event` gesetzt wird.
+        """
+        chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        base_msg = f"[{self.agent_name}] Arbeitet..." if is_de else f"[{self.agent_name}] Processing..."
         idx = 0
-        while not stop_event.is_set():
-            alert_msg = perform_system_check()
-            sys.stdout.write(f'\r{msg} {chars[idx % len(chars)]} {alert_msg}')
-            sys.stdout.flush()
-            idx += 1
-            time.sleep(1.0)
-        sys.stdout.write('\r' + ' ' * 100 + '\r')
-        sys.stdout.flush()
         
+        try:
+            while not stop_event.is_set():
+                metrics = self._get_system_metrics()
+                metric_str = f" | {metrics}" if metrics else ""
+                
+                output_line = f"\r{base_msg} {chars[idx % len(chars)]}{metric_str}   "
+                sys.stdout.write(output_line)
+                sys.stdout.flush()
+                
+                idx += 1
+                time.sleep(self.SPINNER_INTERVAL)
+        except Exception:
+            pass  # Verhindert jeglichen Crash des Hauptprogramms durch Darstellungsfehler
+        finally:
+            # Zeile nach Beendigung sauber im Terminal bereinigen
+            sys.stdout.write('\r' + ' ' * 100 + '\r')
+            sys.stdout.flush()
+
+# META-CODEBASE & HIERARCHICAL ROUTING TREE AGENT
+class MetaCodeBase:
+    """
+    Ein autonomer Agent, der sich selbst weiterentwickelt, indem er Fehler erkennt, Lösungen
+    in einer SQLite-Datenbank speichert und sich iterativ verbessert.
+    """
+    @staticmethod
+    def get_project_root() -> Path:
+        """
+        Ermittelt den zentralen Ankerpunkt ('Offline_AI') als Basis-Root-Verzeichnis.
+        """
+        try:
+            current_path = Path(os.path.abspath(os.getcwd()))
+            if ANKER_DIR.lower() in [p.lower() for p in current_path.parts]:
+                base_parts = list(current_path.parts)
+                anker_index = [p.lower() for p in base_parts].index(ANKER_DIR.lower())
+                base_root = Path(*base_parts[:anker_index + 1])
+                if current_path.drive and not base_root.drive:
+                    base_root = Path(current_path.drive) / base_root
+                return base_root
+            return current_path
+        except Exception as e:
+            print(f"[KRITISCHER FEHLER] Konnte Ankerpunkt nicht finden: {e}")
+            return Path(os.getcwd())
+
+    @staticmethod
+    def project_find_data(filename: str) -> Path:
+        """
+        Universal-Funktion 1: Sucht den Dateipfad ausgehend vom Ankerpunkt 
+        in allen Unterordnern abwärts.
+        """
+        base_root = MetaCodeBase.get_project_root()
+        for path in base_root.rglob(filename):
+            if path.is_file():
+                return path
+        return None
+
+    @staticmethod
+    def project_create_folder(subfolder: str, filename: str) -> Path:
+        """
+        Universal-Funktion 2: Erstellt gezielt die Ordnerstruktur (BASE_DIR + subfolder),
+        falls diese nicht existiert, und gibt den vollständigen Dateipfad zurück.
+        """
+        try:
+            base_root = MetaCodeBase.get_project_root()
+            target_base_dir = base_root / BASE_DIR
+            if not target_base_dir.exists():
+                print(f"[INFO] Hauptverzeichnis wurde nicht gefunden, erstelle: '{target_base_dir}'")
+                os.makedirs(target_base_dir, exist_ok=True)
+            
+            target_sub_dir = target_base_dir / subfolder
+            if not target_sub_dir.exists():
+                print(f"[INFO] Unterordner wurde nicht gefunden, erstelle: '{target_sub_dir}'")
+                os.makedirs(target_sub_dir, exist_ok=True)
+                
+            file_path = target_sub_dir / filename
+            if not file_path.exists():
+                print(f"[INFO] Datei '{filename}' existiert noch nicht im Zielpfad: '{file_path}'")
+            return file_path
+        except Exception as e:
+            print(f"[KRITISCHER FEHLER] Ordner- und Pfadserstellung fehlgeschlagen: {e}")
+            exit(1)
+
+    @staticmethod
+    def load_optional_ollama_checker() -> bool:
+        """
+        Startet die '__ollama_running.py' Datei, um die Ollama-Umgebung zu prüfen und zu verifizieren.
+        """
+        global _OLLAMA_VERIFIED_CACHE
+        import importlib.machinery, types
+        
+        # Nutzt die universelle Projektsuche statt eines festen Pfads
+        runner_path = MetaCodeBase.project_find_data("__ollama_running.py")
+        
+        if runner_path and runner_path.is_file():
+            try:
+                loader = importlib.machinery.SourceFileLoader("__ollama_running", str(runner_path))
+                mod = types.ModuleType(loader.name)
+                loader.exec_module(mod)
+                
+                # Führt die Prüf- und Start-Logik direkt aus und wertet das Ergebnis aus
+                if hasattr(mod, "check_and_start_ollama"):
+                    success = mod.check_and_start_ollama()
+                    _OLLAMA_VERIFIED_CACHE = success
+                    return success
+                else:
+                    return False
+            except Exception as e:
+                print(f"[FEHLER] Fehler beim Ausführen von '__ollama_running.py': {e}")
+                return False
+        else:
+            print(f"[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
+            return False
+
     def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434"):
-        if not check_and_start_ollama(ollama_host):
-            print("[KRITISCHER ABBRUCH] Ollama konnte nicht verifiziert oder gestartet werden.")
+        global _OLLAMA_VERIFIED_CACHE
+        if not _OLLAMA_VERIFIED_CACHE:
+            print(f"[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
             sys.exit(1)
 
         self.model_name = model_name
@@ -162,82 +196,62 @@ class MetaCodeBase:
             self.client = Client(host=ollama_host)
             self.client.list()
         except Exception as e:
-            print(f"--> [KRITISCHER FEHLER] Verbindung zum Ollama Client fehlgeschlagen: {e}")
+            print(f"--> [KRITISCHER FEHLER] Verbindung zum Ollama Client unter {ollama_host} fehlgeschlagen: {e}")
             sys.exit(1)
         
-        self.db_path = self.initialize_find_folder()
-        self._init_db()
+        # Korrigierter Aufruf der Klassenmethode
+        self.db_path = self.project_create_folder(SUBFOLDER, DB_FILENAME)
+    
+    @staticmethod
+    def scan_kernel_modules(module_list: list) -> dict:
+        """Scans available Python modules in the kernel."""
+        import importlib.util
+        results = {}
+        for mod in module_list:
+            exists = importlib.util.find_spec(mod) is not None
+            results[mod] = "active" if exists else "inactive"
+        return results
 
-    def initialize_find_folder(self) -> Path:
-        ANKER_DIR = "Offline_AI"
-        BASE_DIR = "Knowledge"
-        AGENT_SUBDIR = "knowledge_agent_hierarchical_routing_tree_sql"
-        DB_FILENAME = "knowledge_agent_routing_tree.db"
-
-        print("--- [START] Prüfe Ordnerstruktur für den Knowledge Agent ---")
-
-        current_path = os.path.abspath(os.getcwd())
-        print(f"--> [INFO] Start-Pfad: {current_path}")
+    @staticmethod
+    def initialize_blueprint_system(raw_query: str) -> dict:
+        """Initializes the planning core for the raw user query and checks SQL table context."""
+        cleaned_query = raw_query.strip().lower()
         
-        if ANKER_DIR.lower() in current_path.lower():
-            base_parts = current_path.split(os.sep)
-            anker_index = [p.lower() for p in base_parts].index(ANKER_DIR.lower())
-            base_root = os.sep.join(base_parts[:anker_index + 1])
-        else:
-            base_root = current_path
+        # Qualitätsprüfung / SQL-Integration der Mikroverhalten
+        blueprint = {
+            "status": "initialized",
+            "query": cleaned_query,
+            "micro_steps": MetaCodeBase._fetch_micro_behaviors_from_db(cleaned_query)
+        }
+        return blueprint
 
-        print(f"--> [ERFOLG] Projekt-Root '{ANKER_DIR}' identifiziert unter: {base_root}")
-
-        target_knowledge_dir = os.path.join(base_root, BASE_DIR)
-        print(f"Suche nach Hauptverzeichnis: '{target_knowledge_dir}'...")
-        if not os.path.exists(target_knowledge_dir):
-            os.makedirs(target_knowledge_dir)
-            print(f"--> [ERFOLG] Hauptverzeichnis '{target_knowledge_dir}' wurde neu erstellt.")
-        else:
-            print(f"--> [INFO] Hauptverzeichnis '{target_knowledge_dir}' wurde gefunden.")
-
-        target_directory = os.path.join(target_knowledge_dir, AGENT_SUBDIR)
-        print(f"Suche nach Unterordner: '{target_directory}'...")
-        
-        if not os.path.exists(target_directory):
-            os.makedirs(target_directory)
-            print(f"--> [ERFOLG] Unterordner '{AGENT_SUBDIR}' wurde neu erstellt.")
-        else:
-            print(f"--> [INFO] Unterordner '{AGENT_SUBDIR}' existiert bereits.")
-
-        db_path = Path(target_directory) / DB_FILENAME
-        print(f"Pfad-Zusammenführung abgeschlossen. Zieldatei: '{db_path}'")
-        print("--- [ENDE] Ordnerstruktur erfolgreich geprüft ---\n")
-        
-        return db_path
-
-    def _init_db(self):
-        domains = ["script_errors", "jupyter_errors", "data_io_errors", "scope_global_errors", "routing_tree_errors"]
-        
-        with sqlite3.connect(self.db_path) as conn:
-            for domain in domains:
-                conn.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {domain} (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        error_signature TEXT UNIQUE,
-                        context_combination TEXT,
-                        solution_code TEXT,
-                        success_score INTEGER DEFAULT 1,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
+    @staticmethod
+    def _fetch_micro_behaviors_from_db(query: str) -> list:
+        """Liest passende Mikroverhalten aus der SQLite-Datenbank für den Routing Tree."""
+        import sqlite3
+        steps = []
+        try:
+            # Verbindung zur lokalen SQLite-Datenbank (Pfad entsprechend anpassen falls nötig)
+            conn = sqlite3.connect("meta_coder.db") # oder dein spezifischer DB-Pfad
+            cursor = conn.cursor()
             
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS core_directives (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    capability_name TEXT UNIQUE,
-                    code_snippet TEXT,
-                    description TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            conn.commit()
-
+            # Beispiel-Abfrage an die SQLite-Tabelle für Mikroschritte
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_micro_behaviors';")
+            table_exists = cursor.fetchone()
+            
+            if table_exists:
+                cursor.execute("SELECT behavior_code FROM agent_micro_behaviors")
+                rows = cursor.fetchall()
+                steps = [row[0] for row in rows]
+            else:
+                steps = ["default_analysis_step", "default_execution_step"]
+                
+            conn.close()
+        except Exception as e:
+            steps = [f"sql_error_fallback: {str(e)}"]
+            
+        return steps
+    
     def persist_new_capability(self, capability_name: str, code_snippet: str, description: str):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -248,7 +262,6 @@ class MetaCodeBase:
                     description = excluded.description
             """, (capability_name, code_snippet, description))
             conn.commit()
-            
         print(f"\n[PERSISTENZ-ERFOLG] Fähigkeit '{capability_name}' wurde dauerhaft in SQLite verewigt!")
 
     def _detect_domain(self, text_context: str) -> str:
@@ -268,13 +281,10 @@ class MetaCodeBase:
         domain = self._detect_domain(task_description)
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            
             cursor.execute(f"SELECT error_signature, solution_code FROM {domain} ORDER BY success_score DESC LIMIT 3")
             rows = cursor.fetchall()
-            
             cursor.execute("SELECT capability_name, description FROM core_directives LIMIT 5")
             directives = cursor.fetchall()
-
             try:
                 cursor.execute("SELECT execution_phase, agent_instruction FROM pre_execution_blueprint_generator WHERE is_active = 1 LIMIT 5")
                 blueprints = cursor.fetchall()
@@ -284,30 +294,24 @@ class MetaCodeBase:
         tips = ["=================================================="]
         tips.append(" [SYSTEM CORE MEMORY: SQL-DATABASE DEEP KNOWLEDGE]")
         tips.append("==================================================")
-        
         tips.append(f"\n--- Relevant Past Solutions from [{domain}] ---")
         for err, sol in rows:
             tips.append(f"- Bug: [{err}] -> Fix Code Pattern: {sol}")
-            
         if directives:
             tips.append("\n--- Active Core Directives & Capabilities ---")
             for cap, desc in directives:
                 tips.append(f"- Capability: [{cap}] -> {desc}")
-
         if blueprints:
             tips.append("\n--- Mandatory Pre-Execution Blueprints ---")
             for phase, instruction in blueprints:
                 tips.append(f"- Phase [{phase}]: {instruction}")
-
         if len(tips) <= 3:
             return f"No prior errors recorded in domain [{domain}]."
-
         return "\n".join(tips)
 
     def _save_solution_to_db(self, task_description: str, error_msg: str, solution_code: str):
         domain = self._detect_domain(task_description)
         error_signature = error_msg.strip().split('\n')[-1]
-        
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(f"""
                 INSERT INTO {domain} (error_signature, context_combination, solution_code, success_score)
@@ -323,9 +327,7 @@ class MetaCodeBase:
         history_dir = Path("src/agent/metacoder_history")
         history_dir.mkdir(parents=True, exist_ok=True)
         new_filename = history_dir / f"MetaCodeBase_{timestamp}.py"
-        
         tips_text = self._get_relevant_tips(task_context)
-
         prompt = f"""
 You are an expert Autonomous Meta-Architect AI. You are improving your own source code to fix a recurring bug.
 
@@ -339,8 +341,9 @@ Task:
 Rewrite and improve this Python class (MetaCodeBase) so that it proactively checks for and prevents the above error. 
 Return the COMPLETE, executable Python code for the new MetaCodeBase script inside markdown code blocks (```python ... ```).
 """
+        spinner = ResourceAwareSpinner(agent_name="MetaCoder-Evolution")
         stop_event = threading.Event()
-        spinner_thread = threading.Thread(target=self.start_spinner, args=(stop_event, True))
+        spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
         spinner_thread.start()
         try:
             response = self.client.generate(model=self.model_name, prompt=prompt)
@@ -355,39 +358,69 @@ Return the COMPLETE, executable Python code for the new MetaCodeBase script insi
         return new_filename
 
     def test_and_evolve_loop(self, specialization: str, task_description: str, base_filename: str, max_generations: int = 3):
-        # 1. Systemressourcen und Blueprint-Initialisierung vorab ausführen
-        if not check_system_resources():
-            print("--> [WARNUNG] Hohe CPU-Auslastung vor dem Start erkannt!")
-        
-        blueprint = initialize_blueprint_system(task_description)
-        print(f"--> [BLUEPRINT STATUS] {blueprint['status']} für Query: {blueprint['query']}")
+        try:
+            import psutil
+            if psutil.cpu_percent(interval=None) > 90.0:
+                print("--> [WARNUNG] Hohe CPU-Auslastung vor dem Start erkannt!")
+        except ImportError:
+            pass
+
+        db_steps = []
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT step_order, micro_behavior, status 
+                    FROM agent_micro_behaviors 
+                    WHERE task_context = ? AND status != 'COMPLETED'
+                    ORDER BY step_order ASC
+                """, (task_description[:50],))
+                db_steps = cursor.fetchall()
+        except sqlite3.OperationalError:
+            db_steps = []
+
+        if db_steps:
+            print(f"--> [SQL-KNOWLEDGE] {len(db_steps)} offene Mikroverhalten/Schritte aus SQLite geladen:")
+            for order, behavior, status in db_steps:
+                print(f"    • Schritt [{order}]: {behavior} (Status: {status})")
+        else:
+            print("--> [SQL-KNOWLEDGE] Keine spezifischen Schritte gefunden. Nutze allgemeine DB-Tips als Wissensbasis.")
 
         target_dir = Path("src/agent")
         target_dir.mkdir(parents=True, exist_ok=True)
         current_error = None
         generated_files = []
-        print(f"\n[AGENT-LOOP] Starte Generierungs- und Test-Zyklus für: {base_filename}")
+        print(f"\n[AGENT-LOOP] Starte ressourcensparenden Generierungs- und Test-Zyklus für: {base_filename}")
         
         for gen in range(1, max_generations + 1):
-            print(f"--> [GEN {gen}/{max_generations}] Generiere Arbeiter-Agent...")
+            print(f"--> [GEN {gen}/{max_generations}] Generiere Arbeiter-Agent mit SQLite-Mikroverhalten...")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M")
             versioned_filename = f"{Path(base_filename).stem}_{timestamp}.py"
             filepath = target_dir / versioned_filename
-            db_tips = self._get_relevant_tips(task_description)
+            
+            if db_steps:
+                behavior_sequence = "\n".join([f"Step {order}: {behavior} [Status: {status}]" for order, behavior, status in db_steps])
+            else:
+                behavior_sequence = self._get_relevant_tips(task_description)
             
             prompt = f"""
-You are an expert Autonomous Python Architect. Write a complete, standalone Python script for an agent 
-integrated into a Hierarchical Routing Tree using SQLite.
+You are an expert Autonomous Python Architect. Write a complete, standalone Python script for a lightweight worker agent.
+The agent must execute its logic strictly step-by-step based on the dynamic SQLite Knowledge sequence provided below.
+
 Specialization: {specialization}
 Task Description: {task_description}
-Known Rules & Lessons from SQLite Knowledge Database (Follow strictly!):
-{db_tips}
+
+Dynamic SQLite Micro-Behavior Sequence (Execute strictly line by line, ensure state persistence):
+{behavior_sequence}
+
 Mandatory Rules:
 1. Return ONLY valid Python code inside standard markdown code blocks (```python ... ```).
-2. The script must be fully self-contained and runnable via `python`.
+2. The script must be fully self-contained, lightweight, resource-efficient, and runnable via `python`.
+3. Every single execution step must report its progress and log its state back to the SQLite database to remain crash-safe.
 """
+            spinner = ResourceAwareSpinner(agent_name=f"Worker-Gen-{gen}")
             stop_event = threading.Event()
-            spinner_thread = threading.Thread(target=self.start_spinner, args=(stop_event, True))
+            spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
             spinner_thread.start()
             try:
                 response = self.client.generate(model=self.model_name, prompt=prompt)
@@ -399,15 +432,17 @@ Mandatory Rules:
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(code)
             generated_files.append(filepath)
+            
             print(f"--> [TEST] Führe Arbeiter-Agent aus: {filepath.name}...")
             success, output = self._run_script(filepath)
+            
             if success:
-                print(f"--> [ERFOLG] Arbeiter-Agent lief fehlerfrei durch!")
+                print(f"--> [ERFOLG] Arbeiter-Agent hat alle Mikroschritte fehlerfrei abgearbeitet!")
                 return filepath
             else:
-                print(f"--> [FEHLER GEFANGEN] Agent ist gestolpert. Speichere Signatur in SQLite-DB.")
+                print(f"--> [FEHLER GEFANGEN] Agent ist in einem Mikroschritt gestolpert. Speichere Signatur in SQLite-DB.")
                 current_error = output
-                sample_fix = f"try-except block added for routing/sql context: {task_description[:30]}"
+                sample_fix = f"Resilient step-by-step error handling added for: {task_description[:30]}"
                 self._save_solution_to_db(task_description, current_error, sample_fix)
                 self.evolve_self(recent_error=current_error, task_context=task_description)
                 
@@ -456,10 +491,18 @@ def query_meta_coder_sql(notebook_path: str, instruction: str):
     )
 
 if __name__ == "__main__":
+    # 1. Ordnerstruktur und Datenbankpfad ermitteln (gibt nur bei echten Fehlern Prints aus)
+    database_path = MetaCodeBase.project_create_folder(SUBFOLDER, DB_FILENAME)
+    
+    # 2. Optionalen Ollama-Checker ausführen (gibt nur im Fehlerfall Meldungen aus)
+    if not MetaCodeBase.load_optional_ollama_checker():
+        exit(1)
+
+    # 3. Metacoder booten und Start-Routine durchführen
     metacoder = boot_latest_metacoder()
     
     # Kernel-Modul-Check beim Start
-    kernel_check = scan_kernel_modules(["psutil", "sqlite3", "ollama"])
+    kernel_check = MetaCodeBase.scan_kernel_modules(["psutil", "sqlite3", "ollama"])
     print(f"\n[KERNEL MODULE SCAN] Status: {kernel_check}")
 
     print("\n======================================================================")
@@ -478,7 +521,7 @@ if __name__ == "__main__":
                 break
 
             # Initialisiere Blueprint-Logik für jede Benutzereingabe
-            user_blueprint = initialize_blueprint_system(user_input)
+            user_blueprint = MetaCodeBase.initialize_blueprint_system(user_input)
 
             domain = metacoder._detect_domain(user_input)
             db_tips = metacoder._get_relevant_tips(user_input)
@@ -494,10 +537,10 @@ Retrieved Knowledge & Past Patterns from SQLite DB:
 Your Task: Answer the user's request in German, keeping any code or technical keywords strictly in English. 
 Acknowledge and make use of the SQLite database context if relevant.
 """
-
-            # Spinner im Hintergrund während der Ollama-Chat-Anfrage starten
+            # Korrekte Instanziierung des ResourceAwareSpinners im Hintergrund
+            spinner = ResourceAwareSpinner(agent_name="Codestral-Chat")
             stop_event = threading.Event()
-            spinner_thread = threading.Thread(target=metacoder.start_spinner, args=(stop_event, True))
+            spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
             spinner_thread.start()
 
             try:
