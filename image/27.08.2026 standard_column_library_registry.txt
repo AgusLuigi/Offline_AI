@@ -1,0 +1,33 @@
+[ TABELLEN-NAME: standard_column_library_registry ]
+       │
+       ▼
+[1] node_id
+       │ ( ➔ )
+       ▼
+[2] is_active
+       │ ( ➔ )
+       ▼
+[3] error_fallback_count ────────► [ NEU: Zählt die Fallback-Versuche (max. 5) ]
+       │ ( ➔ )
+       ▼
+[4] "year" | "month" | "day" | "hour" | "minute" | "second"
+       │ ( ➔ )
+       ▼
+[5] "topic_title"
+       │ ( ➔ )
+       ▼
+[6] topic_specification
+       │ ( ➔ )
+       ▼
+[7] agent_instruction 
+    example_code_snippet 
+    validation_rule
+       │ ( ➔ )
+       ▼
+[8] execution_count 
+    success_weight
+       │ ( ➔ )
+       ▼
+[9] target_table 
+     target_column_id 
+     target_node_id

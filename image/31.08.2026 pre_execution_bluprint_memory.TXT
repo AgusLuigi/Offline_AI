@@ -1,0 +1,128 @@
+========================================================================================================================
+ TABELLE 2: User Query usre_query      | TABELLE 1: Pre_Execution_Blueprint_generator        | TABELLE 3: Agent Execution Memory  = time_stamp
+========================================================================================================================
+ Tabelle user_query <───────────────────────────── [benutzer anfrage Ablegen]                | [AGENT EXECUTION MEMORY (DYNAMIC LOG)]
+        │                              |						     | (Event Sourcing Ledger) - Status: PENDING / SUCCESS / FAILED
+        │                              |                                                     | - Initialer Zeitstempel als tabellen name von tabelle user_query mitgenommen (YYYYMMDD_HHMMSS)
+        ▼                              |                                                     |   als Name für neue, isolierte Log-Tabelle
+ [node_id einlegen]                    |                                                     | - Speichert Events als unveränderliche Einträge:
+        │                              |                                                     |   * PENDING / SUCCESS / FAILED
+        ▼                              |                                                     | - Dient als isolierter Audit-Trail & 
+				       |						     |  Idempotenz-Basis nach Stromausfall
+[is_aktive = 1 Check]                  |                                                     |
+ (Wenn nicht abgearbeitet,             |                                                     |
+  damit Ablauf fortgesetzt             |                                                     |
+  werden kann bei Stromausfall)	       |                                                     |
+        │                              |                                                     |
+        ▼                              |                                                     |
+ [Loop_Guard_Depth_Check]              |                                                     |
+ (z.B. Max 5)                          |                                                     |
+        │                              |                                                     |
+        ▼                              |                                                     |
+[Zeitstempel = YYYYMMDD_HHMMSS]	       |						     |  
+in den Spalten = "year"		       |						     |
+        	"month"		       |						     |
+        	"day"		       |						     |
+        	"hour"		       |						     |
+        	"minute"	       |						     |
+        	"second"	       |						     |
+        │                              |                                                     |
+        ▼                              |                                                     |
+[raw_user_query / Genauer Text]        |                                                     |
+        │                              |                                                     |
+        └───────────────────────────────────────────────┐                                    |
+ 				       |	[Resource Vad Management & Monitoring]	     |
+ 				       |     	KERNEL SCAN AND REGISTRY UPDATE		     |
+ 				       |in Kernel_tool tabelle das nach 24h erneuert wird    |	        
+ 				       |	        │                              	     |
+ 				       |	        ▼                                    |
+ 				       |	[Clarification & Multiple Choice Dialog]     |
+ 				       |	(Prüfung auf Eindeutigkeit)                  |
+ 				       |	RESOURCE AND PERFORMANCE MONITORING	     |
+ 				       |	hardware_enviroment			     |
+ 				       |	        │                                    |
+ 				       |	        ▼                                    |
+ 				       |	[Optimierter User-Text erzeugen]	     |
+		                       |        	│                                    |
+                                       |        	▼                                    |
+                                       |[Evaluation: Reicht die Qualität der Anfrage?]       |
+                                       |        │                                            |
+                                       |        ├── [NEIN: Unklar / Mehr Info nötig]         |
+                                       |        │     │                                      |
+                                       |        │     ▼                                      |
+                                       |        │  [Rückfrage an Benutzer / Beispiele geben] |
+                                       |        │     │                                      |
+                                       |        │     ▼                                      |
+                                       |        | [Merge: Erste Anfrage + Antwort validieren]|
+                                       |        │     │                                      |
+                                       |        │     └──────────────────┐                   |
+                                       |        │                        │                   |
+                                       |        └── [JA: Ausreichend] ◄──┘                   |
+                                       |        │                                            |
+                                       |        ▼                                            |
+                                       |    [Finaler Optimized User Text fixiert & abgelegt] |
+                                       |        │                                            |
+                                       |        ├──────────────────────────────────────────────►  informiere Benutzer = gebe meldung ich werd deine Frage bezuglich {optimized_user_query}...!  
+                                       |        │                                            |
+        ┌───────────────────────────────────────┘    			                     |
+        │                              |     						     |
+(optimized_user_query)                 |  						     |
+        │                              |                                                     |
+        ├── [Nein] ────────────────────┼──────────────────────────────────────────────────┐  |
+        │                              |                                                  ▼  |
+        │                              |                                     [Zeitstempel = YYYYMMDD_HHMMSS]
+        │                              |                                                  │  |
+        │                              |                                                  ▼  |
+        │                              |                               [Wissen in Local DB? (Agent Knowledge Graph)]
+        │                              |                                                  │  |
+        │                              |                                                  ▼  |
+        │                              |					 [Planung Mikroschritte]
+        │                              |                                                  │  |
+        │                              |                                                  ▼  |
+	│			       |				   [Clarification / Multiple Choice]
+        │                              |                                                  │  |
+        │                              |                                                  ▼  |
+        │                              |                                     		     ├── [JA] ──► [Lade & Überspringe Internet Recherche]
+        │                              |                                     		     └── [NEIN] ─► [Internet verfügbar?]
+        │                              |                                     					   │
+        │                              |                                                        		   ▼
+        │                              |                                            ┌──────────────────────────────┴───────────────┐
+        │                              |                                            ▼                         			   ▼
+        │                              |                                     [INTERNET VORHANDEN]     			[KEIN INTERNET]
+        │                              |                                            │                         			   │
+        │                              |                                            ▼                         			   ▼
+        │                              |                                     [BEST PRACTICE SKELETON] 			[GENERIEREN KONTROLLIERTER]
+        │                              |                                     [INTEGRATION]            			[FEHLERMELDUNG (Offline)]
+        │                              |                                            │                 			(inkl. Retardierungs-Meldung 
+        │                              |                                            │                  			an User / "gebe meldung offline work!")
+        │                              |                                            ▼                         			   │
+        │                              |                                     [RECHERCHIERTE DATEN ANALYSIEREN]			   │
+        │                              |                                            │                         			   │
+        │                              |                                            ▼                         			   │
+        │                              |                                     [Schema-Update im Haupt-Index nötig?]◄────────────────┘   
+        │                              |                                     ├── [JA] ──► [Erstelle NEUE Tabelle & Füge Daten ein]
+        │                              |                                     │            [Füge Daten in bestehende Tabelle ein]   
+        │                              |                                     │            [Aktualisiert Haupt-Index]
+        │                              |                                     └── [NEIN] ─► [Füge Daten in bestehende Tabelle ein]
+        │                              |                                                  [Aktualisiert Haupt-Index]
+        │                              |                                            │
+        │                              |                                            ▼
+        │                              |                                     [Resilient Background Execution & Checkpoints]
+        │                              |                                            │
+        │                              |                                            ▼
+        │                              |                                     [JARVIS PRESENCE AND ERROR FX]
+        │                              |                                            │
+        │                              |                                            ▼
+        │                              |                                     [Post-Execution Reflection]
+ 	├─────► [agent_response]◄──────────────────────────────────────────────────┘│ 
+        │                              |                                            ▼
+        │                              |                                     [Ende: Anfrage bearbeitet]
+        │                              |                                            	    │
+        │                              |                                            	    │
+        └──►[Yes] ─────────────────────┼──────────────────────────────────┐         	    │
+                                       ▼                                  ▼         	    │
+                       [ZZZ / NOTFALL-INDEX (EX_CHAIN)]    [RESTART & IDEMPOTENCY CHECK]    │
+                               SCHLEIFENSCHUTZ             (Read Event History)             │
+                                       │                                  │         	    │
+                                       └──────────────────────────────────┴─────────────────┴────────────────────────────────────────► [usre_query spalte is_aktive auf 0 setzen]
+========================================================================================================================
