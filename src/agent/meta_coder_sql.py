@@ -232,7 +232,7 @@ class MetaCodeBase:
         steps = []
         try:
             # Verbindung zur lokalen SQLite-Datenbank (Pfad entsprechend anpassen falls nötig)
-            conn = sqlite3.connect("meta_coder.db") # oder dein spezifischer DB-Pfad
+            conn = sqlite3.connect(DB_FILENAME) # oder dein spezifischer DB-Pfad
             cursor = conn.cursor()
             
             # Beispiel-Abfrage an die SQLite-Tabelle für Mikroschritte
@@ -584,7 +584,7 @@ Acknowledge and make use of the SQLite database context if relevant.
 # Variante 1: Auslösung über das Terminal (Konsole)
 #
 # A) Interaktiver Modus (fragt nach Pfad & Aufgabe):
-#    python src/agent/meta_coder_sql.py
+#    hallo
 #
 # B) Direkt als Einzeiler mit Parametern:
 #    python src/agent/meta_coder_sql.py notebooks/dein_notebook.ipynb "Deine Aufgabe hier"
