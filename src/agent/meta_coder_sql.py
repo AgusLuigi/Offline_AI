@@ -14,9 +14,9 @@ _OLLAMA_VERIFIED_CACHE = False
 
 # Globale Einstellungen (Variablennamen wie gewünscht beibehalten/angepasst)
 ANKER_DIR = "Offline_AI"
-BASE_DIR = "knowledge"
-SUBFOLDER = "knowledge_agent_hierarchical_routing_tree_sql"
-DB_FILENAME = "knowledge_agent_routing_tree.db"
+BASE_DIR = "Knowledge"
+SUBFOLDER = "Knowledge_Agent_Hierarchical_Routing_Tree_SQL"
+DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
 OLLAMA_CHECKER_FILENAME = "__ollama_running.py"
 
 class ResourceAwareSpinner:
@@ -101,6 +101,13 @@ class MetaCodeBase:
         Ermittelt den zentralen Ankerpunkt ('Offline_AI') als Basis-Root-Verzeichnis.
         """
         try:
+            # 1. Ausgehend von dieser Datei nach oben suchen
+            file_path = Path(__file__).resolve()
+            for parent in [file_path] + list(file_path.parents):
+                if parent.name.lower() == ANKER_DIR.lower():
+                    return parent
+
+            # 2. Ausgehend vom aktuellen Arbeitsverzeichnis suchen
             current_path = Path(os.path.abspath(os.getcwd()))
             if ANKER_DIR.lower() in [p.lower() for p in current_path.parts]:
                 base_parts = list(current_path.parts)
@@ -118,39 +125,77 @@ class MetaCodeBase:
     def project_find_data(filename: str) -> Path:
         """
         Universal-Funktion 1: Sucht den Dateipfad ausgehend vom Ankerpunkt 
-        in allen Unterordnern abwärts.
+        in allen Unterordnern abwärts (case-insensitive).
         """
         base_root = MetaCodeBase.get_project_root()
-        for path in base_root.rglob(filename):
-            if path.is_file():
+        fn_lower = filename.lower()
+        for path in base_root.rglob("*"):
+            if path.is_file() and path.name.lower() == fn_lower:
                 return path
         return None
 
     @staticmethod
+    def get_database_path() -> Path:
+        """
+        Gibt ausschließlich den Pfad zur existierenden SQLite-Datenbank Knowledge_Agent_Routing_tree.db zurück.
+        Erstellt unter keinen Umständen eine neue oder leere Datenbank.
+        """
+        base_root = MetaCodeBase.get_project_root()
+
+        # 1. Direkter Pfad (auch bei Case-Variationen auf verschiedenen Systemen)
+        candidate = base_root / BASE_DIR / SUBFOLDER / DB_FILENAME
+        if candidate.is_file():
+            return candidate
+
+        # 2. Case-insensitive Suche in Knowledge-Ordnern
+        for k_name in ["Knowledge", "knowledge"]:
+            k_dir = base_root / k_name
+            if k_dir.is_dir():
+                for p in k_dir.rglob("*.db"):
+                    if p.name.lower() == DB_FILENAME.lower():
+                        return p
+
+        # 3. Projektweite Suche als Fallback
+        found = MetaCodeBase.project_find_data(DB_FILENAME)
+        if found and found.is_file():
+            return found
+
+        raise FileNotFoundError(
+            f"[KRITISCHER FEHLER] Die existierende SQLite-Datenbank '{DB_FILENAME}' wurde unter dem Pfad "
+            f"'{candidate}' nicht gefunden! Es darf keine neue Datenbank erstellt werden."
+        )
+
+    @staticmethod
+    def get_db_connection() -> sqlite3.Connection:
+        """
+        Öffnet eine schreib-/lesbare Verbindung zur existierenden Datenbank.
+        Verhindert durch vorherige Existenzprüfung und mode=rw, dass SQLite eine neue Datei erstellt.
+        """
+        db_path = MetaCodeBase.get_database_path()
+        if not db_path.is_file():
+            raise FileNotFoundError(f"[KRITISCHER FEHLER] Datenbankdatei existiert nicht: {db_path}")
+
+        posix_path = db_path.resolve().as_posix()
+        uri_path = f"file:///{posix_path}?mode=rw" if posix_path.startswith("/") else f"file:{posix_path}?mode=rw"
+        try:
+            conn = sqlite3.connect(uri_path, uri=True)
+        except sqlite3.OperationalError:
+            conn = sqlite3.connect(str(db_path))
+        return conn
+
+    @staticmethod
     def project_create_folder(subfolder: str, filename: str) -> Path:
         """
-        Universal-Funktion 2: Erstellt gezielt die Ordnerstruktur (BASE_DIR + subfolder),
-        falls diese nicht existiert, und gibt den vollständigen Dateipfad zurück.
+        Gibt den Pfad zu einer Datei zurück. Falls es sich um die Datenbank handelt,
+        wird strikt die existierende Datenbank Knowledge_Agent_Routing_tree.db zurückgegeben.
         """
-        try:
-            base_root = MetaCodeBase.get_project_root()
-            target_base_dir = base_root / BASE_DIR
-            if not target_base_dir.exists():
-                print(f"[INFO] Hauptverzeichnis wurde nicht gefunden, erstelle: '{target_base_dir}'")
-                os.makedirs(target_base_dir, exist_ok=True)
-            
-            target_sub_dir = target_base_dir / subfolder
-            if not target_sub_dir.exists():
-                print(f"[INFO] Unterordner wurde nicht gefunden, erstelle: '{target_sub_dir}'")
-                os.makedirs(target_sub_dir, exist_ok=True)
-                
-            file_path = target_sub_dir / filename
-            if not file_path.exists():
-                print(f"[INFO] Datei '{filename}' existiert noch nicht im Zielpfad: '{file_path}'")
-            return file_path
-        except Exception as e:
-            print(f"[KRITISCHER FEHLER] Ordner- und Pfadserstellung fehlgeschlagen: {e}")
-            exit(1)
+        if filename.lower() == DB_FILENAME.lower():
+            return MetaCodeBase.get_database_path()
+
+        base_root = MetaCodeBase.get_project_root()
+        target_dir = base_root / BASE_DIR / subfolder
+        target_dir.mkdir(parents=True, exist_ok=True)
+        return target_dir / filename
 
     @staticmethod
     def load_optional_ollama_checker() -> bool:
@@ -199,8 +244,9 @@ class MetaCodeBase:
             print(f"--> [KRITISCHER FEHLER] Verbindung zum Ollama Client unter {ollama_host} fehlgeschlagen: {e}")
             sys.exit(1)
         
-        # Korrigierter Aufruf der Klassenmethode
-        self.db_path = self.project_create_folder(SUBFOLDER, DB_FILENAME)
+        # Sicherstellen, dass ausschließlich die existierende Routing-Tree-Datenbank verwendet wird
+        self.db_path = self.get_database_path()
+        print(f"[INFO] Verbunden mit existierender SQLite-Datenbank: '{self.db_path}'")
     
     @staticmethod
     def scan_kernel_modules(module_list: list) -> dict:
@@ -227,100 +273,203 @@ class MetaCodeBase:
 
     @staticmethod
     def _fetch_micro_behaviors_from_db(query: str) -> list:
-        """Liest passende Mikroverhalten aus der SQLite-Datenbank für den Routing Tree."""
-        import sqlite3
+        """
+        Liest aktive Blueprint-Schritte aus der existierenden Tabelle
+        'pre_execution_blueprint_generator' der Knowledge_Agent_Routing_tree.db.
+        """
         steps = []
         try:
-            # Verbindung zur lokalen SQLite-Datenbank (Pfad entsprechend anpassen falls nötig)
-            conn = sqlite3.connect(DB_FILENAME) # oder dein spezifischer DB-Pfad
-            cursor = conn.cursor()
-            
-            # Beispiel-Abfrage an die SQLite-Tabelle für Mikroschritte
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_micro_behaviors';")
-            table_exists = cursor.fetchone()
-            
-            if table_exists:
-                cursor.execute("SELECT behavior_code FROM agent_micro_behaviors")
+            with MetaCodeBase.get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT node_id, topic_title, agent_instruction 
+                    FROM pre_execution_blueprint_generator 
+                    WHERE is_active = 1 
+                    ORDER BY node_id ASC
+                """)
                 rows = cursor.fetchall()
-                steps = [row[0] for row in rows]
-            else:
-                steps = ["default_analysis_step", "default_execution_step"]
-                
-            conn.close()
+                for node_id, title, instruction in rows:
+                    steps.append(f"[{node_id}] {title}: {instruction}")
         except Exception as e:
             steps = [f"sql_error_fallback: {str(e)}"]
             
         return steps
     
+    @staticmethod
+    def _insert_routing_node(
+        conn: sqlite3.Connection,
+        table_name: str,
+        node_id: str,
+        topic_title: str,
+        topic_specification: str,
+        agent_instruction: str,
+        example_code_snippet: str = "",
+        validation_rule: str = "validated",
+        target_table: str = "",
+        target_column_id: str = "node_id",
+        target_node_id: str = ""
+    ):
+        """
+        Fügt einen Knoten konform zum Standard-Schema des Knowledge Agent Routing Trees ein.
+        """
+        now = datetime.now()
+        conn.execute(f"""
+            INSERT INTO {table_name} (
+                node_id, is_active, error_fallback_count,
+                year, month, day, hour, minute, second,
+                topic_title, topic_specification, agent_instruction,
+                example_code_snippet, validation_rule, execution_count,
+                success_weight, target_table, target_column_id, target_node_id
+            ) VALUES (?, 1, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1.0, ?, ?, ?)
+            ON CONFLICT(node_id) DO UPDATE SET
+                topic_title = excluded.topic_title,
+                topic_specification = excluded.topic_specification,
+                agent_instruction = excluded.agent_instruction,
+                example_code_snippet = excluded.example_code_snippet,
+                execution_count = execution_count + 1
+        """, (
+            node_id,
+            now.year, now.month, now.day, now.hour, now.minute, now.second,
+            topic_title, topic_specification, agent_instruction,
+            example_code_snippet, validation_rule,
+            target_table, target_column_id, target_node_id
+        ))
+        conn.commit()
+
     def persist_new_capability(self, capability_name: str, code_snippet: str, description: str):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                INSERT INTO core_directives (capability_name, code_snippet, description)
-                VALUES (?, ?, ?)
-                ON CONFLICT(capability_name) DO UPDATE SET 
-                    code_snippet = excluded.code_snippet,
-                    description = excluded.description
-            """, (capability_name, code_snippet, description))
-            conn.commit()
-        print(f"\n[PERSISTENZ-ERFOLG] Fähigkeit '{capability_name}' wurde dauerhaft in SQLite verewigt!")
+        """
+        Persistiert eine neue Fähigkeit dauerhaft in der 'library_registry' Tabelle des Routing Trees.
+        """
+        node_id = f"CAP_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        with self.get_db_connection() as conn:
+            self._insert_routing_node(
+                conn=conn,
+                table_name="library_registry",
+                node_id=node_id,
+                topic_title=capability_name,
+                topic_specification=description,
+                agent_instruction=f"EXECUTE_CAPABILITY: {capability_name}",
+                example_code_snippet=code_snippet,
+                validation_rule="capability_persisted == TRUE"
+            )
+        print(f"\n[PERSISTENZ-ERFOLG] Fähigkeit '{capability_name}' wurde dauerhaft in SQLite ('library_registry') verewigt!")
 
     def _detect_domain(self, text_context: str) -> str:
+        """
+        Ermittelt anhand von Schlüsselwörtern, in welcher Tabelle des Routing Trees
+        gesucht oder referenziert werden soll.
+        """
         text_lower = text_context.lower()
-        if "jupyter" in text_lower or "notebook" in text_lower or ".ipynb" in text_lower:
-            return "jupyter_errors"
-        elif "json" in text_lower or "csv" in text_lower or "file" in text_lower or "data" in text_lower or "io" in text_lower:
-            return "data_io_errors"
-        elif "global" in text_lower or "scope" in text_lower or "import" in text_lower or "variable" in text_lower:
-            return "scope_global_errors"
-        elif "route" in text_lower or "tree" in text_lower or "sql" in text_lower or "hierarchy" in text_lower:
-            return "routing_tree_errors"
+        if any(k in text_lower for k in ["repair", "fix", "notfall", "error", "fehler", "crash", "fx_chain", "kette"]):
+            return "meta_admin_repair_registry"
+        elif any(k in text_lower for k in ["admin", "taboo", "bootstrap", "security", "protect", "schutz"]):
+            return "meta_admin_bootstrap_registry"
+        elif any(k in text_lower for k in ["resource", "hardware", "cpu", "ram", "psutil", "speicher", "leistung"]):
+            return "system_resources"
+        elif any(k in text_lower for k in ["tool", "toolkit", "api", "scan", "module", "kernel"]):
+            return "toolkit_library_registry"
+        elif any(k in text_lower for k in ["plan", "blueprint", "route", "tree", "schritt", "workflow"]):
+            return "pre_execution_blueprint_generator"
         else:
-            return "script_errors"
+            return "library_registry"
 
     def _get_relevant_tips(self, task_description: str) -> str:
+        """
+        Lädt kontextbezogene Richtlinien, Blueprint-Schritte und Knoten aus der
+        existierenden Knowledge_Agent_Routing_tree.db.
+        """
         domain = self._detect_domain(task_description)
-        with sqlite3.connect(self.db_path) as conn:
+        tips = ["=================================================="]
+        tips.append(" [SYSTEM CORE MEMORY: KNOWLEDGE AGENT ROUTING TREE]")
+        tips.append("==================================================")
+
+        with self.get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT error_signature, solution_code FROM {domain} ORDER BY success_score DESC LIMIT 3")
-            rows = cursor.fetchall()
-            cursor.execute("SELECT capability_name, description FROM core_directives LIMIT 5")
-            directives = cursor.fetchall()
+
+            # 1. System-Manifest & Core-Direktiven laden
             try:
-                cursor.execute("SELECT execution_phase, agent_instruction FROM pre_execution_blueprint_generator WHERE is_active = 1 LIMIT 5")
+                cursor.execute("SELECT directive_key, explanation_for_agent FROM agent_system_manifest LIMIT 5")
+                manifest_rows = cursor.fetchall()
+            except sqlite3.OperationalError:
+                manifest_rows = []
+
+            # 2. Relevante Knoten aus der erkannten Domain-Tabelle laden
+            try:
+                words = [w for w in task_description.lower().split() if len(w) > 3]
+                domain_rows = []
+                if words:
+                    placeholders = " OR ".join(["topic_title LIKE ? OR topic_specification LIKE ? OR agent_instruction LIKE ?"] * len(words))
+                    params = []
+                    for w in words:
+                        pattern = f"%{w}%"
+                        params.extend([pattern, pattern, pattern])
+                    cursor.execute(
+                        f"SELECT node_id, topic_title, agent_instruction, example_code_snippet FROM {domain} "
+                        f"WHERE is_active = 1 AND ({placeholders}) ORDER BY success_weight DESC LIMIT 3",
+                        params
+                    )
+                    domain_rows = cursor.fetchall()
+
+                if not domain_rows:
+                    cursor.execute(
+                        f"SELECT node_id, topic_title, agent_instruction, example_code_snippet FROM {domain} "
+                        f"WHERE is_active = 1 ORDER BY success_weight DESC LIMIT 3"
+                    )
+                    domain_rows = cursor.fetchall()
+            except sqlite3.OperationalError:
+                domain_rows = []
+
+            # 3. Aktive Blueprint-Schritte laden
+            try:
+                cursor.execute(
+                    "SELECT node_id, topic_title, agent_instruction FROM pre_execution_blueprint_generator "
+                    "WHERE is_active = 1 ORDER BY node_id ASC LIMIT 5"
+                )
                 blueprints = cursor.fetchall()
             except sqlite3.OperationalError:
                 blueprints = []
 
-        tips = ["=================================================="]
-        tips.append(" [SYSTEM CORE MEMORY: SQL-DATABASE DEEP KNOWLEDGE]")
-        tips.append("==================================================")
-        tips.append(f"\n--- Relevant Past Solutions from [{domain}] ---")
-        for err, sol in rows:
-            tips.append(f"- Bug: [{err}] -> Fix Code Pattern: {sol}")
-        if directives:
-            tips.append("\n--- Active Core Directives & Capabilities ---")
-            for cap, desc in directives:
-                tips.append(f"- Capability: [{cap}] -> {desc}")
+        if manifest_rows:
+            tips.append("\n--- Agent System Manifest & Core Directives ---")
+            for key, exp in manifest_rows:
+                tips.append(f"• [{key}]: {exp}")
+
+        if domain_rows:
+            tips.append(f"\n--- Relevant Nodes from Domain [{domain}] ---")
+            for node_id, title, instruction, snippet in domain_rows:
+                tips.append(f"• Node [{node_id}] {title}: {instruction}")
+                if snippet and snippet.strip() and not snippet.startswith("# FX_"):
+                    tips.append(f"  Code Snippet: {snippet.strip()[:150]}...")
+
         if blueprints:
             tips.append("\n--- Mandatory Pre-Execution Blueprints ---")
-            for phase, instruction in blueprints:
-                tips.append(f"- Phase [{phase}]: {instruction}")
+            for node_id, title, instruction in blueprints:
+                tips.append(f"• Step [{node_id}] {title}: {instruction}")
+
         if len(tips) <= 3:
-            return f"No prior errors recorded in domain [{domain}]."
+            return f"No prior routing tree nodes recorded for domain [{domain}]."
         return "\n".join(tips)
 
     def _save_solution_to_db(self, task_description: str, error_msg: str, solution_code: str):
+        """
+        Protokolliert Interaktionsmuster und Lösungen in der Tabelle
+        'table_issue_data_time_stamp_run_protocol_for_query' des Routing Trees.
+        """
         domain = self._detect_domain(task_description)
-        error_signature = error_msg.strip().split('\n')[-1]
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(f"""
-                INSERT INTO {domain} (error_signature, context_combination, solution_code, success_score)
-                VALUES (?, ?, ?, 1)
-                ON CONFLICT(error_signature) DO UPDATE SET 
-                    success_score = success_score + 1,
-                    solution_code = excluded.solution_code
-            """, (error_signature, task_description[:100], solution_code))
-            conn.commit()
+        node_id = f"LOG_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        with self.get_db_connection() as conn:
+            self._insert_routing_node(
+                conn=conn,
+                table_name="table_issue_data_time_stamp_run_protocol_for_query",
+                node_id=node_id,
+                topic_title=f"Pattern in [{domain}]",
+                topic_specification=task_description[:200],
+                agent_instruction=error_msg.strip().split('\n')[-1][:200],
+                example_code_snippet=solution_code,
+                validation_rule="protocol_logged == TRUE",
+                target_table=domain
+            )
+        print(f"[SQL-KNOWLEDGE] Eintrag erfolgreich in 'table_issue_data_time_stamp_run_protocol_for_query' protokolliert.")
 
     def evolve_self(self, recent_error: str, task_context: str) -> Path:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
@@ -367,22 +516,22 @@ Return the COMPLETE, executable Python code for the new MetaCodeBase script insi
 
         db_steps = []
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with self.get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT step_order, micro_behavior, status 
-                    FROM agent_micro_behaviors 
-                    WHERE task_context = ? AND status != 'COMPLETED'
-                    ORDER BY step_order ASC
-                """, (task_description[:50],))
+                    SELECT node_id, topic_title, agent_instruction 
+                    FROM pre_execution_blueprint_generator 
+                    WHERE is_active = 1
+                    ORDER BY node_id ASC
+                """)
                 db_steps = cursor.fetchall()
         except sqlite3.OperationalError:
             db_steps = []
 
         if db_steps:
-            print(f"--> [SQL-KNOWLEDGE] {len(db_steps)} offene Mikroverhalten/Schritte aus SQLite geladen:")
-            for order, behavior, status in db_steps:
-                print(f"    • Schritt [{order}]: {behavior} (Status: {status})")
+            print(f"--> [SQL-KNOWLEDGE] {len(db_steps)} aktive Blueprint-Schritte aus SQLite geladen:")
+            for node_id, title, instruction in db_steps:
+                print(f"    • Schritt [{node_id}]: {title}")
         else:
             print("--> [SQL-KNOWLEDGE] Keine spezifischen Schritte gefunden. Nutze allgemeine DB-Tips als Wissensbasis.")
 
@@ -399,7 +548,7 @@ Return the COMPLETE, executable Python code for the new MetaCodeBase script insi
             filepath = target_dir / versioned_filename
             
             if db_steps:
-                behavior_sequence = "\n".join([f"Step {order}: {behavior} [Status: {status}]" for order, behavior, status in db_steps])
+                behavior_sequence = "\n".join([f"Step [{node_id}] {title}: {instruction}" for node_id, title, instruction in db_steps])
             else:
                 behavior_sequence = self._get_relevant_tips(task_description)
             
@@ -491,8 +640,9 @@ def query_meta_coder_sql(notebook_path: str, instruction: str):
     )
 
 if __name__ == "__main__":
-    # 1. Ordnerstruktur und Datenbankpfad ermitteln (gibt nur bei echten Fehlern Prints aus)
-    database_path = MetaCodeBase.project_create_folder(SUBFOLDER, DB_FILENAME)
+    # 1. Sicherstellen, dass ausschließlich die existierende Datenbank verwendet wird
+    database_path = MetaCodeBase.get_database_path()
+    print(f"[BOOT] Exklusive SQLite-Datenbank erfolgreich geladen: '{database_path}'")
     
     # 2. Optionalen Ollama-Checker ausführen (gibt nur im Fehlerfall Meldungen aus)
     if not MetaCodeBase.load_optional_ollama_checker():
@@ -563,7 +713,7 @@ Acknowledge and make use of the SQLite database context if relevant.
                     code_snippet=answer[:500],
                     description=user_input
                 )
-                print("\n[SYSTEM-INFO] Die Fähigkeit wurde physisch in die SQLite-Tabelle 'core_directives' geschrieben!")
+                print("\n[SYSTEM-INFO] Die Fähigkeit wurde physisch in die SQLite-Tabelle 'library_registry' geschrieben!")
 
             elif "sql" in user_input.lower() or "fehler" in user_input.lower() or "code" in user_input.lower():
                 metacoder._save_solution_to_db(
