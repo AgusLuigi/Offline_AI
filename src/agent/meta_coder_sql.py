@@ -228,25 +228,32 @@ class MetaCodeBase:
             print(f"[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
             return False
 
-    def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434"):
+    def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
         global _OLLAMA_VERIFIED_CACHE
-        if not _OLLAMA_VERIFIED_CACHE:
+        if require_ollama and not _OLLAMA_VERIFIED_CACHE:
             print(f"[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
             sys.exit(1)
 
         self.model_name = model_name
         self.ollama_host = ollama_host
+        self.client = None
         
-        try:
-            self.client = Client(host=ollama_host)
-            self.client.list()
-        except Exception as e:
-            print(f"--> [KRITISCHER FEHLER] Verbindung zum Ollama Client unter {ollama_host} fehlgeschlagen: {e}")
-            sys.exit(1)
+        if require_ollama:
+            try:
+                self.client = Client(host=ollama_host)
+                self.client.list()
+            except Exception as e:
+                print(f"--> [KRITISCHER FEHLER] Verbindung zum Ollama Client unter {ollama_host} fehlgeschlagen: {e}")
+                sys.exit(1)
         
         # Sicherstellen, dass ausschließlich die existierende Routing-Tree-Datenbank verwendet wird
         self.db_path = self.get_database_path()
         print(f"[INFO] Verbunden mit existierender SQLite-Datenbank: '{self.db_path}'")
+
+        # Database-Driven DNA: Autonomer Bootstrap aus SQLite
+        self.bootstrap_dna = []
+        self.manifest_directives = {}
+        self.bootstrap_from_database()
     
     @staticmethod
     def scan_kernel_modules(module_list: list) -> dict:
@@ -471,6 +478,278 @@ class MetaCodeBase:
             )
         print(f"[SQL-KNOWLEDGE] Eintrag erfolgreich in 'table_issue_data_time_stamp_run_protocol_for_query' protokolliert.")
 
+    def bootstrap_from_database(self):
+        """
+        Lädt die Start-DNA des Agenten autonom aus der SQLite-Datenbank.
+        Folgt der Kette: meta_admin_bootstrap_registry (Node '001') -> meta_agent_start ('000' bis '999').
+        """
+        print("\n" + "=" * 60)
+        print(" [BOOTSTRAP-DNA] Initialisiere Agent über SQLite Knowledge Tree")
+        print("=" * 60)
+        try:
+            with self.get_db_connection() as conn:
+                cursor = conn.cursor()
+                
+                # 1. Inbound-Prüfung über meta_admin_bootstrap_registry Node 001
+                cursor.execute("""
+                    SELECT target_table, target_node_id, topic_title 
+                    FROM meta_admin_bootstrap_registry 
+                    WHERE node_id = '001' AND is_active = 1
+                """)
+                registry_entry = cursor.fetchone()
+                if not registry_entry:
+                    print("--> [WARNUNG] Kein aktiver Bootstrap-Eintrag '001' in meta_admin_bootstrap_registry gefunden.")
+                    start_table = "meta_agent_start"
+                else:
+                    start_table = registry_entry[0]
+                    print(f"--> [REGISTRY LINK] Node '001' verweist auf '{start_table}' (Ziel: '{registry_entry[1]}')")
+
+                # 2. Phasen aus meta_agent_start sequenziell abrufen und aktivieren
+                cursor.execute(f"""
+                    SELECT node_id, topic_title, topic_specification, agent_instruction, target_table, target_node_id
+                    FROM {start_table}
+                    WHERE is_active = 1
+                    ORDER BY node_id ASC
+                """)
+                phases = cursor.fetchall()
+                self.bootstrap_dna = phases
+                
+                for node_id, title, spec, instruction, tgt_tbl, tgt_node in phases:
+                    print(f"  • Phase [{node_id}] {title}")
+                    
+                    # Phase 000: System Manifest harvest
+                    if node_id == "000":
+                        try:
+                            cursor.execute("SELECT directive_key, explanation_for_agent FROM agent_system_manifest WHERE is_active = 1")
+                            self.manifest_directives = dict(cursor.fetchall())
+                            print(f"    ↳ {len(self.manifest_directives)} Kern-Direktiven aus 'agent_system_manifest' absorbiert.")
+                        except sqlite3.OperationalError:
+                            pass
+                    
+                    # Phase 001: Kernel & Resource Audit
+                    elif node_id == "001":
+                        k_mods = self.scan_kernel_modules(["psutil", "sqlite3", "ollama"])
+                        print(f"    ↳ Kernel-Audit: {sum(1 for v in k_mods.values() if v == 'active')}/{len(k_mods)} Module aktiv.")
+                    
+                    # Phase 002: Cache readiness check
+                    elif node_id == "002":
+                        cursor.execute("SELECT COUNT(*) FROM user_query WHERE is_active = 1")
+                        active_queries = cursor.fetchone()[0]
+                        print(f"    ↳ Idempotenz-Prüfung: 'user_query' betriebsbereit ({active_queries} aktive Einträge).")
+                    
+                    # Phase 999: Startup Seal
+                    elif node_id == "999":
+                        now = datetime.now()
+                        cursor.execute("""
+                            INSERT INTO table_issue_data_time_stamp_run_protocol_for_query (
+                                node_id, is_active, error_fallback_count,
+                                year, month, day, hour, minute, second,
+                                topic_title, topic_specification, agent_instruction,
+                                example_code_snippet, validation_rule, execution_count,
+                                success_weight, target_table, target_column_id, target_node_id
+                            ) VALUES (?, 1, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1.0, ?, ?, ?)
+                        """, (
+                            f"START_{now.strftime('%Y%m%d_%H%M%S')}",
+                            now.year, now.month, now.day, now.hour, now.minute, now.second,
+                            "AGENT_BOOTSTRAP_SUCCESS",
+                            f"Bootstrapped via {start_table} with {len(phases)} phases",
+                            "SYSTEM_READY_FOR_INTERACTION",
+                            "",
+                            "BOOTSTRAP_SEALED == TRUE",
+                            "user_query", "node_id", "000"
+                        ))
+                        conn.commit()
+                        print(f"    ↳ Startup-Siegel in 'table_issue_data_time_stamp_run_protocol_for_query' verankert.")
+
+                print(f"--> [BOOTSTRAP-DNA ERFOLG] {len(phases)} Phasen erfolgreich aus SQLite instanziiert.")
+                print("=" * 60 + "\n")
+        except Exception as e:
+            print(f"--> [BOOTSTRAP FEHLER] Konnte Start-DNA nicht vollständig laden: {e}")
+
+    def check_or_cache_user_query(self, raw_query: str) -> dict:
+        """
+        Autonome User-Query-Prüfung & Sequenzieller Cache (003 bis 998).
+        1. Exakter Cache-Hit: Liefert Antwort direkt ohne LLM-Inferenz (Zero-Compute).
+        2. Cache-Miss: Registriert neue Anfrage unter nächster freier ID (003 bis 998)
+           mit Status 'PENDING_EXECUTION'.
+        """
+        cleaned_query = raw_query.strip().lower()
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            # 1. Exakte Suche nach aktiver Anfrage mit vorhandenem Cache
+            cursor.execute("""
+                SELECT node_id, topic_title, topic_specification, agent_instruction, example_code_snippet, validation_rule
+                FROM user_query
+                WHERE TRIM(LOWER(topic_specification)) = ? AND is_active = 1
+                ORDER BY node_id DESC LIMIT 1
+            """, (cleaned_query,))
+            cached = cursor.fetchone()
+            
+            if cached and cached[3] and cached[3] != "PROCESSING" and cached[5] == "COMPLETED_CACHE_READY":
+                cursor.execute("""
+                    UPDATE user_query 
+                    SET execution_count = execution_count + 1 
+                    WHERE node_id = ?
+                """, (cached[0],))
+                conn.commit()
+                print(f"--> [SQL-CACHE HIT] Anfrage '{raw_query}' direkt aus Node '{cached[0]}' geladen (Zero-Compute)!")
+                return {
+                    "cache_hit": True,
+                    "node_id": cached[0],
+                    "title": cached[1],
+                    "query": cached[2],
+                    "response": cached[3],
+                    "snippet": cached[4]
+                }
+            
+            # 2. Nächste freie Sequenz-ID bis 998 ermitteln
+            cursor.execute("SELECT node_id FROM user_query")
+            existing_ids = set()
+            for row in cursor.fetchall():
+                try:
+                    existing_ids.add(int(row[0]))
+                except (ValueError, TypeError):
+                    pass
+                    
+            next_id_num = None
+            for candidate in range(3, 999):
+                if candidate not in existing_ids:
+                    next_id_num = candidate
+                    break
+                    
+            if next_id_num is None:
+                raise OverflowError("Maximale User-Query-Kapazität von ID 998 erreicht!")
+                
+            next_node_id = f"{next_id_num:03d}"
+            now = datetime.now()
+            
+            insert_query = """
+                INSERT INTO user_query (
+                    node_id, is_active, error_fallback_count,
+                    year, month, day, hour, minute, second,
+                    topic_title, topic_specification, agent_instruction,
+                    example_code_snippet, validation_rule, execution_count,
+                    success_weight, target_table, target_column_id, target_node_id
+                ) VALUES (?, 1, 0, ?, ?, ?, ?, ?, ?, ?, ?, 'PROCESSING', '', 'PENDING_EXECUTION', 1, 1.0, 'pre_execution_blueprint_generator', 'node_id', '000')
+            """
+            cursor.execute(insert_query, (
+                next_node_id,
+                now.year, now.month, now.day, now.hour, now.minute, now.second,
+                f"USER QUERY: {raw_query[:35]}",
+                raw_query
+            ))
+            conn.commit()
+            print(f"--> [SQL-CACHE MISS] Neue Anfrage in Node '{next_node_id}' registriert.")
+            
+            return {
+                "cache_hit": False,
+                "node_id": next_node_id,
+                "query": raw_query,
+                "status": "PENDING_EXECUTION"
+            }
+
+    def seal_query_cache(self, node_id: str, answer: str, snippet: str = ""):
+        """
+        Versiegelt eine erfolgreich beantwortete Anfrage in 'user_query' als fertigen Cache-Eintrag.
+        """
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE user_query
+                SET agent_instruction = ?,
+                    example_code_snippet = ?,
+                    validation_rule = 'COMPLETED_CACHE_READY',
+                    is_active = 1
+                WHERE node_id = ?
+            """, (answer, snippet, node_id))
+            conn.commit()
+        print(f"--> [SQL-CACHE SEAL] Antwort in 'user_query' Node '{node_id}' dauerhaft versiegelt.")
+
+    def deactivate_and_reroute(self, table_name: str, node_id: str, failure_reason: str) -> dict:
+        """
+        Deaktiviert einen fehlerhaften Knoten (is_active = 0), zählt Fehler hoch
+        und leitet autonom auf einen alternativen Pfad oder FX_CHAIN um.
+        """
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            # 1. Zielknoten deaktivieren und Fehler zählen
+            cursor.execute(f"""
+                UPDATE {table_name}
+                SET is_active = 0, error_fallback_count = error_fallback_count + 1
+                WHERE node_id = ?
+            """, (node_id,))
+            
+            # 2. Alternativen Pfad ermitteln (aus derselben Tabelle, sonst Fallback auf FX_CHAIN)
+            cursor.execute(f"""
+                SELECT node_id, topic_title, target_table, target_node_id
+                FROM {table_name}
+                WHERE is_active = 1 AND node_id != ?
+                ORDER BY success_weight DESC LIMIT 1
+            """, (node_id,))
+            alt_row = cursor.fetchone()
+            
+            # 3. Vorfall in Protokolltabelle loggen
+            now = datetime.now()
+            cursor.execute("""
+                INSERT INTO table_issue_data_time_stamp_run_protocol_for_query (
+                    node_id, is_active, error_fallback_count,
+                    year, month, day, hour, minute, second,
+                    topic_title, topic_specification, agent_instruction,
+                    example_code_snippet, validation_rule, execution_count,
+                    success_weight, target_table, target_column_id, target_node_id
+                ) VALUES (?, 1, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1.0, ?, ?, ?)
+            """, (
+                f"ISSUE_{now.strftime('%Y%m%d_%H%M%S')}",
+                now.year, now.month, now.day, now.hour, now.minute, now.second,
+                f"REROUTE_{table_name}_{node_id}",
+                f"Failure reason: {failure_reason[:150]}",
+                f"Deactivated node {node_id} in {table_name}",
+                "",
+                "REROUTE_EXECUTED == TRUE",
+                alt_row[2] if alt_row and alt_row[2] else "meta_admin_repair_registry",
+                "node_id",
+                alt_row[3] if alt_row and alt_row[3] else "999"
+            ))
+            conn.commit()
+            
+        print(f"--> [EVOLUTION] Node '{node_id}' in '{table_name}' deaktiviert wegen: '{failure_reason}'.")
+        if alt_row:
+            print(f"--> [REROUTING] Umschaltung auf Alternativ-Knoten: '{alt_row[0]}' ({alt_row[1]})")
+        else:
+            print("--> [REROUTING] Keine Alternativen in Tabelle vorhanden. Eskalation an FX_CHAIN.")
+            
+        return {
+            "deactivated_node": node_id,
+            "table_name": table_name,
+            "reason": failure_reason,
+            "alternative_available": alt_row is not None,
+            "next_node": alt_row[0] if alt_row else "000",
+            "next_target": alt_row[2] if alt_row and alt_row[2] else "FX_CHAIN"
+        }
+
+    def record_feedback(self, query_node_id: str, is_positive: bool, comment: str = "") -> dict:
+        """
+        Verarbeitet Benutzer-Feedback für einen Query-Knoten in 'user_query'.
+        - Positiv: Erhöht success_weight und bestätigt Validierung.
+        - Negativ: Deaktiviert den Knoten via deactivate_and_reroute.
+        """
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            if is_positive:
+                cursor.execute("""
+                    UPDATE user_query
+                    SET success_weight = success_weight + 0.2,
+                        validation_rule = 'POSITIVE_VERIFIED'
+                    WHERE node_id = ?
+                """, (query_node_id,))
+                conn.commit()
+                print(f"--> [FEEDBACK POSITIV] Node '{query_node_id}' durch Feedback gestärkt (Gewicht erhöht).")
+                return {"status": "success", "feedback": "positive", "node_id": query_node_id}
+            else:
+                return self.deactivate_and_reroute("user_query", query_node_id, failure_reason=comment or "Negatives Benutzer-Feedback")
+
     def evolve_self(self, recent_error: str, task_context: str) -> Path:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         history_dir = Path("src/agent/metacoder_history")
@@ -620,10 +899,96 @@ Mandatory Rules:
                 return parts[1].strip()
         return text.strip()
 
-def boot_latest_metacoder():
+def check_or_cache_user_query(raw_query: str, db_path=None) -> dict:
+    """Modul-Level Wrapper für die autonome User-Query-Prüfung und Sequenz-Allokation."""
+    if db_path is None:
+        db_path = MetaCodeBase.get_database_path()
+    cleaned_query = raw_query.strip().lower()
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT node_id, topic_title, topic_specification, agent_instruction, example_code_snippet, validation_rule
+        FROM user_query
+        WHERE TRIM(LOWER(topic_specification)) = ? AND is_active = 1
+        ORDER BY node_id DESC LIMIT 1
+    """, (cleaned_query,))
+    cached = cursor.fetchone()
+    if cached and cached[3] and cached[3] != "PROCESSING" and cached[5] == "COMPLETED_CACHE_READY":
+        cursor.execute("UPDATE user_query SET execution_count = execution_count + 1 WHERE node_id = ?", (cached[0],))
+        conn.commit()
+        conn.close()
+        return {
+            "cache_hit": True,
+            "node_id": cached[0],
+            "title": cached[1],
+            "query": cached[2],
+            "response": cached[3],
+            "snippet": cached[4]
+        }
+    cursor.execute("SELECT node_id FROM user_query")
+    existing_ids = set()
+    for row in cursor.fetchall():
+        try:
+            existing_ids.add(int(row[0]))
+        except (ValueError, TypeError):
+            pass
+    next_id_num = None
+    for candidate in range(3, 999):
+        if candidate not in existing_ids:
+            next_id_num = candidate
+            break
+    if next_id_num is None:
+        conn.close()
+        raise OverflowError("Maximale User-Query-Kapazität von ID 998 erreicht!")
+    next_node_id = f"{next_id_num:03d}"
+    now = datetime.now()
+    insert_query = """
+        INSERT INTO user_query (
+            node_id, is_active, error_fallback_count,
+            year, month, day, hour, minute, second,
+            topic_title, topic_specification, agent_instruction,
+            example_code_snippet, validation_rule, execution_count,
+            success_weight, target_table, target_column_id, target_node_id
+        ) VALUES (?, 1, 0, ?, ?, ?, ?, ?, ?, ?, ?, 'PROCESSING', '', 'PENDING_EXECUTION', 1, 1.0, 'pre_execution_blueprint_generator', 'node_id', '000')
+    """
+    cursor.execute(insert_query, (
+        next_node_id,
+        now.year, now.month, now.day, now.hour, now.minute, now.second,
+        f"USER QUERY: {raw_query[:35]}",
+        raw_query
+    ))
+    conn.commit()
+    conn.close()
+    return {
+        "cache_hit": False,
+        "node_id": next_node_id,
+        "query": raw_query,
+        "status": "PENDING_EXECUTION"
+    }
+
+def deactivate_and_reroute_node(table_name: str, node_id: str, failure_reason: str, db_path=None) -> dict:
+    """Modul-Level Wrapper für autonome Knoten-Deaktivierung und Rerouting."""
+    if db_path is None:
+        db_path = MetaCodeBase.get_database_path()
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+    cursor.execute(f"UPDATE {table_name} SET is_active = 0, error_fallback_count = error_fallback_count + 1 WHERE node_id = ?", (node_id,))
+    cursor.execute(f"SELECT node_id, topic_title, target_table, target_node_id FROM {table_name} WHERE is_active = 1 AND node_id != ? ORDER BY success_weight DESC LIMIT 1", (node_id,))
+    alt_row = cursor.fetchone()
+    conn.commit()
+    conn.close()
+    return {
+        "deactivated_node": node_id,
+        "reason": failure_reason,
+        "alternative_available": alt_row is not None,
+        "next_node": alt_row[0] if alt_row else "000",
+        "next_target": alt_row[2] if alt_row and alt_row[2] else "FX_CHAIN"
+    }
+
+def boot_latest_metacoder(require_ollama: bool = True):
     history_dir = Path("src/agent/metacoder_history")
     history_dir.mkdir(parents=True, exist_ok=True)
-    return MetaCodeBase()
+    return MetaCodeBase(require_ollama=require_ollama)
 
 def query_meta_coder_sql(notebook_path: str, instruction: str):
     metacoder = boot_latest_metacoder()
@@ -648,7 +1013,7 @@ if __name__ == "__main__":
     if not MetaCodeBase.load_optional_ollama_checker():
         exit(1)
 
-    # 3. Metacoder booten und Start-Routine durchführen
+    # 3. Metacoder booten und Database-Driven DNA Start-Routine durchführen
     metacoder = boot_latest_metacoder()
     
     # Kernel-Modul-Check beim Start
@@ -658,9 +1023,10 @@ if __name__ == "__main__":
     print("\n======================================================================")
     print(" [INTELLIGENTER CHAT-MODUS] Verbunden mit SQLite-Langzeitgedächtnis")
     print(" Codestral nutzt jetzt aktiv den Knowledge Agent Routing Tree.")
-    print(" Schreibe 'exit' oder 'quit', um das Gespräch zu beenden.")
+    print(" Befehle: '!positiv' / '!negativ' für Feedback | 'exit' zum Beenden")
     print("======================================================================\n")
 
+    last_query_node_id = None
     while True:
         try:
             user_input = input("\nDu: ").strip()
@@ -669,6 +1035,30 @@ if __name__ == "__main__":
             if user_input.lower() in ["exit", "quit"]:
                 print("\nAgent: Bis zum nächsten Mal!")
                 break
+
+            # Feedback-Befehle behandeln
+            if user_input.lower().startswith("!feedback") or user_input.lower() in ["!positiv", "!negativ"]:
+                if not last_query_node_id:
+                    print("--> [FEEDBACK] Bisher wurde noch keine Anfrage ausgeführt, die bewertet werden könnte.")
+                    continue
+                is_pos = "positiv" in user_input.lower() or "!positiv" in user_input.lower()
+                comment = user_input.split(" ", 1)[1] if " " in user_input else ("Positives Feedback" if is_pos else "Negatives Feedback")
+                fb_res = metacoder.record_feedback(last_query_node_id, is_positive=is_pos, comment=comment)
+                print(f"--> [FEEDBACK REGISTRIERT] Node '{last_query_node_id}' bewertet: {fb_res}")
+                continue
+
+            # Stufe 1: Autonome User-Query-Prüfung & Sequenzieller Cache (Database-Driven DNA)
+            cache_info = metacoder.check_or_cache_user_query(user_input)
+            last_query_node_id = cache_info["node_id"]
+
+            if cache_info.get("cache_hit"):
+                print(f"\nCodestral [Domain: SQL-Cache | DB aktiv | Node {cache_info['node_id']}]:")
+                print(cache_info["response"])
+                print("-" * 70)
+                continue
+
+            # Cache Miss -> Inferenz starten
+            print(f"--> [SQL-CACHE MISS] Verarbeite neue Anfrage in Node '{cache_info['node_id']}'...")
 
             # Initialisiere Blueprint-Logik für jede Benutzereingabe
             user_blueprint = MetaCodeBase.initialize_blueprint_system(user_input)
@@ -706,6 +1096,9 @@ Acknowledge and make use of the SQLite database context if relevant.
                 spinner_thread.join()
             
             answer = response.get('message', {}).get('content', '')
+
+            # Antwort dauerhaft in user_query als Cache versiegeln
+            metacoder.seal_query_cache(cache_info['node_id'], answer)
             
             if "verewige" in user_input.lower() or "speichere in sql" in user_input.lower():
                 metacoder.persist_new_capability(
