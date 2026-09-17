@@ -89,6 +89,69 @@ class ResourceAwareSpinner:
             sys.stdout.write('\r' + ' ' * 100 + '\r')
             sys.stdout.flush()
 
+# SUB-AGENT EXECUTION ENGINE & SANDBOX VERIFIER
+class SubAgentVerifier:
+    """
+    Closed-Loop Code Execution & Sandbox Verifier.
+    Führt generierten Python-Code in einem isolierten Subprozess aus, fängt stdout/stderr ab
+    und verhindert, dass unvalidierter oder fehlerhafter Code in die Systemtabellen gelangt.
+    """
+    @staticmethod
+    def extract_code_blocks(text: str) -> list[str]:
+        """Extrahiert alle Python-Codeblöcke aus einer Textantwort."""
+        blocks = []
+        if "```python" in text:
+            parts = text.split("```python")
+            for p in parts[1:]:
+                if "```" in p:
+                    code = p.split("```")[0].strip()
+                    if code:
+                        blocks.append(code)
+        elif "```" in text:
+            parts = text.split("```")
+            for i in range(1, len(parts), 2):
+                code = parts[i].strip()
+                if code and not any(code.startswith(tag) for tag in ["markdown", "sql", "bash", "json", "yaml"]):
+                    blocks.append(code)
+        return blocks
+
+    @staticmethod
+    def verify_code_in_sandbox(code_snippet: str, timeout_sec: int = 15) -> tuple[bool, str]:
+        """
+        Führt das Code-Snippet in einem separaten Python-Subprozess im Sandbox-Verzeichnis aus.
+        Gibt (success: bool, output: str) zurück.
+        """
+        import tempfile
+        sandbox_dir = MetaCodeBase.get_project_root() / "scratch"
+        sandbox_dir.mkdir(parents=True, exist_ok=True)
+        
+        temp_file = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".py", mode="w", encoding="utf-8", dir=str(sandbox_dir), delete=False) as f:
+                f.write(code_snippet)
+                temp_file = Path(f.name)
+
+            res = subprocess.run(
+                [sys.executable, str(temp_file)],
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                cwd=str(MetaCodeBase.get_project_root())
+            )
+            success = (res.returncode == 0)
+            output = res.stdout.strip() if success else (res.stderr.strip() or res.stdout.strip())
+            return success, output
+        except subprocess.TimeoutExpired:
+            return False, f"Sandbox execution timeout ({timeout_sec}s exceeded)."
+        except Exception as err:
+            return False, f"Sandbox execution error: {err}"
+        finally:
+            if temp_file and temp_file.exists():
+                try:
+                    temp_file.unlink()
+                except Exception:
+                    pass
+
 # META-CODEBASE & HIERARCHICAL ROUTING TREE AGENT
 class MetaCodeBase:
     """
