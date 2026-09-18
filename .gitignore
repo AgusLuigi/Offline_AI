@@ -7,3 +7,4 @@ logs/*
 config/python_library_config.json
 config/active_model_config.json
 config/project_paths.json
+data/users/user_alice_mai-ai_local/inbox/user_inbox.db
