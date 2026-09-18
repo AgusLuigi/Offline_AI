@@ -4,3 +4,6 @@ src/docker_py/__pycache__/*
 src/Install/__pycache__/*
 logs/*
 
+config/python_library_config.json
+config/active_model_config.json
+config/project_paths.json
