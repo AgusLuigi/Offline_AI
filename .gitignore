@@ -1,28 +1,6 @@
-src/Install/__pycache__/active_ollama_hardware_downloader.cpython-311.pyc
-config/python_library_config.json
-config/project_paths.json
-config/active_model_config.json
-src/docker_py/__pycache__/docker_user_manager.cpython-311.pyc
-src/docker_py/__pycache__/docker_sqlite_inbox.cpython-311.pyc
-src/docker_py/__pycache__/docker_hardening_lifecycle.cpython-311.pyc
-src/docker_py/__pycache__/docker_orchestrator.cpython-311.pyc
-src/docker_py/__pycache__/docker_user_isolation.cpython-311.pyc
-src/docker_py/__pycache__/docker_connection.cpython-311.pyc
-src/docker_py/__pycache__/docker_config.cpython-311.pyc
-src/docker_py/__pycache__/__init__.cpython-311.pyc
-data/users/user_test_mai-ai_local/inbox/user_inbox.db
-data/users/user_alice_mai-ai_local/inbox/user_inbox.db
-src/docker_py/__pycache__/docker_network_volumes.cpython-311.pyc
-logs/app.log
-notebooks/README.md
-.gitignore
-src/Install/__pycache__/ollama_model_utils.cpython-311.pyc
-data/models/huggingface/DeepSeek-V4-Flash-DSpark-support-0731.gguf
-src/Jarvis/__pycache__/jarvis_onboarding.cpython-311.pyc
-tests/__pycache__/test_ollama_model_sanitization.cpython-311.pyc
-knowledge/meta_coder_base/meta_coder_base_issue_solution.db
-src/agent/__pycache__/__ollama_runing.cpython-311.pyc
-src/agent/__pycache__/__ollama_running.cpython-311.pyc
-image/27.08.2026 standard_column_library_registry.jfif
-image/31.08.2026 pre_execution_bluprint_memory.jfif
-src/agent/__pycache__/meta_coder_sql.cpython-311.pyc
+# Folder
+config/*
+src/docker_py/__pycache__/*
+src/Install/__pycache__/*
+logs/*
+
