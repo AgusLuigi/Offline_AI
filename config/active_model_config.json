@@ -1,5 +1,7 @@
 {
-    "model_name": "llama3.1",
+    "model_name": "mixtral:v0.1",
     "allocated_size_gb": 4.0,
-    "detected_ram_gb": 31.87
+    "detected_ram_gb": 31.87,
+    "platform": "ollama",
+    "updated_at": "2026-09-18 21:01:40"
 }
