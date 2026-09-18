@@ -458,7 +458,7 @@ class WindowsInstaller(BaseInstaller):
 
 
 class MacOSInstaller(BaseInstaller):
-    """Spezifische Installations-Logik für macOS (M-Chips/Intel)."""
+    """Spezifische Installations-Logik für macOS (M-Chips/Intel) mit automatischem Fallback."""
     def install_miniconda_sys(self):
         if self.check_miniconda():
             self.log("Conda ist bereits auf macOS installiert.")
@@ -483,8 +483,23 @@ class MacOSInstaller(BaseInstaller):
         return False
 
     def run(self):
-        self.log("--- Starte macOS Installation ---")
-        if not self.check_miniconda():
+        self.log("--- Starte Installation (Plattform-Prüfung aktiv) ---")
+        
+        # Automatische Erkennung, falls das Skript auf Linux/Codespaces läuft statt macOS
+        if self.system not in ["Darwin", "Windows"]:
+            self.log(f"[AUTO-FIX] Nicht-macOS System '{self.system}' im MacOSInstaller erkannt. Leite auf Linux-Routine um.")
+            url = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+            installer_path = "/tmp/miniconda_installer.sh"
+            if not self.check_miniconda():
+                try:
+                    urllib.request.urlretrieve(url, installer_path)
+                    self.run_command_raw(f"chmod +x {installer_path}")
+                    self.run_command_raw(f"bash {installer_path} -b -p $HOME/miniconda3")
+                    self.conda_executable = self._resolve_conda_path()
+                except Exception as e:
+                    self.log(f"Automatischer Fallback-Fehler: {e}")
+
+        if self.system == "Darwin" and not self.check_miniconda():
             if not self.install_miniconda_sys():
                 self.log("Bitte stelle sicher, dass Conda in deinem $PATH liegt.")
                 return
@@ -495,20 +510,53 @@ class MacOSInstaller(BaseInstaller):
         # 2. Zielumgebung vorbereiten und Pakete installieren
         if self.create_conda_env():
             self.install_dependencies()
-            self.log("macOS-Setup abgeschlossen!")
+            self.log("Setup erfolgreich abgeschlossen!")
+
+class LinuxInstaller(BaseInstaller):
+    """Installationsroutine für Linux-Systeme (Ubuntu, Debian, CentOS, etc.)"""
+    def run(self):
+        print("[INFO] Starte Miniconda-Installation für Linux...")
+        
+        installer_url = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+        installer_path = "/tmp/miniconda_installer.sh"
+        
+        print(f"Downloade von {installer_url}...")
+        urllib.request.urlretrieve(installer_url, installer_path)
+        
+        home_dir = os.path.expanduser("~")
+        target_dir = os.path.join(home_dir, "miniconda3")
+        
+        self.run_command_raw(f"chmod +x {installer_path}")
+        install_cmd = f"bash {installer_path} -b -p {target_dir}"
+        
+        if self.run_command_raw(install_cmd):
+            self.conda_executable = self._resolve_conda_path()
+            print("[INFO] Konfiguriere Linux-Umgebungsvariablen...")
+            self.ensure_base_and_runtime_ipykernel()
+            if self.create_conda_env():
+                self.install_dependencies()
+                print("[SUCCESS] Linux-Installation erfolgreich abgeschlossen!")
+        else:
+            print("[FEHLER] Linux-Miniconda-Installation fehlgeschlagen.")
 
 
 def main():
     current_os = platform.system()
     
+    # Check, ob wir uns in einer Linux-basierten VS Code Umgebung (z.B. Container/WSL) auf einem Windows-Host befinden
+    print(f"[INFO] Erkanntes Betriebssystem vom System: {current_os}")
+    
     if current_os == "Windows":
         installer = WindowsInstaller()
     elif current_os == "Darwin":
         installer = MacOSInstaller()
+    elif current_os == "Linux":
+        print("[INFO] Linux-Umgebung erkannt (z.B. VS Code Remote / Container). Nutze LinuxInstaller.")
+        installer = LinuxInstaller()
     else:
-        installer = BaseInstaller()
+        raise NotImplementedError(f"Das Betriebssystem '{current_os}' wird von diesem Installer nicht unterstützt.")
         
     installer.run()
 
 if __name__ == "__main__":
-    main()
+    main()
