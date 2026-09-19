@@ -288,13 +288,13 @@ class MetaCodeBase:
                 print(f"[FEHLER] Fehler beim Ausführen von '__ollama_running.py': {e}")
                 return False
         else:
-            print(f"[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
+            print("[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
             return False
 
-    def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
+    def __init__(self, model_name: str = "mixtral:instruct", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
         global _OLLAMA_VERIFIED_CACHE
         if require_ollama and not _OLLAMA_VERIFIED_CACHE:
-            print(f"[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
+            print("[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
             sys.exit(1)
 
         self.model_name = model_name
