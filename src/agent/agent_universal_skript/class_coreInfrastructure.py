@@ -5,18 +5,15 @@ from pathlib import Path
 class coreInfrastructure:
     """
     Zentrale Basis-Infrastruktur für alle zukünftigen Agenten und Tools.
-    Ermittelt das Projekt-Hauptverzeichnis rein dynamisch über das Auffinden des 'src'-Ordners.
+    Ermittelt das Projekt-Hauptverzeichnis rein dynamisch über das Auffinden des 'PROJECT_POINT'-Ordners.
     """
-    
-    BASE_DIR = "Knowledge"
-    SUBFOLDER = "Knowledge_Agent_Hierarchical_Routing_Tree_SQL"
-    DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
+    PROJECT_POINT = "src"
 
-    @staticmethod
-    def get_project_root(start_path: Path = None) -> Path:
+    @classmethod
+    def get_project_root(cls, start_path: Path = None) -> Path:
         """
-        Sucht stochastisch im Verzeichnisbaum nach oben, bis ein 'src'-Ordner 
-        gefunden wird. Der Ordner direkt darüber ist das automatische Projekt-Root.
+        Sucht heuristisch im Verzeichnisbaum nach oben, bis ein Projekt-Root
+        (definiert durch das Vorhandensein eines 'PROJECT_POINT'-Ordners) gefunden wird.
         """
         if start_path is None:
             file_path = Path(__file__).resolve()
@@ -25,48 +22,47 @@ class coreInfrastructure:
 
         current = file_path if file_path.is_dir() else file_path.parent
 
-        # Kaskadierende Aufwärtssuche nach dem 'src'-Verzeichnis
-        for parent in [current] + list(current.parents):
-            # Fall 1: Der aktuelle Elternordner enthält ein 'src'-Unterverzeichnis -> das ist unser Root
-            if (parent / "src").is_dir():
-                return parent
-            # Fall 2: Wir stehen selbst direkt im 'src'-Ordner -> der Ordner darüber ist das Root
-            if parent.name.lower() == "src":
-                return parent.parent
+        try:
+            for parent in [current] + list(current.parents):
+                # Prüfen, ob der Ordner selbst den Namen von PROJECT_POINT hat
+                if parent.name.lower() == cls.PROJECT_POINT.lower():
+                    return parent.parent
+                
+                # Prüfen, ob der Ordner ein PROJECT_POINT-Unterverzeichnis enthält
+                if (parent / cls.PROJECT_POINT).is_dir():
+                    return parent
+                    
+        except Exception as e:
+            print(f"[KRITISCHER FEHLER] Konnte Ankerpunkt nicht finden: {e}")
 
-        # Fallback auf das aktuelle Verzeichnis, falls nirgendwo ein 'src' existiert
+        # Letzter Fallback, falls kein PROJECT_POINT im ganzen Baum existiert
         return current
-
+    
     @classmethod
-    def project_find_data(cls, filename: str) -> Path:
-        """Sucht eine Datei ausgehend vom dynamisch erkannten Projekt-Root in allen Unterordnern abwärts."""
+    def get_file_path(cls, filename: str) -> Path:
+        """
+        Sucht universell nach einer beliebigen Datei im Projektverzeichnis,
+        ausgehend vom automatischen Projekt-Root, und bricht bei Nichtfinden ab.
+        """
         base_root = cls.get_project_root()
         fn_lower = filename.lower()
+
         for path in base_root.rglob("*"):
             if path.is_file() and path.name.lower() == fn_lower:
                 return path
-        return None
-
-    @classmethod
-    def get_database_path(cls) -> Path:
-        """Gibt den Pfad zur SQLite-Wissensdatenbank zurück."""
-        base_root = cls.get_project_root()
-        candidate = base_root / cls.BASE_DIR / cls.SUBFOLDER / cls.DB_FILENAME
-        if candidate.is_file():
-            return candidate
-
-        found = cls.project_find_data(cls.DB_FILENAME)
-        if found and found.is_file():
-            return found
 
         raise FileNotFoundError(
-            f"[KRITISCHER FEHLER] Die SQLite-Datenbank '{cls.DB_FILENAME}' wurde ausgehend vom Root '{base_root}' nicht gefunden!"
+            f"[KRITISCHER FEHLER] Die Datei '{filename}' wurde ausgehend vom Root '{base_root}' "
+            f"im gesamten Projektverzeichnis nicht gefunden!"
         )
-
+    
     @classmethod
-    def get_db_connection(cls) -> sqlite3.Connection:
-        """Öffnet eine robuste Verbindung zur SQLite-Datenbank."""
-        db_path = cls.get_database_path()
+    def get_db_connection(cls, filename: str) -> sqlite3.Connection:
+        """
+        Öffnet eine robuste Verbindung zu einer beliebigen, übergebenen SQLite-Datenbank.
+        Der konkrete Dateiname wird dynamisch vom jeweiligen Agenten vorgegeben.
+        """
+        db_path = cls.get_file_path(filename)
         posix_path = db_path.resolve().as_posix()
         uri_path = f"file:///{posix_path}?mode=rw" if posix_path.startswith("/") else f"file:{posix_path}?mode=rw"
         try:
