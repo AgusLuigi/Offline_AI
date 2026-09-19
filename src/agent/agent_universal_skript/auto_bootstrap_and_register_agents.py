@@ -2,12 +2,14 @@ import sys
 import importlib
 import inspect
 from pathlib import Path
+import types
 
 def auto_bootstrap_and_register_agents():
     """
     Ermittelt stochastisch den 'agent_universal_skript'-Ordner im Projekt,
     fügt ihn dem Python-Pfad hinzu, scannt alle enthaltenen .py-Dateien 
-    und registriert alle Klassen automatisch im globalen Namespace des Aufrufers.
+    und registriert sowohl alle Klassen als auch alle globalen Funktionen 
+    automatisch im globalen Namespace des Aufrufers.
     """
     current_file = Path(__file__).resolve()
     target_dir = None
@@ -48,15 +50,25 @@ def auto_bootstrap_and_register_agents():
             # Modul dynamisch zur Laufzeit importieren
             mod = importlib.import_module(full_module_path)
             
-            # 3. Introspektion: Alle Klassen des Moduls automatisch finden und globalisieren
+            # 3. Introspektion: Klassen UND Funktionen automatisch finden und globalisieren
             for attr_name in dir(mod):
+                if attr_name.startswith("_"):
+                    continue
+                    
                 attr_value = getattr(mod, attr_name)
-                # Prüfen, ob es sich um eine echte Python-Klasse handelt, die direkt in diesem Modul definiert wurde
-                if isinstance(attr_value, type) and attr_value.__module__ == mod.__name__:
+                
+                # Bedingung A: Ist es eine echte Klasse aus diesem Modul?
+                is_class_from_mod = isinstance(attr_value, type) and attr_value.__module__ == mod.__name__
+                
+                # Bedingung B: Ist es eine Funktion, die in diesem Modul definiert wurde?
+                is_func_from_mod = isinstance(attr_value, types.FunctionType) and attr_value.__module__ == mod.__name__
+                
+                if is_class_from_mod or is_func_from_mod:
                     caller_globals[attr_name] = attr_value
                     
         except Exception as e:
             print(f"[FEHLER beim automatischen Laden] Modul '{module_name}': {e}")
 
-# Sofortige Ausführung beim Start des Agenten
+# Sofortige Ausführung beim Start des Skripts
+sys.path.append(str(Path(__file__).resolve().parent))
 auto_bootstrap_and_register_agents()
