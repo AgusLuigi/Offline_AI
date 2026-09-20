@@ -10,7 +10,7 @@ class coreInfrastructure:
     PROJECT_POINT = "src"
 
     @classmethod
-    def get_project_root(cls, start_path: PROJECT_POINT) -> Path:
+    def get_project_root(cls, start_path=None) -> Path:
         """
         Sucht heuristisch im Verzeichnisbaum nach oben, bis ein Projekt-Root
         (definiert durch das Vorhandensein eines 'PROJECT_POINT'-Ordners) gefunden wird.
@@ -24,24 +24,19 @@ class coreInfrastructure:
 
         try:
             for parent in [current] + list(current.parents):
-                # Prüfen, ob der Ordner selbst den Namen von PROJECT_POINT hat
                 if parent.name.lower() == cls.PROJECT_POINT.lower():
                     return parent.parent
-                
-                # Prüfen, ob der Ordner ein PROJECT_POINT-Unterverzeichnis enthält
                 if (parent / cls.PROJECT_POINT).is_dir():
                     return parent
-                    
         except Exception as e:
             print(f"[KRITISCHER FEHLER] Konnte Ankerpunkt nicht finden: {e}")
 
-        # Letzter Fallback, falls kein PROJECT_POINT im ganzen Baum existiert
         return current
     
     @classmethod
     def get_file_path(cls, filename: str) -> Path:
         """
-        Sucht universell nach einer beliebigen Datei im Projektverzeichnis,
+        Sucht universell nach einer beliebigen Datei im Projektverzeichnis.
         ausgehend vom automatischen Projekt-Root, und bricht bei Nichtfinden ab.
         """
         base_root = cls.get_project_root()
@@ -52,8 +47,7 @@ class coreInfrastructure:
                 return path
 
         raise FileNotFoundError(
-            f"[KRITISCHER FEHLER] Die Datei '{filename}' wurde ausgehend vom Root '{base_root}' "
-            f"im gesamten Projektverzeichnis nicht gefunden!"
+            f"[KRITISCHER FEHLER] Die Datei '{filename}' wurde ausgehend vom Root '{base_root}' nicht gefunden!"
         )
     
     @staticmethod
@@ -69,10 +63,10 @@ class coreInfrastructure:
         return status
 
     @classmethod
-    def get_db_connection(cls, filename: str) -> sqlite3.Connection:
+    def get_db_connection(cls, filename: str = "app_standards.db") -> sqlite3.Connection:
         """
-        Öffnet eine robuste Verbindung zu einer beliebigen, übergebenen SQLite-Datenbank.
-        Der konkrete Dateiname wird dynamisch vom jeweiligen Agenten vorgegeben.
+        Öffnet eine robuste Verbindung zur übergebenen SQLite-Datenbank.
+        Standardwert ("app_standards.db") verhindert den Absturz bei leerem Aufruf.
         """
         db_path = cls.get_file_path(filename)
         posix_path = db_path.resolve().as_posix()
@@ -83,12 +77,20 @@ class coreInfrastructure:
             conn = sqlite3.connect(str(db_path))
         return conn
 
+    def _detect_domain(self, task_description: str) -> str:
+        """Hilfsmethode zur Erkennung der SQL-Tabelle basierend auf der Aufgabe."""
+        # Fallback falls die Methode im Original fehlte
+        return "app_standards"
+
     def _get_relevant_tips(self, task_description: str) -> str:
         """Lädt kontextbezogene Richtlinien und Knoten aus dem Routing Tree."""
         domain = self._detect_domain(task_description)
-        tips = (" [SYSTEM CORE MEMORY: KNOWLEDGE AGENT ROUTING TREE]")
+        
+        # FIX 1: Als Liste initialisieren, damit .append() funktioniert
+        tips = ["[SYSTEM CORE MEMORY: KNOWLEDGE AGENT ROUTING TREE]"]
 
-        with self.get_db_connection() as conn:
+        # FIX 2: Standard-Datenbanknamen übergeben, damit kein TypeError geworfen wird
+        with self.get_db_connection("app_standards.db") as conn:
             cursor = conn.cursor()
 
             try:
@@ -148,7 +150,7 @@ class coreInfrastructure:
             for node_id, title, instruction in blueprints:
                 tips.append(f"• Step [{node_id}] {title}: {instruction}")
 
-        if len(tips) <= 3:
+        if len(tips) <= 5:
             return f"No prior routing tree nodes recorded for domain [{domain}]."
         return "\n".join(tips)
 
