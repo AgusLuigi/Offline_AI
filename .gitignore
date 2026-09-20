@@ -8,7 +8,14 @@ config/python_library_config.json
 config/active_model_config.json
 config/project_paths.json
 data/users/user_alice_mai-ai_local/inbox/user_inbox.db
-src/agent/__pycache__/__ollama_running.cpython-313.pyc
+src/agent/__pycache__/*
 config/active_model_config.json
 src/agent/agent_universal_skript/__pycache__/*
+<<<<<<< HEAD
 src/agent/meta_coder_sql_V1.py
+=======
+tests/__pycache__/test_ollama_model_sanitization.cpython-311.pyc
+src/Jarvis/__pycache__/jarvis_onboarding.cpython-311.pyc
+src/agent/__pycache__/meta_coder_sql.cpython-311.pyc
+src/agent/__pycache__/__ollama_running.cpython-311.pyc
+>>>>>>> 709fb5cbcc11e1cde2159418c2c64e7f55ce1332
