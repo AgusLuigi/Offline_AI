@@ -11,3 +11,4 @@ data/users/user_alice_mai-ai_local/inbox/user_inbox.db
 src/agent/__pycache__/__ollama_running.cpython-313.pyc
 config/active_model_config.json
 src/agent/agent_universal_skript/__pycache__/*
+src/agent/meta_coder_sql_V1.py

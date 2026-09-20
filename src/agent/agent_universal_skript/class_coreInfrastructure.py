@@ -10,7 +10,7 @@ class coreInfrastructure:
     PROJECT_POINT = "src"
 
     @classmethod
-    def get_project_root(cls, start_path: Path = None) -> Path:
+    def get_project_root(cls, start_path: PROJECT_POINT) -> Path:
         """
         Sucht heuristisch im Verzeichnisbaum nach oben, bis ein Projekt-Root
         (definiert durch das Vorhandensein eines 'PROJECT_POINT'-Ordners) gefunden wird.
