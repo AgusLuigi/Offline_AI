@@ -1,13 +1,19 @@
 import os
-import sys
-import subprocess
 import sqlite3
-import time
-import gc
+import subprocess
+import sys
 import threading
 from datetime import datetime
 from pathlib import Path
+
 from ollama import Client
+
+# Hauptverzeichnis zum Python-Pfad hinzufügen
+sys.path.append(str(Path(__file__).resolve().parent))
+
+# Funktion importieren und direkt ausführen
+from agent_universal_skript.auto_bootstrap_and_register_agents import auto_bootstrap_and_register_agents
+auto_bootstrap_and_register_agents()
 
 # Globale Einstellungen
 _OLLAMA_VERIFIED_CACHE = False
@@ -18,139 +24,6 @@ BASE_DIR = "Knowledge"
 SUBFOLDER = "Knowledge_Agent_Hierarchical_Routing_Tree_SQL"
 DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
 OLLAMA_CHECKER_FILENAME = "__ollama_running.py"
-
-class ResourceAwareSpinner:
-    """
-    Kapselt den visuellen Terminal-Spinner inklusive Live-Ressourcenüberwachung (CPU/RAM).
-    Läuft fehlertolerant im Hintergrund-Thread, ohne den Hauptprozess zu blockieren.
-    """
-    # Globale Schutz- und Mindesteinstellungen für den Agenten
-    MIN_RAM_MB = 2000          # Mindestens 2 GB RAM-Sicherheitspuffer
-    MAX_CPU_THRESHOLD = 90.0   # Warnschwelle bei CPU-Auslastung
-    SPINNER_INTERVAL = 1.0     # Taktung der Aktualisierung in Sekunden
-
-    def __init__(self, agent_name: str = "Codestral-Agent"):
-        self.agent_name = agent_name
-        self.has_psutil = self._check_psutil()
-
-    @staticmethod
-    def _check_psutil() -> bool:
-        try:
-            import psutil
-            return True
-        except ImportError:
-            return False
-
-    def _get_system_metrics(self) -> str:
-        """Sammelt ressourcenschonend CPU- und RAM-Werte für die Live-Anzeige."""
-        if not self.has_psutil:
-            return ""
-        
-        try:
-            import psutil
-            ram_avail = psutil.virtual_memory().available / (1024**3)
-            cpu_usage = psutil.cpu_percent(interval=None)
-
-            # Automatisches Aufräumen, falls der RAM unter das Limit fällt
-            if ram_avail < (self.MIN_RAM_MB / 1024):
-                gc.collect()
-                return f"⚠️ RAM kritisch ({ram_avail:.2f}GB) | GC aktiv"
-
-            if cpu_usage > self.MAX_CPU_THRESHOLD:
-                return f"🔥 CPU Last hoch ({cpu_usage:.0f}%)"
-
-            return f"RAM frei: {ram_avail:.1f}GB | CPU: {cpu_usage:.0f}%"
-        except Exception:
-            return ""
-
-    def run(self, stop_event: threading.Event, is_de: bool = True):
-        """
-        Startet die Endlos-Visualisierung im Terminal, bis das `stop_event` gesetzt wird.
-        """
-        chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-        base_msg = f"[{self.agent_name}] Arbeitet..." if is_de else f"[{self.agent_name}] Processing..."
-        idx = 0
-        
-        try:
-            while not stop_event.is_set():
-                metrics = self._get_system_metrics()
-                metric_str = f" | {metrics}" if metrics else ""
-                
-                output_line = f"\r{base_msg} {chars[idx % len(chars)]}{metric_str}   "
-                sys.stdout.write(output_line)
-                sys.stdout.flush()
-                
-                idx += 1
-                time.sleep(self.SPINNER_INTERVAL)
-        except Exception:
-            pass  # Verhindert jeglichen Crash des Hauptprogramms durch Darstellungsfehler
-        finally:
-            # Zeile nach Beendigung sauber im Terminal bereinigen
-            sys.stdout.write('\r' + ' ' * 100 + '\r')
-            sys.stdout.flush()
-
-# SUB-AGENT EXECUTION ENGINE & SANDBOX VERIFIER
-class SubAgentVerifier:
-    """
-    Closed-Loop Code Execution & Sandbox Verifier.
-    Führt generierten Python-Code in einem isolierten Subprozess aus, fängt stdout/stderr ab
-    und verhindert, dass unvalidierter oder fehlerhafter Code in die Systemtabellen gelangt.
-    """
-    @staticmethod
-    def extract_code_blocks(text: str) -> list[str]:
-        """Extrahiert alle Python-Codeblöcke aus einer Textantwort."""
-        blocks = []
-        if "```python" in text:
-            parts = text.split("```python")
-            for p in parts[1:]:
-                if "```" in p:
-                    code = p.split("```")[0].strip()
-                    if code:
-                        blocks.append(code)
-        elif "```" in text:
-            parts = text.split("```")
-            for i in range(1, len(parts), 2):
-                code = parts[i].strip()
-                if code and not any(code.startswith(tag) for tag in ["markdown", "sql", "bash", "json", "yaml"]):
-                    blocks.append(code)
-        return blocks
-
-    @staticmethod
-    def verify_code_in_sandbox(code_snippet: str, timeout_sec: int = 15) -> tuple[bool, str]:
-        """
-        Führt das Code-Snippet in einem separaten Python-Subprozess im Sandbox-Verzeichnis aus.
-        Gibt (success: bool, output: str) zurück.
-        """
-        import tempfile
-        sandbox_dir = MetaCodeBase.get_project_root() / "scratch"
-        sandbox_dir.mkdir(parents=True, exist_ok=True)
-        
-        temp_file = None
-        try:
-            with tempfile.NamedTemporaryFile(suffix=".py", mode="w", encoding="utf-8", dir=str(sandbox_dir), delete=False) as f:
-                f.write(code_snippet)
-                temp_file = Path(f.name)
-
-            res = subprocess.run(
-                [sys.executable, str(temp_file)],
-                capture_output=True,
-                text=True,
-                timeout=timeout_sec,
-                cwd=str(MetaCodeBase.get_project_root())
-            )
-            success = (res.returncode == 0)
-            output = res.stdout.strip() if success else (res.stderr.strip() or res.stdout.strip())
-            return success, output
-        except subprocess.TimeoutExpired:
-            return False, f"Sandbox execution timeout ({timeout_sec}s exceeded)."
-        except Exception as err:
-            return False, f"Sandbox execution error: {err}"
-        finally:
-            if temp_file and temp_file.exists():
-                try:
-                    temp_file.unlink()
-                except Exception:
-                    pass
 
 # META-CODEBASE & HIERARCHICAL ROUTING TREE AGENT
 class MetaCodeBase:
@@ -288,13 +161,13 @@ class MetaCodeBase:
                 print(f"[FEHLER] Fehler beim Ausführen von '__ollama_running.py': {e}")
                 return False
         else:
-            print(f"[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
+            print("[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
             return False
 
-    def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
+    def __init__(self, model_name: str = "mixtral:instruct", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
         global _OLLAMA_VERIFIED_CACHE
         if require_ollama and not _OLLAMA_VERIFIED_CACHE:
-            print(f"[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
+            print("[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
             sys.exit(1)
 
         self.model_name = model_name

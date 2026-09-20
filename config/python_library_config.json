@@ -5,7 +5,7 @@
     },
     {
         "library": "anyio",
-        "version": "4.14.2"
+        "version": "4.15.1"
     },
     {
         "library": "argon2-cffi",
@@ -65,7 +65,7 @@
     },
     {
         "library": "debugpy",
-        "version": "1.8.21"
+        "version": "1.8.22"
     },
     {
         "library": "defusedxml",
@@ -101,7 +101,7 @@
     },
     {
         "library": "idna",
-        "version": "3.19"
+        "version": "3.20"
     },
     {
         "library": "ipykernel",
@@ -109,7 +109,7 @@
     },
     {
         "library": "ipython",
-        "version": "9.16.1"
+        "version": "9.17.1"
     },
     {
         "library": "ipython_pygments_lexers",
@@ -165,11 +165,11 @@
     },
     {
         "library": "jupyter_builder",
-        "version": "1.2.2"
+        "version": "1.2.3"
     },
     {
         "library": "jupyter_client",
-        "version": "8.9.1"
+        "version": "8.10.0"
     },
     {
         "library": "jupyter_core",
@@ -177,7 +177,7 @@
     },
     {
         "library": "jupyter_server",
-        "version": "2.20.0"
+        "version": "2.21.1"
     },
     {
         "library": "jupyter_server_terminals",
@@ -193,7 +193,7 @@
     },
     {
         "library": "jupyterlab_server",
-        "version": "2.28.0"
+        "version": "2.28.1"
     },
     {
         "library": "jupyterlab_widgets",
@@ -252,10 +252,6 @@
         "version": "26.3"
     },
     {
-        "library": "packaging",
-        "version": "26.2"
-    },
-    {
         "library": "pandocfilters",
         "version": "1.5.1"
     },
@@ -265,11 +261,11 @@
     },
     {
         "library": "pip",
-        "version": "26.1.2"
+        "version": "26.2.1"
     },
     {
         "library": "platformdirs",
-        "version": "4.11.3"
+        "version": "4.11.10"
     },
     {
         "library": "prometheus_client",
@@ -285,7 +281,7 @@
     },
     {
         "library": "pure_eval",
-        "version": "0.2.3"
+        "version": "0.2.4"
     },
     {
         "library": "pycparser",
@@ -293,11 +289,11 @@
     },
     {
         "library": "pydantic",
-        "version": "2.13.4"
+        "version": "2.13.5"
     },
     {
         "library": "pydantic_core",
-        "version": "2.46.4"
+        "version": "2.46.5"
     },
     {
         "library": "pygments",
@@ -325,7 +321,7 @@
     },
     {
         "library": "pyzmq",
-        "version": "27.1.0"
+        "version": "27.2.0"
     },
     {
         "library": "referencing",
@@ -381,7 +377,7 @@
     },
     {
         "library": "tornado",
-        "version": "6.5.8"
+        "version": "6.5.10"
     },
     {
         "library": "traitlets",
@@ -397,7 +393,7 @@
     },
     {
         "library": "tzdata",
-        "version": "2026.3"
+        "version": "2026.4"
     },
     {
         "library": "uri-template",
@@ -405,11 +401,11 @@
     },
     {
         "library": "urllib3",
-        "version": "2.7.0"
+        "version": "2.8.0"
     },
     {
         "library": "wcwidth",
-        "version": "0.8.2"
+        "version": "0.8.4"
     },
     {
         "library": "webcolors",
@@ -421,7 +417,7 @@
     },
     {
         "library": "websocket-client",
-        "version": "1.9.0"
+        "version": "1.9.2"
     },
     {
         "library": "wheel",
