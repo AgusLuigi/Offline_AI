@@ -291,7 +291,7 @@ class MetaCodeBase:
             print(f"[FEHLER] Datei '__ollama_running.py' wurde im Projektverzeichnis nicht gefunden.")
             return False
 
-    def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
+    def __init__(self, model_name: str = "llama3.1", ollama_host: str = "http://127.0.0.1:11434", require_ollama: bool = True):
         global _OLLAMA_VERIFIED_CACHE
         if require_ollama and not _OLLAMA_VERIFIED_CACHE:
             print(f"[KRITISCHER ABBRUCH] Ollama ist nicht verifiziert (_OLLAMA_VERIFIED_CACHE = False).")
