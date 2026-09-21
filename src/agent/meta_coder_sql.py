@@ -116,7 +116,7 @@ class MetaCoderSQLPipeline(class_sql_reader):
             try:
                 self.initialize_blueprint_system(task_description)
             except Exception as e:
-                print(f"[GEGENKONTROLLE FEHLER] Blueprint-System übersprungen: {e}")
+                print(f"[GEGENKONTROLLE FEHLER] Blueprint-System übersprungen: {e}")  
             # 2. Cache abfragen / Eintrag vorbereiten
             try:
                 cached_check = self.get_cached_or_create_query(task_description)
@@ -125,24 +125,24 @@ class MetaCoderSQLPipeline(class_sql_reader):
                     return cached_check
                 node_id = cached_check.get("node_id") if cached_check else None
             except Exception as e:
-                print(f"[GEGENKONTROLLE FEHLER] Cache-Abfrage fehlgeschlagen: {e}")
+                print(f"[GEGENKONTROLLE FEHLER] Cache-Abfrage fehlgeschlagen: {e}")        
             # Falls kein Reader die Node-ID generiert hat, bauen wir die ID deterministisch vorab
             if not node_id:
                 current_time = datetime.datetime.now().strftime("%H%M%S")
                 unique_suffix = str(random.randint(100000, 999999))
                 node_id = f"STEP_{current_time}_{unique_suffix}"
                 print(f"[PIPELINE-FIX] Generiere autonome Pipeline-ID: {node_id}")
-
+            # 3. Sandbox-Ausführungsumgebung für den EvolveLoop definieren
             def execution_runner(payload):
                 nonlocal codes
                 codes = SubAgentVerifier.extract_code_blocks(payload.get("task", ""))
                 if codes:
-                    success, output = SubAgentVerifier.verify_code_in_sandbox(codes[0])
+                    success, output = SubAgentVerifier.verify_code_in_sandbox(codes)
                     if not success:
                         raise RuntimeError(f"Sandbox-Fehler: {output}")
                     return output
                 return "Kein ausführbarer Code-Block gefunden, logische Ausführung erfolgreich."
-            # 3. Evolutionsschleife starten
+            # 4. Evolutionsschleife (Test & Evolve) starten
             evolution_result = self.evolution_loop.test_and_evolve_loop(
                 specialization="MetaCoder SQL Automated Pipeline",
                 task_description=task_description,
@@ -152,19 +152,18 @@ class MetaCoderSQLPipeline(class_sql_reader):
             )
             final_status = evolution_result.get("status")
             final_message = evolution_result.get("message") or evolution_result.get("result", "")
-            snippet_to_store = codes[0] if codes else ""
-            # 4. Ergebnisse mit gesicherter Node-ID zurückspeichern
+            snippet_to_store = codes if codes else ""
+            # 5. Generierte Ergebnisse mit gesicherter Node-ID im Cache versiegeln
             try:
                 self.store_query_result(node_id=node_id, answer=str(final_message), snippet=snippet_to_store)
             except Exception as e:
                 print(f"[GEGENKONTROLLE FEHLER] store_query_result abgebrochen: {e}")
+            # 6. Zeitstempel-Protokollierung ohne den blockierenden 'node_id' Parameter aufrufen
             try:
-                # Reicht die node_id an den Zeitstempel-Logger weiter
                 self.log_save_query_run_to_db_timestamp(
                     task_description=task_description,
                     error_msg="" if final_status == "SUCCESS" else str(evolution_result.get("last_error")),
                     solution_code=str(final_message),
-                    node_id=node_id  # Verhindert den Zeitstempel-Abbruch im Folge-Protokoll
                 )
             except Exception as e:
                 print(f"[GEGENKONTROLLE FEHLER] Zeitstempel-Verankerung fehlgeschlagen: {e}")
