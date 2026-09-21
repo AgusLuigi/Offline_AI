@@ -21,7 +21,6 @@ class coreInfrastructure:
             file_path = Path(start_path).resolve()
 
         current = file_path if file_path.is_dir() else file_path.parent
-
         try:
             for parent in [current] + list(current.parents):
                 if parent.name.lower() == cls.PROJECT_POINT.lower():
@@ -30,7 +29,6 @@ class coreInfrastructure:
                     return parent
         except Exception as e:
             print(f"[KRITISCHER FEHLER] Konnte Ankerpunkt nicht finden: {e}")
-
         return current
     
     @classmethod
@@ -85,20 +83,16 @@ class coreInfrastructure:
     def _get_relevant_tips(self, task_description: str) -> str:
         """Lädt kontextbezogene Richtlinien und Knoten aus dem Routing Tree."""
         domain = self._detect_domain(task_description)
-        
         # FIX 1: Als Liste initialisieren, damit .append() funktioniert
         tips = ["[SYSTEM CORE MEMORY: KNOWLEDGE AGENT ROUTING TREE]"]
-
         # FIX 2: Standard-Datenbanknamen übergeben, damit kein TypeError geworfen wird
         with self.get_db_connection("app_standards.db") as conn:
             cursor = conn.cursor()
-
             try:
                 cursor.execute("SELECT directive_key, explanation_for_agent FROM agent_system_manifest LIMIT 5")
                 manifest_rows = cursor.fetchall()
             except sqlite3.OperationalError:
                 manifest_rows = []
-
             try:
                 words = [w for w in task_description.lower().split() if len(w) > 3]
                 domain_rows = []
@@ -114,7 +108,6 @@ class coreInfrastructure:
                         params
                     )
                     domain_rows = cursor.fetchall()
-
                 if not domain_rows:
                     cursor.execute(
                         f"SELECT node_id, topic_title, agent_instruction, example_code_snippet FROM {domain} "
@@ -123,7 +116,6 @@ class coreInfrastructure:
                     domain_rows = cursor.fetchall()
             except sqlite3.OperationalError:
                 domain_rows = []
-
             try:
                 cursor.execute(
                     "SELECT node_id, topic_title, agent_instruction FROM pre_execution_blueprint_generator "
@@ -132,24 +124,20 @@ class coreInfrastructure:
                 blueprints = cursor.fetchall()
             except sqlite3.OperationalError:
                 blueprints = []
-
         if manifest_rows:
             tips.append("\n--- Agent System Manifest & Core Directives ---")
             for key, exp in manifest_rows:
                 tips.append(f"• [{key}]: {exp}")
-
         if domain_rows:
             tips.append(f"\n--- Relevant Nodes from Domain [{domain}] ---")
             for node_id, title, instruction, snippet in domain_rows:
                 tips.append(f"• Node [{node_id}] {title}: {instruction}")
                 if snippet and snippet.strip() and not snippet.startswith("# FX_"):
                     tips.append(f"  Code Snippet: {snippet.strip()[:150]}...")
-
         if blueprints:
             tips.append("\n--- Mandatory Pre-Execution Blueprints ---")
             for node_id, title, instruction in blueprints:
                 tips.append(f"• Step [{node_id}] {title}: {instruction}")
-
         if len(tips) <= 5:
             return f"No prior routing tree nodes recorded for domain [{domain}]."
         return "\n".join(tips)
