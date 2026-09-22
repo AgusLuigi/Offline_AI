@@ -1,5 +1,7 @@
+import json
 import time
 import traceback
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 
@@ -7,15 +9,21 @@ class EvolveLoopTest:
     """
     Klasse zur Steuerung des autonomen Test- und Evolutions-Zyklus (Closed-Loop-Architektur).
     
-    Diese Klasse dient als Steuerungs-Framework für KI-Agenten, um generierten Code oder 
-    Workflow-Schritte in einer geschlossenen Schleife zu verifizieren, auszuführen und bei 
-    Fehlern automatisch anzupassen (Evolution / Fallback).
+    Dieses Framework ist agent-agnostisch: Es steuert den Zyklus aus Verifizierung,
+    Ausführung und Fehlerbehandlung, ohne eigene DB-Operationen oder agent-spezifische Logik.
     
     Erweiterungsmöglichkeiten für Agenten:
     - Integration einer Docker-basierten Sandbox für die Code-Ausführung.
     - Anbindung an eine relationale Datenbank (z.B. SQLite) zur Persistenz von Metriken.
     - Dynamische Anpassung von Schwellenwerten (Success Weights / Error Fallbacks).
+
+    Konfigurierbare Parameter:
+    - max_generations: Über test_and_evolve_loop()-Parameter
+    - retry_delay: Über Klassenattribut EVOLUTION_RETRY_DELAY_SEC
     """
+
+    # Konfigurierbare Schwellenwerte
+    EVOLUTION_RETRY_DELAY_SEC = 1
 
     def __init__(self, registry_db_path: Optional[str] = None):
         self.registry_db_path = registry_db_path
@@ -26,7 +34,6 @@ class EvolveLoopTest:
         Führt eine Closed-Loop-Verifizierung in einer isolierten Umgebung aus.
         Passiver Text wird nicht akzeptiert; Code-Snippets müssen lauffähig sein.
         """
-        # Hier greift im voll ausgebauten Agenten-System die Sandbox-Isolation
         return execution_func(task_payload)
 
     def test_and_evolve_loop(
@@ -41,7 +48,7 @@ class EvolveLoopTest:
         Führt den vollständigen Test- und Evolutions-Zyklus aus.
         
         Parameter:
-            specialization (str): Fachbereich oder Agenten-Kontext (z.B. 'Data Science', 'Elektrotechnik').
+            specialization (str): Fachbereich oder Agenten-Kontext.
             task_description (str): Beschreibung der aktuellen Aufgabe.
             base_filename (str): Basis-Dateiname oder Identifier für Artefakte.
             max_generations (int): Maximale Anzahl von Evolutionsversuchen bei Fehlschlägen.
@@ -63,10 +70,8 @@ class EvolveLoopTest:
 
             try:
                 if execution_func:
-                    # Closed-Loop Ausführung über die definierte Funktion
                     result_data = self._verify_in_sandbox({"task": task_description}, execution_func)
                 else:
-                    # Standard-Simulations-Fallback, falls keine Funktion übergeben wurde
                     result_data = f"Simuliertes Ergebnis für {base_filename} in Generation {current_generation}"
                 
                 success = True
@@ -76,9 +81,7 @@ class EvolveLoopTest:
                 last_error = str(e)
                 print(f"[METABASE] Fehler in Generation {current_generation}: {last_error}")
                 traceback.print_exc()
-                # Hier greift im erweiterten System das automatische Deaktivieren des Knotens (is_active = 0)
-                # und der Wechsel in die Notfall-Registry (FX_CHAIN).
-                time.sleep(1)  #Kurze Pause vor dem nächsten Evolutionsschritt
+                time.sleep(self.EVOLUTION_RETRY_DELAY_SEC)
 
         if success:
             return {
@@ -97,36 +100,6 @@ class EvolveLoopTest:
                 "fallback_triggered": True,
                 "message": f"Evolutions-Schleife fehlgeschlagen nach {max_generations} Versuchen. Fallback-Registry aktiviert."
             }
-
-    def persist_new_capability(self, capability_name: str, code_snippet: str, description: str):
-        """Speichert eine neue Fähigkeit dauerhaft in der Registry."""
-        with self.get_db_connection() as conn:
-            self._insert_routing_node(
-                conn=conn,
-                table_name="library_registry" if "library_registry" in [row[0] for row in conn.cursor().execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()] else "user_query",
-                node_id=f"CAP_{datetime.now().strftime('%H%M%S')}",
-                topic_title=capability_name,
-                topic_specification=description,
-                agent_instruction="CAPABILITY_REGISTERED",
-                example_code_snippet=code_snippet,
-                validation_rule="VERIFIED"
-            )
-
-    def record_feedback(self, query_node_id: str, is_positive: bool, comment: str = "") -> dict:
-        """Verarbeitet Benutzer-Feedback und aktualisiert die Gewichte in der Datenbank."""
-        with self.get_db_connection() as conn:
-            cursor = conn.cursor()
-            if is_positive:
-                cursor.execute("""
-                    UPDATE user_query
-                    SET success_weight = success_weight + 0.2,
-                        validation_rule = 'POSITIVE_VERIFIED'
-                    WHERE node_id = ?
-                """, (query_node_id,))
-                conn.commit()
-                return {"status": "success", "feedback": "positive", "node_id": query_node_id}
-            else:
-                return self.deactivate_and_reroute("user_query", query_node_id, failure_reason=comment or "Negatives Feedback")
 
     def extract_code_from_notebook(self, notebook_path: str) -> List[str]:
         """
@@ -153,33 +126,63 @@ class EvolveLoopTest:
             
         return code_snippets
 
+    def persist_new_capability(self, capability_name: str, code_snippet: str, description: str):
+        """Speichert eine neue Fähigkeit dauerhaft in der Registry."""
+        with self.get_db_connection() as conn:
+            self._insert_routing_node(
+                conn=conn,
+                table_name="library_registry" if "library_registry" in [row[0] for row in conn.cursor().execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()] else "user_query",
+                node_id=f"CAP_{datetime.now().strftime('%H%M%S')}",
+                topic_title=capability_name,
+                topic_specification=description,
+                agent_instruction="CAPABILITY_REGISTERED",
+                example_code_snippet=code_snippet,
+                validation_rule="VERIFIED"
+            )
+
     def query_meta_coder_sql(self, notebook_path: str, instruction: str) -> Dict[str, Any]:
-        """
-        Schnittstelle: Analysiert ein Jupyter Notebook, lernt daraus und 
-        startet den Evolutions-Agenten für SQL- oder Code-Anweisungen.
-    -   """
-        # 1. Aus dem Jupyter Notebook lernen (Code extrahieren)
-        learned_code_patterns = self.extract_code_from_notebook(notebook_path)
-        
-        # 2. Spezifikation und Task-Kontext aufbauen
-        spec = f"Hierarchical Routing Tree SQL Agent for {Path(notebook_path).name}"
-        task = f"""
-        Target Notebook Path: {notebook_path}
-        User Instruction/Routing Goal: {instruction}
-        Learned Context Snippets Count: {len(learned_code_patterns)}
-        """
-        
-        # 3. Evolutions-Schleife triggern
-        return self.test_and_evolve_loop(
-            specialization=spec,
-            task_description=task,
-            base_filename=f"sql_routing_agent_{Path(notebook_path).stem}",
-            max_generations=3
-        )
+            """
+            Schnittstelle: Analysiert ein Jupyter Notebook, lernt daraus und 
+            startet den Evolutions-Agenten für SQL- oder Code-Anweisungen.
+        -   """
+            # 1. Aus dem Jupyter Notebook lernen (Code extrahieren)
+            learned_code_patterns = self.extract_code_from_notebook(notebook_path)
+            
+            # 2. Spezifikation und Task-Kontext aufbauen
+            spec = f"Hierarchical Routing Tree SQL Agent for {Path(notebook_path).name}"
+            task = f"""
+            Target Notebook Path: {notebook_path}
+            User Instruction/Routing Goal: {instruction}
+            Learned Context Snippets Count: {len(learned_code_patterns)}
+            """
+            
+            # 3. Evolutions-Schleife triggern
+            return self.test_and_evolve_loop(
+                specialization=spec,
+                task_description=task,
+                base_filename=f"sql_routing_agent_{Path(notebook_path).stem}",
+                max_generations=3
+            )
+
+    def record_feedback(self, query_node_id: str, is_positive: bool, comment: str = "") -> dict:
+        """Verarbeitet Benutzer-Feedback und aktualisiert die Gewichte in der Datenbank."""
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            if is_positive:
+                cursor.execute("""
+                    UPDATE user_query
+                    SET success_weight = success_weight + 0.2,
+                        validation_rule = 'POSITIVE_VERIFIED'
+                    WHERE node_id = ?
+                """, (query_node_id,))
+                conn.commit()
+                return {"status": "success", "feedback": "positive", "node_id": query_node_id}
+            else:
+                return self.deactivate_and_reroute("user_query", query_node_id, failure_reason=comment or "Negatives Feedback")
+
 
 # Beispiel für die Verwendung und Erweiterung durch einen Agenten:
 if __name__ == "__main__":
-    # Testfunktion, die einen erfolgreichen Durchlauf simuliert
     def sample_task_runner(payload):
         return f"Erfolgreich ausgeführt mit Payload: {payload['task']}"
 

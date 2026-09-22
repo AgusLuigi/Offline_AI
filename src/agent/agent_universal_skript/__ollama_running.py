@@ -5,10 +5,20 @@ import time
 import urllib.request
 import socket
 
+# ═══════════════════════════════════════════════════════════════
+# KONFIGURIERBARE PARAMETER
+# ═══════════════════════════════════════════════════════════════
+DEFAULT_OLLAMA_HOST = "http://127.0.0.1"
+DEFAULT_OLLAMA_PORT = 11434
+SOCKET_TIMEOUT = 1.0
+API_TIMEOUT = 2
+MAX_START_RETRIES = 3
+RETRY_WAIT_SEC = 3
+
 # Modulinterner RAM-Merker: Speichert, ob Ollama in dieser Session bereits erfolgreich verifiziert wurde
 _OLLAMA_VERIFIED_CACHE = False
 
-def is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
+def is_port_open(host: str, port: int, timeout: float = SOCKET_TIMEOUT) -> bool:
     """Schneller Socket-Check, ob der Port überhaupt erreichbar ist (Best Practice)."""
     try:
         with socket.create_connection((host, port), timeout=timeout):
@@ -16,12 +26,15 @@ def is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
     except (socket.timeout, ConnectionRefusedError, OSError):
         return False
 
-def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
+def check_and_start_ollama(ollama_host: str = None) -> bool:
     """
     Prüft autonom den Status von Ollama (inkl. RAM-Cache), startet den Dienst 
     bei Bedarf im Hintergrund und gibt absolut KEINE Meldungen bei Erfolg aus.
     """
     global _OLLAMA_VERIFIED_CACHE
+
+    if ollama_host is None:
+        ollama_host = f"{DEFAULT_OLLAMA_HOST}:{DEFAULT_OLLAMA_PORT}"
 
     # 0. Schritt: RAM-Cache prüfen – Wenn in dieser Session bereits erfolgreich, sofort still abbrechen
     if _OLLAMA_VERIFIED_CACHE:
@@ -29,13 +42,16 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
 
     # Host und Port für den Socket-Check extrahieren
     host_ip = ollama_host.replace("http://", "").replace("https://", "").split(":")[0]
-    port = int(ollama_host.split(":")[-1]) if ":" in ollama_host else 11434
+    try:
+        port = int(ollama_host.split(":")[-1])
+    except ValueError:
+        port = DEFAULT_OLLAMA_PORT
 
     # 1. Schritt: Minimaler Aufwand – Socket- und API-Schnelltest
-    if is_port_open(host_ip, port, timeout=1.0):
+    if is_port_open(host_ip, port, timeout=SOCKET_TIMEOUT):
         try:
             req = urllib.request.Request(f"{ollama_host}/api/tags")
-            with urllib.request.urlopen(req, timeout=2) as response:
+            with urllib.request.urlopen(req, timeout=API_TIMEOUT) as response:
                 if response.status == 200:
                     _OLLAMA_VERIFIED_CACHE = True
                     return True
@@ -62,12 +78,12 @@ def check_and_start_ollama(ollama_host: str = "http://127.0.0.1:11434") -> bool:
         return False
 
     # 3. Schritt: Warten und verifizieren, ob der automatische Start erfolgreich war
-    for attempt in range(1, 4):
-        time.sleep(3)
-        if is_port_open(host_ip, port, timeout=1.0):
+    for attempt in range(1, MAX_START_RETRIES + 1):
+        time.sleep(RETRY_WAIT_SEC)
+        if is_port_open(host_ip, port, timeout=SOCKET_TIMEOUT):
             try:
                 req = urllib.request.Request(f"{ollama_host}/api/tags")
-                with urllib.request.urlopen(req, timeout=2) as response:
+                with urllib.request.urlopen(req, timeout=API_TIMEOUT) as response:
                     if response.status == 200:
                         _OLLAMA_VERIFIED_CACHE = True  # Erfolgreich im RAM merken – absolut still
                         return True

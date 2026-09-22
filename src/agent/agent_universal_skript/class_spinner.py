@@ -8,15 +8,26 @@ class ResourceAwareSpinner:
     """
     Kapselt den visuellen Terminal-Spinner inklusive Live-Ressourcenüberwachung (CPU/RAM).
     Läuft fehlertolerant im Hintergrund-Thread, ohne den Hauptprozess zu blockieren.
+    Alle Schwellenwerte sind über Klassenattribute oder __init__-Parameter konfigurierbar.
     """
-    # Globale Schutz- und Mindesteinstellungen für den Agenten
+    # Globale Schutz- und Mindesteinstellungen (überschreibbar via __init__ oder Unterklasse)
     MIN_RAM_MB = 2000          # Mindestens 2 GB RAM-Sicherheitspuffer
     MAX_CPU_THRESHOLD = 90.0   # Warnschwelle bei CPU-Auslastung
     SPINNER_INTERVAL = 1.0     # Taktung der Aktualisierung in Sekunden
 
-    def __init__(self, agent_name: str = "Codestral-Agent"):
+    def __init__(self, agent_name: str = "Agent",
+                 min_ram_mb: int = None,
+                 max_cpu_threshold: float = None,
+                 spinner_interval: float = None):
         self.agent_name = agent_name
         self.has_psutil = self._check_psutil()
+        # Individuelle Überschreibung der Klassenattribute pro Instanz
+        if min_ram_mb is not None:
+            self.MIN_RAM_MB = min_ram_mb
+        if max_cpu_threshold is not None:
+            self.MAX_CPU_THRESHOLD = max_cpu_threshold
+        if spinner_interval is not None:
+            self.SPINNER_INTERVAL = spinner_interval
 
     @staticmethod
     def _check_psutil() -> bool:

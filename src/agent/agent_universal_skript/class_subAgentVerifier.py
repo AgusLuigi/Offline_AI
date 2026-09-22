@@ -16,10 +16,16 @@ class SubAgentVerifier(coreInfrastructure):
     Closed-Loop Code Execution & Security Sandbox Verifier.
     Nutzt ausschließlich die zentrale CoreInfrastructure (Vererbung), 
     um Redundanzen zu vermeiden und gemeinsame Verbesserungen zu garantieren.
+    Alle Sicherheits- und Leistungswerte als konfigurierbare Klassenattribute.
     """
     
+    # Konfigurierbare Sicherheits-Sets (überschreibbar durch Unterklassen)
     FORBIDDEN_MODULES = {"subprocess", "shutil", "socket", "ctypes", "pickle", "multiprocessing"}
     FORBIDDEN_FUNCTIONS = {"eval", "exec", "__import__", "compile", "open"}
+    
+    # Konfigurierbare Leistungsparameter
+    DEFAULT_SANDBOX_TIMEOUT = 15
+    MAX_SANDBOX_OUTPUT_LENGTH = 4000
 
     @staticmethod
     def extract_code_blocks(text: str) -> list[str]:
@@ -65,11 +71,14 @@ class SubAgentVerifier(coreInfrastructure):
         return True, "AST-Check bestanden."
 
     @classmethod
-    def verify_code_in_sandbox(cls, code_snippet: str, project_root: Path = None, timeout_sec: int = 15) -> tuple[bool, str]:
+    def verify_code_in_sandbox(cls, code_snippet: str, project_root: Path = None, timeout_sec: int = None) -> tuple[bool, str]:
         """
         Führt das Code-Snippet in einem separaten Python-Subprozess im Sandbox-Verzeichnis aus.
         Greift direkt auf die zentrale get_project_root()-Methode der CoreInfrastructure zurück.
         """
+        if timeout_sec is None:
+            timeout_sec = cls.DEFAULT_SANDBOX_TIMEOUT
+
         # 1. Nutzung der zentralen, vererbten Infrastruktur-Logik
         if project_root is None:
             project_root = cls.get_project_root()
@@ -97,11 +106,10 @@ class SubAgentVerifier(coreInfrastructure):
             )
             
             success = (res.returncode == 0)
-            max_output_length = 4000
             raw_output = res.stdout.strip() if success else (res.stderr.strip() or res.stdout.strip())
             
-            if len(raw_output) > max_output_length:
-                output = raw_output[:max_output_length] + "\n... [Output aus Sicherheitsgründen abgeschnitten]"
+            if len(raw_output) > cls.MAX_SANDBOX_OUTPUT_LENGTH:
+                output = raw_output[:cls.MAX_SANDBOX_OUTPUT_LENGTH] + "\n... [Output aus Sicherheitsgründen abgeschnitten]"
             else:
                 output = raw_output
                 

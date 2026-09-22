@@ -2,12 +2,17 @@ import os
 import sqlite3
 from pathlib import Path
 
+
 class coreInfrastructure:
     """
     Zentrale Basis-Infrastruktur für alle zukünftigen Agenten und Tools.
     Ermittelt das Projekt-Hauptverzeichnis rein dynamisch über das Auffinden des 'PROJECT_POINT'-Ordners.
+    Keine agenten-spezifischen Begriffe oder Domains — rein technische Infrastruktur.
     """
     PROJECT_POINT = "src"
+
+    # Ollama-Verifizierungsstatus als Klassenattribut (statt global)
+    _ollama_verified = False
 
     @classmethod
     def get_project_root(cls, start_path=None) -> Path:
@@ -36,7 +41,7 @@ class coreInfrastructure:
     @classmethod
     def get_file_path(cls, filename: str) -> Path:
         """
-        Sucht universell nach einer beliebigen Datei im Projektverzeichnis.
+        Sucht universell nach einer beliebigen Datei im Projektverzeichnis,
         ausgehend vom automatischen Projekt-Root, und bricht bei Nichtfinden ab.
         """
         base_root = cls.get_project_root()
@@ -63,10 +68,10 @@ class coreInfrastructure:
         return status
 
     @classmethod
-    def get_db_connection(cls, filename: str = "app_standards.db") -> sqlite3.Connection:
+    def get_db_connection(cls, filename: str) -> sqlite3.Connection:
         """
         Öffnet eine robuste Verbindung zur übergebenen SQLite-Datenbank.
-        Standardwert ("app_standards.db") verhindert den Absturz bei leerem Aufruf.
+        Erfordert expliziten Dateinamen — kein Hardcoded-Default.
         """
         db_path = cls.get_file_path(filename)
         posix_path = db_path.resolve().as_posix()
@@ -154,17 +159,21 @@ class coreInfrastructure:
             return f"No prior routing tree nodes recorded for domain [{domain}]."
         return "\n".join(tips)
 
-    @staticmethod
-    def load_optional_ollama_checker() -> bool:
-        """Prüft optional, ob Ollama erreichbar ist."""
-        global _OLLAMA_VERIFIED_CACHE
-        if _OLLAMA_VERIFIED_CACHE:
+
+    @classmethod
+    def load_optional_ollama_checker(cls) -> bool:
+        """Prüft optional, ob Ollama erreichbar ist (mit Guard-Import)."""
+        if cls._ollama_verified:
             return True
         try:
+            from ollama import Client
             client = Client()
             client.list()
-            _OLLAMA_VERIFIED_CACHE = True
+            cls._ollama_verified = True
             return True
+        except ImportError:
+            print("[OLLAMA WARNUNG] Das Paket 'ollama' ist nicht installiert.")
+            return False
         except Exception as e:
             print(f"[OLLAMA WARNUNG] Konnte keine Verbindung zu Ollama herstellen: {e}")
             return False
