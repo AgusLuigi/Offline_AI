@@ -5,6 +5,48 @@ from pathlib import Path
 
 
 class class_sql_reader:
+    """
+    Universeller SQL-Reader für den Knowledge Agent Routing Tree.
+    Alle konfigurierbaren Parameter sind als Klassenattribute definiert,
+    damit Agenten sie per Unterklasse oder Instanz überschreiben können.
+    Keine fixen Agent-Namen, Domains oder Tabellen im Code-Body.
+    """
+    # KONFIGURIERBARE KLASSENATTRIBUTE (überschreibbar durch Agenten)
+    # Erlaubte Tabellen für SQL-Operationen
+    ALLOWED_TABLES = {
+        "user_query",
+        "table_issue_data_time_stamp_run_protocol_for_query"
+    }
+
+    # Fallback-Domain bei unbekannter Klassifizierung
+    DEFAULT_DOMAIN = "python_domain"
+
+    # Domain-Keyword-Mapping für die heuristische Erkennung
+    DOMAIN_KEYWORDS = {
+        "sql_domain": ["sql", "database", "query", "sqlite", "postgres", "select", "insert", "update", "table"],
+        "infrastructure_domain": ["docker", "container", "traefik", "ollama", "deployment", "server", "network"],
+        "fehlererkennung": ["bug", "fix", "error", "exception", "debugging", "crash", "stacktrace", "failure"],
+        "logische_anfrage": ["bedingung", "logik", "berechnen", "vergleichen", "auswerten", "algorithmus", "verständnis"],
+        "python_domain": ["python", "script", "code", "function", "variables", "data", "science"]
+    }
+
+    # Schwellenwert für TF-IDF Ähnlichkeitsanalyse
+    TFIDF_SIMILARITY_THRESHOLD = 0.15
+
+    # Ob fehlende Dependencies automatisch installiert werden sollen
+    AUTO_INSTALL_DEPENDENCIES = True
+
+    # Text-Limits
+    TASK_DESCRIPTION_MAX_LEN = 200
+    CODE_SNIPPET_PREVIEW_LEN = 150
+    QUERY_TITLE_MAX_LEN = 35
+
+    # Blueprint/Manifest-Limits
+    MAX_BLUEPRINT_STEPS = 5
+    MAX_DOMAIN_NODES = 3
+    MAX_MANIFEST_ENTRIES = 5
+
+    # METHODEN
     @staticmethod
     def initialize_blueprint_system(user_input: str) -> dict:
         """
@@ -12,20 +54,14 @@ class class_sql_reader:
         Meldet jeden Fehler sofort und bricht kontrolliert ab.
         """
         try:
-            # Gegenkontrolle 1: Prüfen, ob die Eingabe überhaupt existiert und valide ist
             if not user_input or not isinstance(user_input, str) or not user_input.strip():
                 raise ValueError("Die Benutzereingabe für das Blueprint-System ist leer oder ungültig.")
-            
-            # Hier findet die reguläre Initialisierung statt
             print(f"[BLUEPRINT] Initialisiere Blueprint-System für Anfrage...")
-            
-            return {"status": "INITIALIZED","query": user_input.strip()}
+            return {"status": "INITIALIZED", "query": user_input.strip()}
             
         except Exception as e:
-            # Gegenkontrolle greift: Fehler exakt melden
             error_message = f"[FEHLER IN initialize_blueprint_system] Konnte das System nicht initialisieren: {str(e)}"
             print(error_message)
-            
             return {
                 "status": "FAILED",
                 "query": user_input,
@@ -37,9 +73,7 @@ class class_sql_reader:
         if not raw_query or not isinstance(raw_query, str):
             print("[GEGENKONTROLLE FEHLER] Ungültige oder leere raw_query übergeben.")
             return {"cache_hit": False, "status": "FAILED", "error": "Ungültige Eingabe"}
-
         cleaned_query = raw_query.strip().lower()
-        
         try:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
@@ -65,7 +99,6 @@ class class_sql_reader:
                     except sqlite3.Error as db_err:
                         print(f"[GEGENKONTROLLE FEHLER] UPDATE des execution_count für Node {cached[0]} fehlgeschlagen: {db_err}")
                         raise
-                        
                     return {
                         "cache_hit": True,
                         "node_id": cached[0],
@@ -82,7 +115,6 @@ class class_sql_reader:
                 except sqlite3.Error as db_err:
                     print(f"[GEGENKONTROLLE FEHLER] Auslesen der node_ids aus 'user_query' fehlgeschlagen: {db_err}")
                     raise
-                
                 next_id_num = next((c for c in range(3, 999) if c not in existing_ids), 998)
                 next_node_id = f"{next_id_num:03d}"
                 
@@ -92,7 +124,7 @@ class class_sql_reader:
                         conn=conn,
                         table_name="user_query",
                         node_id=next_node_id,
-                        topic_title=f"USER QUERY: {raw_query[:35]}",
+                        topic_title=f"USER QUERY: {raw_query[:self.QUERY_TITLE_MAX_LEN]}",
                         topic_specification=raw_query,
                         agent_instruction="PROCESSING",
                         example_code_snippet="",
@@ -102,14 +134,12 @@ class class_sql_reader:
                 except Exception as ins_err:
                     print(f"[GEGENKONTROLLE FEHLER] Einfügen des Routing-Knotens ({next_node_id}) fehlgeschlagen: {ins_err}")
                     raise
-                
                 return {
                     "cache_hit": False,
                     "node_id": next_node_id,
                     "query": raw_query,
                     "status": "PENDING_EXECUTION"
                 }
-                
         except Exception as e:
             error_message = f"[KRITISCHER ABBRUCH IN get_cached_or_create_query]: {str(e)}"
             print(error_message)
@@ -124,12 +154,10 @@ class class_sql_reader:
         if not node_id:
             print("[GEGENKONTROLLE FEHLER] store_query_result aufgerufen ohne gültige node_id.")
             return
-
         try:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
                 
-                # Versuch, den Cache-Eintrag zu aktualisieren
                 cursor.execute("""
                     UPDATE user_query
                     SET agent_instruction = ?,
@@ -138,14 +166,10 @@ class class_sql_reader:
                         is_active = 1
                     WHERE node_id = ?
                 """, (answer, snippet, node_id))
-                
-                # Gegenkontrolle: Prüfen, ob tatsächlich eine Zeile aktualisiert wurde
                 if cursor.rowcount == 0:
                     print(f"[GEGENKONTROLLE WARNUNG] Keine Zeile mit node_id '{node_id}' in 'user_query' gefunden, die aktualisiert werden konnte.")
-                
                 conn.commit()
                 print(f"[SQL-CACHE] Anfrage mit node_id '{node_id}' erfolgreich im Cache versiegelt.")
-                
         except sqlite3.Error as db_err:
             print(f"[GEGENKONTROLLE FEHLER] Datenbankfehler beim Versiegeln des Cache-Ergebnisses für node_id '{node_id}': {db_err}")
         except Exception as e:
@@ -155,19 +179,17 @@ class class_sql_reader:
     def log_save_query_run_to_db_timestamp(self, task_description: str, error_msg: str, solution_code: str, run_id: str = None):
         """
         Protokolliert Mikroschritte und holt den verbindlichen Zeitstempel direkt aus der Datenbank; 
-        steuert die fortlaufende Append-Protokollierung und Crash-Wiederherstellung über run_id (als dynamic_table_name_Zeitstempel) und eindeutige node_id-Einträge.
-        mit lückenhafter Gegenkontrolle und fehlerresistenter Überwachung.
+        steuert die fortlaufende Append-Protokollierung und Crash-Wiederherstellung.
         """
         try:
             domain = self._detect_domain(task_description)
         except Exception as e:
             print(f"[GEGENKONTROLLE FEHLER] Domain-Erkennung fehlgeschlagen: {e}")
-            domain = "python_domain"
+            domain = self.DEFAULT_DOMAIN
 
         try:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
-                
                 # 1. Zeitstempel-Ermittlung aus der Datenbank absichern
                 try:
                     if not run_id:
@@ -179,7 +201,6 @@ class class_sql_reader:
                             LIMIT 1
                         """)
                         db_time = cursor.fetchone()
-                        
                         if db_time and all(db_time):
                             year, month, day, hour, minute, second = db_time
                             run_id = f"{year:04d}{month:02d}{day:02d}_{hour:02d}{minute:02d}{second:02d}"
@@ -195,7 +216,6 @@ class class_sql_reader:
                     now = datetime.now()
                     year, month, day, hour, minute, second = now.year, now.month, now.day, now.hour, now.minute, now.second
                     run_id = now.strftime('%Y%m%d_%H%M%S')
-
                 # Dynamischer Tabellenname
                 dynamic_table_name = f"run_protocol_{run_id}"
                 node_id = f"STEP_{hour:02d}{minute:02d}{second:02d}_{datetime.now().strftime('%f')}"
@@ -204,7 +224,6 @@ class class_sql_reader:
                 try:
                     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (dynamic_table_name,))
                     table_already_exists = cursor.fetchone() is not None
-                    
                     if table_already_exists:
                         print(f"[RECOVERY] Tabelle '{dynamic_table_name}' existiert bereits. Setze fort mit echtem DB-Zeitstempel.")
                 except sqlite3.Error as sqlite_err:
@@ -237,18 +256,18 @@ class class_sql_reader:
                     raise
 
                 # 4. Mikroschritt schreiben absichern
+                max_len = self.TASK_DESCRIPTION_MAX_LEN
                 step_title = f"Step in [{domain}]"
                 if table_already_exists:
                     step_title += " (Resumed)"
-                    
                 try:
                     self._insert_routing_node(
                         conn=conn,
                         table_name=dynamic_table_name,
                         node_id=node_id,
                         topic_title=step_title,
-                        topic_specification=task_description[:200],
-                        agent_instruction=error_msg.strip().split('\n')[-1][:200] if error_msg else "RUN_STEP_SUCCESS",
+                        topic_specification=task_description[:max_len],
+                        agent_instruction=error_msg.strip().split('\n')[-1][:max_len] if error_msg else "RUN_STEP_SUCCESS",
                         example_code_snippet=solution_code,
                         validation_rule="step_logged == TRUE",
                         target_table=domain
@@ -268,127 +287,86 @@ class class_sql_reader:
                 except sqlite3.Error as sqlite_err:
                     print(f"[GEGENKONTROLLE FEHLER] Aktualisieren der Zeitstempel-Daten in '{dynamic_table_name}' fehlgeschlagen: {sqlite_err}")
                     raise
-                
             print(f"[SQL-KNOWLEDGE] Protokollschritt mit DB-Zeitstempel in '{dynamic_table_name}' verankert.")
-
         except Exception as e:
             print(f"[KRITISCHER ABBRUCH IN log_save_query_run_to_db_timestamp]: {str(e)}")
 
     def _detect_domain(self, task_description: str) -> str:
         """
-        Erkennt anhand einer zentralen Definition (Heuristik & TF-IDF kombiniert) die relevante Zieltabelle/Domain.
-        Erweitert um lückenlose Gegenkontrolle und Fehlerprotokollierung.
+        Erkennt anhand einer zentralen Definition (Heuristik & optionalem TF-IDF) die relevante Zieltabelle/Domain.
+        Nutzt konfigurierbare Klassenattribute DOMAIN_KEYWORDS, TFIDF_SIMILARITY_THRESHOLD, DEFAULT_DOMAIN.
         """
         import importlib.util
-        import subprocess
-        import sys
 
-        # Gegenkontrolle 1: Prüfen, ob die Beschreibung valide ist
         if not task_description or not isinstance(task_description, str) or not task_description.strip():
-            print("[GEGENKONTROLLE WARNUNG] task_description ist leer oder ungültig. Fallback auf 'python_domain'.")
-            return "python_domain"
+            print(f"[GEGENKONTROLLE WARNUNG] task_description ist leer oder ungültig. Fallback auf '{self.DEFAULT_DOMAIN}'.")
+            return self.DEFAULT_DOMAIN
 
         try:
-            # Auto-Import & Dependency Check für scikit-learn und numpy
-            required_packages = {"sklearn": "scikit-learn", "numpy": "numpy"}
-            for module_name, pip_name in required_packages.items():
-                if importlib.util.find_spec(module_name) is None:
-                    print(f"[AUTO-INSTALL] Paket '{pip_name}' nicht gefunden. Installiere es automatisch...")
-                    try:
-                        subprocess.check_call([sys.executable, "-m", "pip", "install", pip_name])
-                    except Exception as pip_err:
-                        print(f"[GEGENKONTROLLE FEHLER] Installation von '{pip_name}' fehlgeschlagen: {pip_err}")
-                        return "python_domain"
-
-            # Bibliotheken nach erfolgreicher Prüfung importieren
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            from sklearn.metrics.pairwise import cosine_similarity
-            import numpy as np
-
             desc_lower = task_description.lower()
             
-            # Zentraler Korpus: Domain und ihre zugehörigen Schlüsselwörter
-            domain_data = {
-                "sql_domain": ["sql", "database", "query", "sqlite", "postgres", "select", "insert", "update", "table"],
-                "infrastructure_domain": ["docker", "container", "traefik", "ollama", "deployment", "server", "network"],
-                "fehlererkennung": ["bug", "fix", "error", "exception", "debugging", "crash", "stacktrace", "failure"],
-                "logische_anfrage": ["bedingung", "logik", "berechnen", "vergleichen", "auswerten", "algorithmus", "verständnis"],
-                "python_domain": ["python", "script", "code", "function", "variables", "data", "science"]
-            }
-            
-            # STUFE 1: Fast-Path Heuristik
-            for domain, keywords in domain_data.items():
+            # STUFE 1: Fast-Path Heuristik aus konfigurierbarem Domain-Mapping
+            for domain, keywords in self.DOMAIN_KEYWORDS.items():
                 if any(kw in desc_lower for kw in keywords[:5]):
                     return domain
-                    
-            # STUFE 2: Stochastische Vektor-Analyse (Fuzzy Matching über Kosinus-Ähnlichkeit)
-            domain_corpus = {domain: " ".join(words) for domain, words in domain_data.items()}
-            domain_keys = list(domain_corpus.keys())
-            
-            vectorizer = TfidfVectorizer()
-            tfidf_matrix = vectorizer.fit_transform(list(domain_corpus.values()))
-            task_vector = vectorizer.transform([task_description])
-            cosine_sim = cosine_similarity(task_vector, tfidf_matrix).flatten()
-            
-            total_sim = np.sum(cosine_sim)
-            if total_sim > 0:
-                probabilities = cosine_sim / total_sim
-                best_idx = np.argmax(probabilities)
-                
-                # Schwellenwert-Prüfung
-                if probabilities[best_idx] < 0.15:
-                    return "python_domain"
-                    
-                return domain_keys[best_idx]
-            
-            # STUFE 3: Standard-Fallback
-            return "python_domain"
 
+            # STUFE 2: Optionale stochastische Vektor-Analyse (nur wenn sklearn verfügbar)
+            sklearn_available = importlib.util.find_spec("sklearn") is not None
+            numpy_available = importlib.util.find_spec("numpy") is not None
+
+            if sklearn_available and numpy_available:
+                try:
+                    from sklearn.feature_extraction.text import TfidfVectorizer
+                    from sklearn.metrics.pairwise import cosine_similarity
+                    import numpy as np
+                    domain_corpus = {domain: " ".join(words) for domain, words in self.DOMAIN_KEYWORDS.items()}
+                    domain_keys = list(domain_corpus.keys())
+                    
+                    vectorizer = TfidfVectorizer()
+                    tfidf_matrix = vectorizer.fit_transform(list(domain_corpus.values()))
+                    task_vector = vectorizer.transform([task_description])
+                    cosine_sim = cosine_similarity(task_vector, tfidf_matrix).flatten()
+                    total_sim = np.sum(cosine_sim)
+                    if total_sim > 0:
+                        probabilities = cosine_sim / total_sim
+                        best_idx = np.argmax(probabilities)
+                        if probabilities[best_idx] >= self.TFIDF_SIMILARITY_THRESHOLD:
+                            return domain_keys[best_idx]
+                except Exception:
+                    pass  # TF-IDF optional — bei Fehler einfach Fallback nutzen
+            # STUFE 3: Standard-Fallback
+            return self.DEFAULT_DOMAIN
         except Exception as e:
             print(f"[GEGENKONTROLLE FEHLER IN _detect_domain]: Unerwarteter Fehler bei der Domain-Erkennung: {str(e)}")
-            return "python_domain"
+            return self.DEFAULT_DOMAIN
 
     def fetch_records(self, table_name: str, active_only: bool = True):
         """
-        Liest alle Datensätze aus der angegebenen Tabelle aus mit integrierter Gegenkontrolle und Fehlerprotokollierung.
+        Liest alle Datensätze aus der angegebenen Tabelle aus mit integrierter Gegenkontrolle.
         """
-        allowed_tables = {
-            "user_query",
-            "table_issue_data_time_stamp_run_protocol_for_query"
-        }
-        
         # Gegenkontrolle 1: Registry-Prüfung (erlaubt auch dynamische run_protocol Tabellen)
-        if table_name not in allowed_tables and not table_name.startswith("run_protocol_"):
+        if table_name not in self.ALLOWED_TABLES and not table_name.startswith("run_protocol_"):
             error_msg = f"Tabelle '{table_name}' ist nicht in der Registry zugelassen."
             print(f"[GEGENKONTROLLE FEHLER] {error_msg}")
             raise ValueError(error_msg)
-
         try:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
-                
-                # Gegenkontrolle 2: Prüfen, ob die Tabelle physisch in der DB existiert
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
                 if not cursor.fetchone():
                     print(f"[GEGENKONTROLLE FEHLER] Tabelle '{table_name}' existiert physisch nicht in der Datenbank. Zugriff abgebrochen.")
                     return []
-
-                # Basis-Abfrage unter Berücksichtigung des Status (is_active)
                 if active_only:
                     query = f"SELECT * FROM {table_name} WHERE is_active = 1 ORDER BY year DESC, month DESC, day DESC, hour DESC, minute DESC, second DESC"
                 else:
                     query = f"SELECT * FROM {table_name} ORDER BY year DESC, month DESC, day DESC, hour DESC, minute DESC, second DESC"
-                
                 cursor.execute(query)
-                
                 if not cursor.description:
                     print(f"[GEGENKONTROLLE WARNUNG] Abfrage auf Tabelle '{table_name}' lieferte keine Spaltenbeschreibungen.")
                     return []
                     
                 columns = [description[0] for description in cursor.description]
                 rows = cursor.fetchall()
-                
-                # Rückgabe als Liste von Dictionaries
                 result = [dict(zip(columns, row)) for row in rows]
                 print(f"[SQL-SUCCESS] {len(result)} Datensätze erfolgreich aus '{table_name}' ausgelesen.")
                 return result
@@ -402,16 +380,9 @@ class class_sql_reader:
 
     def fetch_single_node(self, table_name: str, node_id: str):
         """
-        Liest einen spezifischen Knoten anhand seiner node_id aus 
-        mit integrierter Gegenkontrolle und Fehlerabsicherung.
+        Liest einen spezifischen Knoten anhand seiner node_id aus.
         """
-        allowed_tables = {
-            "user_query",
-            "table_issue_data_time_stamp_run_protocol_for_query"
-        }
-        
-        # Gegenkontrolle 1: Registry-Prüfung (erlaubt auch dynamische run_protocol Tabellen)
-        if table_name not in allowed_tables and not table_name.startswith("run_protocol_"):
+        if table_name not in self.ALLOWED_TABLES and not table_name.startswith("run_protocol_"):
             error_msg = f"Tabelle '{table_name}' ist unzulässig."
             print(f"[GEGENKONTROLLE FEHLER] {error_msg}")
             raise ValueError(error_msg)
@@ -423,14 +394,10 @@ class class_sql_reader:
         try:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
-                
-                # Gegenkontrolle 2: Prüfen, ob die Tabelle physisch in der DB existiert
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
                 if not cursor.fetchone():
                     print(f"[GEGENKONTROLLE FEHLER] Tabelle '{table_name}' existiert physisch nicht in der Datenbank.")
                     return None
-
-                # Abfrage des spezifischen Knotens
                 cursor.execute(f"SELECT * FROM {table_name} WHERE node_id = ?", (node_id,))
                 row = cursor.fetchone()
                 
@@ -458,8 +425,8 @@ class class_sql_reader:
                                validation_rule: str = "", target_table: str = "", 
                                target_node_id: str = "000", **kwargs):
         """
-        Fügt einen neuen Knoten minimal, performant und dynamisch anhand des Live-Schemas ein 
-        mit integrierter Gegenkontrolle und Fehlerabsicherung.
+        Fügt einen neuen Knoten minimal, performant und dynamisch anhand des Live-Schemas ein.
+        integrierter Gegenkontrolle und Fehlerabsicherung.
         """
         if not conn:
             print("[GEGENKONTROLLE FEHLER] Keine gültige Datenbankverbindung (conn) an _insert_routing_node übergeben.")
@@ -472,8 +439,6 @@ class class_sql_reader:
 
         try:
             cursor = conn.cursor()
-            
-            # Live-Schema direkt aus der SQL-Datenbank auslesen (verhindert Spalten- und Reihenfolgefehler)
             cursor.execute(f"PRAGMA table_info({table_name})")
             actual_columns = {row[1] for row in cursor.fetchall()}
             
@@ -484,7 +449,6 @@ class class_sql_reader:
 
             now = datetime.now()
             
-            # Alle Werte, Zeitstempel und Parameter in einem sauberen Dictionary bündeln
             payload = {
                 "node_id": node_id,
                 "is_active": 1,
@@ -507,7 +471,6 @@ class class_sql_reader:
             # Dynamischer Abgleich: Nur Spalten verwenden, die die Live-Tabelle aktuell besitzt
             filtered_data = {k: v for k, v in payload.items() if k in actual_columns}
             
-            # SQL-Statement generieren und ausführen
             cols = ", ".join(filtered_data.keys())
             placeholders = ", ".join(["?"] * len(filtered_data))
             
@@ -527,16 +490,9 @@ class class_sql_reader:
 
     def deactivate_and_reroute(self, table_name: str, node_id: str, failure_reason: str) -> dict:
         """
-        Deaktiviert fehlerhafte Knoten und leitet auf Alternativpfade um 
-        mit integrierter Gegenkontrolle und Fehlerabsicherung.
+        Deaktiviert fehlerhafte Knoten und leitet auf Alternativpfade um.
         """
-        allowed_tables = {
-            "user_query",
-            "table_issue_data_time_stamp_run_protocol_for_query"
-        }
-        
-        # Gegenkontrolle 1: Registry-Prüfung (erlaubt auch dynamische run_protocol Tabellen)
-        if table_name not in allowed_tables and not table_name.startswith("run_protocol_"):
+        if table_name not in self.ALLOWED_TABLES and not table_name.startswith("run_protocol_"):
             error_msg = f"Tabelle '{table_name}' ist unzulässig für Rerouting."
             print(f"[GEGENKONTROLLE FEHLER] {error_msg}")
             raise ValueError(error_msg)
@@ -556,13 +512,11 @@ class class_sql_reader:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
                 
-                # Gegenkontrolle 2: Prüfen, ob die Tabelle physisch in der DB existiert
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
                 if not cursor.fetchone():
                     print(f"[GEGENKONTROLLE FEHLER] Tabelle '{table_name}' existiert physisch nicht in der Datenbank.")
                     raise ValueError(f"Tabelle '{table_name}' nicht gefunden.")
 
-                # Schritt 1: Knoten deaktivieren und Fallback-Counter erhöhen
                 cursor.execute(f"""
                     UPDATE {table_name}
                     SET is_active = 0, error_fallback_count = error_fallback_count + 1
@@ -572,7 +526,6 @@ class class_sql_reader:
                 if cursor.rowcount == 0:
                     print(f"[GEGENKONTROLLE WARNUNG] Node '{node_id}' in Tabelle '{table_name}' konnte nicht deaktiviert werden (nicht gefunden).")
                 
-                # Schritt 2: Nach einem validen Alternativpfad suchen
                 cursor.execute(f"""
                     SELECT node_id, topic_title, target_table, target_node_id
                     FROM {table_name}
