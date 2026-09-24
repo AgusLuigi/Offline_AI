@@ -1,0 +1,5 @@
+Füge noch in den Erwartungen Hinzu das alle 
+1. Globalen erst definiert werden und als Exclude variante wen gruppen erstelt werden z.b. Lese zugriff  / Include variante wen es um schreib zugrif handelt 
+2. die Class definiert werd und darin die importe automatisch eingeladen werden 
+3. die einzelnen def genau erklährt 
+4. wen der code arbeitet und funktioniert keine Meldung nur ergebnis wen ein code nicht arbeitet dan auf Jeden fall die Fehlermeldungen im Log
