@@ -20,3 +20,4 @@ src/agent/__pycache__/meta_coder_sql.cpython-311.pyc
 src/agent/__pycache__/__ollama_running.cpython-311.pyc
 >>>>>>> 709fb5cbcc11e1cde2159418c2c64e7f55ce1332
 knowledge/knowledge_agent_hierarchical_routing_tree_sql/knowledge_agent_routing_tree.db
+temp/*
