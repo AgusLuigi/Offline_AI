@@ -1,0 +1,32 @@
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  [◫]                |  🧠 JEV & LAYA :: KOGNITIVER OFFLINE-AGENT  |  [Modell: Qwen2.5-Coder-7B] [RAM: 4.8/16GB]  |  🌙            [◫] │
+├───────────────────────┬─┬────────────────────────────────────────────────────────┬─┬────────────────────────────────────────────────────┤
+│ 📂 LINKE SEITENLEISTE │║│ 💬 MITTLERE CHAT-OBERFLÄCHE (Hauptbereich)            │║│ 🖥️ RECHTE SEITENLEISTE (Virtual Studio Optic)      │
+│ (Themen & Sessions)   │║│                                                        │║│ (Terminal, Live-Logs & Sandbox-Fehler)             │
+│                       │║│                                                        │║│                                                    │
+│ + New Chat            │║│ [Benutzer-Blase]                                       │║│ [ >_ Terminal ]  [ 📁 Files ]  [ ⚠️ Fehler ]      │
+│ ────────────────────  │║│ "nicht sicht bahr und der stop live monitor            │║│ ────────────────────────────────────────────────── │
+│ 🗂️ Sessions          │║│  butom reaghiert nicht zum stoppen..."                  │║│ 1 File not found: generate_notebook.py             │
+│ ⏱️ Scheduled Tasks    │║│                                                        │║│ 2 [2026-09-25 01:20:04] Init class_sql_...         │
+│ ⚡ Agent Runs         │║│ ┌────────────────────────────────────────────────────┐ │║│ 3 [SQL-WAL] PRAGMA journal_mode=WAL;               │
+│                       │║│ │ v Show thinking                                    │ │║│ 4 [AST-CHECK] syntax check: pass                   │
+│ RECENT CHATS (SQLite) │║│ │   👁️ Reading thread controller & events...         │ │║│ 5 [SANDBOX] returncode: 0, time: 0.42s             │
+│ ────────────────────  │║│ │   👁️ Scanning library_registry (Node 001)...       │ │║│                                                    │
+│ • docker ipynb app... │║│ │   👁️ Synthesizing Blueprint via JEV...             │ │║│ VERKNÜPFTE KNOTEN:                                 │
+│   (04. Juni)          │║│ └────────────────────────────────────────────────────┘ │║│ • user_query Node: QUERY_20260925_012004           │
+│ • ich Brauch einen    │║│                                                        │║│ • Log-Tabelle: log_20260925_012004                 │
+│   Sauberen Plan...    │║│ [Modell-Antwort: llama_cpp Worker]                     │║│                                                    │
+│   (30. April)         │║│ "Das Problem liegt daran, dass der Event-Controller    │║│ [Toolbar: 🔍 Suchen | 🔄 Neu | 💾 Export]         │
+│ • SQL Wissensbaum     │║│  im separaten Daemon-Thread läuft. Hier ist der Fix:"  │║│                                                    │
+│   Generierung...      │║│ ```python                                              │║│                                                    │
+│   (24. Sept)          │║│ def stop_live_monitor(): ...                           │║│                                                    │
+│                       │║│ ```                                                    │║│                                                    │
+│                       │║│ 🔊 [Play TTS]  |  👍 (+0.2)  👎 (Reroute)             │║│                                                    │
+│                       │║│                                                        │║│                                                    │
+│                       │║│ ┌────────────────────────────────────────────────────┐ │║│                                                    │
+│                       │║│ │ Ask NextToken / Benutzeranfrage eingeben...        │ │║│                                                    │
+│                       │║│ │ [ + Kontext ] [ 🗄️ SQL DB ] [ ⚡ Tool ] [ 🎙️ Mic ] │ │║│                                                    │
+│                       │║│ └──────────────────────────────────────────────────▲─┘ │║│                                                    │
+├───────────────────────┴─┴────────────────────────────────────────────────────────┴─┴────────────────────────────────────────────────────┤
+│ Status: BEREIT ● 100% OFFLINE ● SQLite: WAL-Aktiv ● Audio-Engine: faster-whisper (int8) ● JEV: Bereit ● llama_cpp: Bereit               │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
