@@ -1,198 +1,136 @@
-import logging
-import sqlite3
 import sys
-import threading
+import logging
 from pathlib import Path
 
 # 1. Hauptverzeichnis zum Python-Pfad hinzufügen
 sys.path.append(str(Path(__file__).resolve().parent))
 
-# 2. Funktion importieren und direkt ausführen (Auto-Bootstrap & globale Registrierung)
+# 2. Auto-Bootstrap & Registrierung aller ausgelagerten Klassen aus agent_universal_skript
 from agent_universal_skript.auto_bootstrap_and_register_agents import auto_bootstrap_and_register_agents
 auto_bootstrap_and_register_agents()
 
+# Auslagerungen importieren (alle Standards sind in den jeweiligen Klassen definiert)
+from agent_universal_skript.class_coreInfrastructure import coreInfrastructure
+from agent_universal_skript.class_sql_reader import class_sql_reader
+from agent_universal_skript.class_spinner import ResourceAwareSpinner
+from agent_universal_skript.class_subAgentVerifier import SubAgentVerifier
+from agent_universal_skript.class_evolve_loop_test import EvolveLoopTest
+from agent_universal_skript.class_ollama_manager import OllamaManager
+
 # Konfiguration des Loggers
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-# 3. Globale Einstellungen & Konstanten
-PROJECT_POINT = "src"
-DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
-_OLLAMA_VERIFIED_CACHE = False
-OLLAMA_CHECKER_FILENAME = "__ollama_running.py"
-MODEL_LLM = "mixtral:instruct"
 
 class MetaCoderSQLPipeline(class_sql_reader):
     """
-    Zentrale Verklemmungs-Pipeline ('metacoder.sql v2').
-    Verlinkt Core-Infrastruktur, SQL-Reader, Sandbox-Verifier,
-    Evolutions-Schleife und Terminal-Spinner zu einem autonomen Agenten-System.
+    Zentrale Verklemmungs-Pipeline ('meta_coder_sql').
+    
+    Architektur-Prinzipien:
+    1. Alle Klassen sind in 'agent_universal_skript' ausgelagert.
+    2. Hier findet ausschließlich die Verklemmung der Module statt.
+    3. Alle Globalen sind standardmäßig in den Klassen definiert. Werden hier keine
+       Änderungen übergeben, greifen automatisch die Klassen-Standards.
+    4. Alle Phasen werden sequentiell aus der SQL-Datenbank (meta_agent_start)
+       abgerufen und zeilenweise ausgeführt, bis die Antwort für den Benutzer feststeht.
     """
-    def __init__(self, db_filename: str = DB_FILENAME, start_path: str = PROJECT_POINT):
-        super().__init__()
-        # Initialisierung der vererbten Core-Infrastruktur und Bestimmung des Projekt-Roots
-        self.root_path = Path(coreInfrastructure.get_project_root(start_path))
-        # Universelle und absolute Pfadfindung für die Datenbank im Projektverzeichnis
-        # Nutzt get_file_path für absolute Sicherheit im Verzeichnisbaum
-        try:
-            self.db_filename = str(coreInfrastructure.get_file_path(db_filename))
-        except FileNotFoundError:
-            # Fallback, falls die DB physisch noch gar nicht im Baum existiert
-            self.db_filename = str(self.root_path / db_filename)
-        # Initialisierung des Evolutions-Loops mit dem absolut aufgelösten Datenbank-Pfad
+
+    def __init__(self, db_filename: str = None, model_name: str = None, 
+                 ollama_host: str = None, require_ollama: bool = True):
+        # Initialisierung über geerbte class_sql_reader-Klasse
+        super().__init__(db_filename=db_filename)
+
+        # Globale Parameter: Standards der Klasse nutzen, falls nicht explizit überschrieben
+        if model_name:
+            self.MODEL_LLM = model_name
+        if ollama_host:
+            self.OLLAMA_HOST = ollama_host
+
+        self.model_name = self.MODEL_LLM
+        self.ollama_host = self.OLLAMA_HOST
+        self.require_ollama = require_ollama
+
+        # Verklemmung der Sub-Systeme
         self.evolution_loop = EvolveLoopTest(registry_db_path=self.db_filename)
-        # Ressourcen-Spinner für visuelles Feedback initialisieren
-        self.spinner = ResourceAwareSpinner(agent_name="MetaCoder-Agent")
+        self.spinner = ResourceAwareSpinner(
+            agent_name=self.AGENT_NAME,
+            min_ram_mb=self.MIN_RAM_MB,
+            max_cpu_threshold=self.CPU_WARNING_THRESHOLD,
+            spinner_interval=self.SPINNER_INTERVAL
+        )
 
-    def get_db_connection(self):
-        """Stellt eine sichere Verbindung zur globalen Knowledge-Datenbank her."""
-        conn = sqlite3.connect(self.db_filename)
-        conn.row_factory = sqlite3.Row
-        return conn
+        # Autonome Hintergrund-Verbindung zu Ollama prüfen/starten
+        if self.require_ollama:
+            OllamaManager.ensure_ollama_running(self.ollama_host)
+            client = OllamaManager.get_client(self.ollama_host)
+            if client:
+                resolved = OllamaManager.resolve_model(self.model_name, self.ollama_host)
+                print(f"[INFO] Ollama-Client aktiv: {self.ollama_host} | Modell: {resolved}")
+            else:
+                print(f"[WARNUNG] Ollama nicht direkt erreichbar. System nutzt Fallback-Wissensmodus.")
 
-    def _ensure_core_tables(self):
-        """Garantiert die physische Existenz aller Kern-Tabellen vor Pipeline-Start."""
-        with self.get_db_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                # Erstellt die kritische Cache-Tabelle 'user_query', falls sie fehlt
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS user_query (
-                        node_id TEXT PRIMARY KEY,
-                        task_description TEXT,
-                        domain TEXT,
-                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        status TEXT
-                    );
-                """)
-                conn.commit()
-            except sqlite3.Error as e:
-                print(f"[GEGENKONTROLLE FEHLER] Konnte Tabellenstrukturen nicht härten: {e}")
-
-    def verify_environment(self) -> bool:
+    def run_query(self, user_input: str) -> dict:
         """
-        Prüft die Existenz der globalen Datenbank, initialisiert die Tabellenstrukturen 
-        und verifiziert die Tool-Schnittstellen.
+        Führt eine Benutzeranfrage streng nach der SQL-Datenbank aus (Regel 5):
+        Phasen aus 'meta_agent_start' sequentiell abrufen und zeilenweise ausführen.
+        Liefert am Schluss die Antwort für den Benutzer.
         """
-        db_path = Path(self.db_filename)
-        if not db_path.exists():
-            print(f"[METABASE] Erstelle neue SQLite-Registry unter: {db_path.resolve()}")
-            # Verzeichnis erstellen, falls es fehlt
-            db_path.parent.mkdir(parents=True, exist_ok=True)
-        # Erst die Standard-Tabellen erzwingen, um Abstürze im SQL-Reader zu verhindern
-        self._ensure_core_tables()
-        # Initialisierung der Tabellen in der Existenz-Datenbank via EvolveLoop
-        if hasattr(self.evolution_loop, "init_database_tables"):
-            try:
-                self.evolution_loop.init_database_tables()
-                print(f"[METABASE] Tabellenstrukturen in '{self.db_filename}' erfolgreich verifiziert/angelegt.")
-            except Exception as e:
-                print(f"[METABASE FEHLER] Konnte Tabellen nicht initialisieren: {e}")  
-        print("[METAKODER] Umgebung erfolgreich verifiziert. Alle erweiterten Tools verbunden.")
-        return True
-
-    def run_pipeline(self, task_description: str, target_notebook: str = None) -> dict:
-        """
-        Führt die Haupt-Pipeline aus:
-        1. Cache-Prüfung oder Abfrage-Registrierung via SQL Reader.
-        2. Visuelle Begleitung mit dem ResourceAwareSpinner.
-        3. Ausführung im Closed-Loop (EvolveLoopTest + SubAgentVerifier).
-        4. Protokollierung der Ergebnisse mit exaktem DB-Zeitstempel.
-        """
-        # Vorab-Verifikation der Tabellen-Integrität vor jedem Run
-        self._ensure_core_tables()
-        stop_event = threading.Event()
-        spinner_thread = threading.Thread(target=self.spinner.run, args=(stop_event, True))
-        spinner_thread.start()
-        codes = []  # Vorab definieren, damit es im finally/store-Bereich sicher greift
-        node_id = None
-        try:
-            # 1. Blueprint-System anfahren
-            try:
-                self.initialize_blueprint_system(task_description)
-            except Exception as e:
-                print(f"[GEGENKONTROLLE FEHLER] Blueprint-System übersprungen: {e}")  
-            # 2. Cache abfragen / Eintrag vorbereiten
-            try:
-                cached_check = self.get_cached_or_create_query(task_description)
-                if cached_check and cached_check.get("cache_hit"):
-                    print(f"\n[CACHE HIT] Anfrage im Cache gefunden (Node-ID: {cached_check.get('node_id')}).")
-                    return cached_check
-                node_id = cached_check.get("node_id") if cached_check else None
-            except Exception as e:
-                print(f"[GEGENKONTROLLE FEHLER] Cache-Abfrage fehlgeschlagen: {e}")        
-            # Falls kein Reader die Node-ID generiert hat, bauen wir die ID deterministisch vorab
-            if not node_id:
-                current_time = datetime.datetime.now().strftime("%H%M%S")
-                unique_suffix = str(random.randint(100000, 999999))
-                node_id = f"STEP_{current_time}_{unique_suffix}"
-                print(f"[PIPELINE-FIX] Generiere autonome Pipeline-ID: {node_id}")
-            # 3. Sandbox-Ausführungsumgebung für den EvolveLoop definieren
-            def execution_runner(payload):
-                nonlocal codes
-                codes = SubAgentVerifier.extract_code_blocks(payload.get("task", ""))
-                if codes:
-                    success, output = SubAgentVerifier.verify_code_in_sandbox(codes)
-                    if not success:
-                        raise RuntimeError(f"Sandbox-Fehler: {output}")
-                    return output
-                return "Kein ausführbarer Code-Block gefunden, logische Ausführung erfolgreich."
-            # 4. Evolutionsschleife (Test & Evolve) starten
-            evolution_result = self.evolution_loop.test_and_evolve_loop(
-                specialization="MetaCoder SQL Automated Pipeline",
-                task_description=task_description,
-                base_filename=target_notebook or "metacoder_run",
-                max_generations=3,
-                execution_func=execution_runner
+        def spinner_starter(agent_label):
+            import threading
+            spinner = ResourceAwareSpinner(
+                agent_name=agent_label,
+                min_ram_mb=self.MIN_RAM_MB,
+                max_cpu_threshold=self.CPU_WARNING_THRESHOLD,
+                spinner_interval=self.SPINNER_INTERVAL
             )
-            final_status = evolution_result.get("status")
-            final_message = evolution_result.get("message") or evolution_result.get("result", "")
-            snippet_to_store = codes if codes else ""
-            # 5. Generierte Ergebnisse mit gesicherter Node-ID im Cache versiegeln
-            try:
-                self.store_query_result(node_id=node_id, answer=str(final_message), snippet=snippet_to_store)
-            except Exception as e:
-                print(f"[GEGENKONTROLLE FEHLER] store_query_result abgebrochen: {e}")
-            # 6. Zeitstempel-Protokollierung ohne den blockierenden 'node_id' Parameter aufrufen
-            try:
-                self.log_save_query_run_to_db_timestamp(
-                    task_description=task_description,
-                    error_msg="" if final_status == "SUCCESS" else str(evolution_result.get("last_error")),
-                    solution_code=str(final_message),
-                )
-            except Exception as e:
-                print(f"[GEGENKONTROLLE FEHLER] Zeitstempel-Verankerung fehlgeschlagen: {e}")
-            return evolution_result
-        except Exception as e:
-            print(f"\n[KRITISCHER PIPELINE-FEHLER] {e}")
-            return {"status": "FAILED", "error": str(e)}
-        finally:
-            stop_event.set()
-            spinner_thread.join()
+            stop_evt = threading.Event()
+            th = threading.Thread(target=spinner.run, args=(stop_evt, True))
+            th.start()
+            return stop_evt, th
 
-# 4. AUSFÜHRUNG & INTERAKTIVER MODUS
+        return self.execute_query_with_db_phases(
+            raw_query=user_input,
+            model_name=self.model_name,
+            ollama_host=self.ollama_host,
+            spinner_thread_starter=spinner_starter
+        )
+
+
+def boot_latest_metacoder(require_ollama: bool = True) -> MetaCoderSQLPipeline:
+    """Erstellt und bootet die MetaCoder-Pipeline mit Database-Driven DNA."""
+    pipeline = MetaCoderSQLPipeline(require_ollama=require_ollama)
+    try:
+        pipeline.bootstrap_from_database()
+    except Exception as e:
+        print(f"[BOOT WARNUNG] Bootstrap-DNA konnte nicht geladen werden: {e}")
+    return pipeline
+
+
+def query_meta_coder_sql(notebook_path: str, instruction: str):
+    """Schnittstelle für Jupyter-Notebooks: Startet den MetaCoder für ein spezifisches Notebook."""
+    metacoder = boot_latest_metacoder()
+    task = f"Target Notebook: {notebook_path}\nInstruction: {instruction}"
+    return metacoder.run_query(task)
+
+
 if __name__ == "__main__":
-    print("--- Starte MetaCoder SQL Verklemmungs-Pipeline (v2) ---")
+    print(f"--- Starte {class_sql_reader.AGENT_NAME} SQL Verklemmungs-Pipeline (v2+V1) ---")
     
-    pipeline = MetaCoderSQLPipeline()
-    
-    # Umgebung und Tabellen prüfen
-    if not pipeline.verify_environment():
-        logging.warning("Umgebung konnte nicht vollständig verifiziert werden. Fahre fort...")
+    pipeline = boot_latest_metacoder(require_ollama=True)
+    pipeline.verify_environment()
 
-    # Kernel-Modul-Check über coreInfrastructure
-    kernel_check = coreInfrastructure.scan_kernel_modules(["psutil", "sqlite3"])
+    # Kernel-Modul-Scan
+    kernel_check = coreInfrastructure.scan_kernel_modules(pipeline.REQUIRED_KERNEL_MODULES)
     logging.info(f"[KERNEL MODULE SCAN] Status: {kernel_check}")
 
-    print("\n======================================================================")
-    print(" [INTELLIGENTER CHAT-MODUS] Verbunden mit SQLite-Langzeitgedächtnis")
-    print(" Befehle: 'exit' zum Beenden")
+    print(f" [INTELLIGENTER CHAT-MODUS] Verbunden mit SQLite-Langzeitgedächtnis")
+    print(f" {pipeline.AGENT_NAME} nutzt aktiv den Knowledge Agent Routing Tree.")
+    print(" Befehle: '!positiv' / '!negativ' für Feedback | 'exit' zum Beenden")
 
+    last_query_node_id = None
     while True:
         try:
             user_input = input("\nDu: ").strip()
@@ -202,36 +140,41 @@ if __name__ == "__main__":
                 print("\nAgent: Bis zum nächsten Mal!")
                 break
 
-            # Pipeline mit der Benutzereingabe ausführen
-            result = pipeline.run_pipeline(user_input)
+            # Feedback-Befehle behandeln
+            if user_input.lower().startswith("!feedback") or user_input.lower() in ["!positiv", "!negativ"]:
+                if not last_query_node_id:
+                    print("--> [FEEDBACK] Bisher wurde noch keine Anfrage ausgeführt, die bewertet werden könnte.")
+                    continue
+                is_pos = "positiv" in user_input.lower()
+                comment = user_input.split(" ", 1)[1] if " " in user_input else ("Positives Feedback" if is_pos else "Negatives Feedback")
+                fb_res = pipeline.record_feedback(last_query_node_id, is_positive=is_pos, comment=comment)
+                print(f"--> [FEEDBACK REGISTRIERT] Node '{last_query_node_id}' bewertet: {fb_res}")
+                continue
 
-            print(f"\nMetaCoder-Agent [Status: {result.get('status')}]:")
-            print(result.get("message") or result.get("result") or result.get("error"))
+            # Sequentielle Phasen-Ausführung aus der SQL-Datenbank (Regel 5)
+            result = pipeline.run_query(user_input)
+            last_query_node_id = result.get("node_id")
+
+            # Rückmeldung / Antwort für den Benutzer anzeigen
+            answer = result.get("answer", "")
+            domain = result.get("domain", "Allgemein")
+            cache_tag = "SQL-Cache | " if result.get("cache_hit") else ""
+
+            print(f"\n{pipeline.AGENT_NAME} [Domain: {cache_tag}{domain} | DB aktiv | Node {last_query_node_id or '-'}]:")
+            print(answer)
             print("-" * 70)
+
+            # Auto-Persistenz bei Schlüsselwörtern
+            if "verewige" in user_input.lower() or "speichere in sql" in user_input.lower():
+                pipeline.persist_new_capability(
+                    capability_name="Autonomous_Capability",
+                    code_snippet=answer[:pipeline.PROMPT_MAX_LEN],
+                    description=user_input
+                )
+                print("\n[SYSTEM-INFO] Die Fähigkeit wurde physisch in die SQLite-Tabelle 'library_registry' geschrieben!")
 
         except KeyboardInterrupt:
             print("\n\nAgent: Sitzung durch Benutzer abgebrochen.")
             break
         except Exception as e:
             logging.error(f"[FEHLER IM AGENTEN-LOOP] Konnte Anfrage nicht verarbeiten: {e}")
-            
-# [INFO-BOX] ANLEITUNG ZUR AUSLÖSUNG DES META-CODERS
-# Variante 1: Auslösung über das Terminal (Konsole)
-#
-# A) Interaktiver Modus (fragt nach Pfad & Aufgabe):
-#    hallo
-#
-# B) Direkt als Einzeiler mit Parametern:
-#    python src/agent/meta_coder_sql.py notebooks/dein_notebook.ipynb "Deine Aufgabe hier"
-#
-# 
-# Variante 2: Auslösung direkt aus einem Jupyter Notebook (.ipynb) heraus
-# 
-# Füge diesen Code in eine Notebook-Zelle ein und führe sie aus:
-#
-#    from src.agent.meta_coder_sql import query_meta_coder_sql
-#
-#    query_meta_coder_sql(
-#        notebook_path="notebooks/dein_notebook.ipynb",
-#        instruction="Deine Anweisung zur Korrektur oder Erweiterung"
-#    )
