@@ -1,0 +1,1077 @@
+2026-09-26 18:27:07,014 [INFO] [HARDWARE NEUBERECHNUNG] Neues oder geändertes System erkannt (Windows_AMD64_20C_31.87GB).
+2026-09-26 18:27:07,015 [INFO] [HARDWARE PROFILE] SIG='Windows_AMD64_20C_31.87GB' RAM=31.87GB BUDGET=22.3GB CPU=20
+2026-09-26 18:37:37,116 [INFO] [HARDWARE PROFILE] SIG='Servern_Windows_AMD64_20C_31.87GB' RAM=31.87GB BUDGET=22.3GB CPU=20
+2026-09-26 18:37:43,290 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 18:41:11,606 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 18:59:29,736 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 19:01:15,923 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:01:15,924 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:01:15,925 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:01:15,927 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:01:15,928 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:05:35,140 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 19:05:35,146 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 19:05:35,149 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 19:05:35,150 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 19:05:35,160 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:05:35,164 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:05:35,165 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:05:35,166 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:05:35,169 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:05:35,169 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:05:35,170 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:05:35,171 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:08:06,883 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 19:08:06,889 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 19:08:06,893 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 19:08:06,894 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 19:08:06,905 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:08:06,907 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:08:06,908 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:08:06,908 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:08:06,912 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:08:06,914 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:08:06,915 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:08:06,915 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:11:25,288 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 19:11:25,294 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 19:11:25,298 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 19:11:25,299 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 19:11:25,310 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:11:25,312 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:11:25,313 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:11:25,314 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:11:25,318 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:11:25,319 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:11:25,320 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:11:25,321 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:18:26,865 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:18:58,526 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:19:02,334 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 19:19:05,795 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 19:19:05,799 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 19:19:05,805 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 19:19:05,806 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 19:19:05,817 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:19:05,819 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:19:05,820 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:19:05,821 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:19:05,824 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:19:05,826 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:19:05,826 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:19:05,827 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:42:44,492 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 19:42:44,497 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 19:42:44,501 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 19:42:44,503 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 19:42:44,514 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:42:44,517 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:42:44,518 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:42:44,519 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:42:44,522 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:42:44,523 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:42:44,524 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:42:44,525 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:08,447 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:43:08,552 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 19:43:12,908 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 19:43:12,914 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 19:43:12,918 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 19:43:12,919 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 19:43:12,930 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:43:12,934 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:43:12,935 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:43:12,936 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:43:12,938 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:43:12,939 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:43:12,939 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:43:12,940 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:31,603 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:43:31,604 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:43:31,605 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:43:31,606 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:43:31,609 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:43:31,610 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:43:31,610 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:43:31,612 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:36,230 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'd'
+2026-09-26 19:43:36,231 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:36,340 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'de'
+2026-09-26 19:43:36,341 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:36,667 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'dee'
+2026-09-26 19:43:36,669 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:37,469 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'deep'
+2026-09-26 19:43:37,470 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:50,395 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 19:43:50,396 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:43:50,397 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:50,398 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 19:43:50,399 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 19:43:50,400 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 19:43:50,402 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 19:43:50,404 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 19:43:50,405 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 19:43:50,405 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:53,557 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'd'
+2026-09-26 19:43:53,558 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:53,658 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'de'
+2026-09-26 19:43:53,660 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:53,834 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'dee'
+2026-09-26 19:43:53,834 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 19:43:54,380 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'deep'
+2026-09-26 19:43:54,381 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:03:20,880 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:03:22,339 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 20:03:25,156 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 20:03:25,161 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 20:03:25,167 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 20:03:25,169 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 20:03:25,184 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:03:25,187 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:03:25,188 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:03:25,189 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:03:25,193 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:03:25,195 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:03:25,196 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:03:25,197 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:03:29,462 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:03:29,463 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:03:29,465 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:03:29,466 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:03:29,468 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:03:29,469 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:03:29,470 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:03:29,471 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:13:50,492 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:14:03,892 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 20:15:47,096 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 20:15:47,101 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 20:15:47,105 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 20:15:47,107 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 20:15:47,118 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:15:47,120 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:15:47,121 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:15:47,122 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:15:47,126 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:15:47,127 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:15:47,127 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:15:47,128 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:15:51,561 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:15:51,562 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:15:51,563 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:15:51,564 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:15:51,567 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:15:51,568 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:15:51,568 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:15:51,570 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:15:55,861 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'huggingface'
+2026-09-26 20:15:55,863 [INFO] Starte Abruf der Top-50 GGUF-Modelle von Hugging Face...
+2026-09-26 20:15:56,061 [INFO] HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-09-26 20:15:56,207 [INFO] HTTP Request: GET https://huggingface.co/api/models?filter=gguf&sort=downloads&limit=50 "HTTP/1.1 200 OK"
+2026-09-26 20:15:56,215 [INFO] 50 GGUF-Modelle erfolgreich von Hugging Face geladen.
+2026-09-26 20:15:56,216 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: ''
+2026-09-26 20:15:56,217 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:15:56,344 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:15:56,354 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:15:56,356 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:15:56,490 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:15:56,500 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:15:58,682 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:15:58,684 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:15:58,686 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:15:58,686 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:15:58,689 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:15:58,690 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:15:58,691 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:15:58,692 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:16:01,028 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:16:01,030 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:16:01,030 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:16:01,031 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:16:01,034 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:16:01,035 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:16:01,036 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:16:01,037 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:16:02,455 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:16:02,456 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:16:02,457 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:16:02,458 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:16:02,460 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:16:02,461 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:16:02,461 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:16:02,462 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:16:03,483 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:16:03,484 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:16:03,485 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:16:03,486 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:16:03,489 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:16:03,490 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:16:03,490 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:16:03,491 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:16:07,539 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'huggingface'
+2026-09-26 20:16:07,541 [INFO] Starte Abruf der Top-50 GGUF-Modelle von Hugging Face...
+2026-09-26 20:16:07,729 [INFO] HTTP Request: GET https://huggingface.co/api/models?filter=gguf&sort=downloads&limit=50 "HTTP/1.1 200 OK"
+2026-09-26 20:16:07,738 [INFO] 50 GGUF-Modelle erfolgreich von Hugging Face geladen.
+2026-09-26 20:16:07,739 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: ''
+2026-09-26 20:16:07,740 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:16:07,868 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:07,878 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:07,879 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:16:08,004 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:08,011 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:09,775 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'd'
+2026-09-26 20:16:09,776 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:16:09,905 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:09,908 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:09,926 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'de'
+2026-09-26 20:16:09,927 [INFO] Lade Dateibaum für Repository: 'Abiray/MiniMax-H3-GGUF'
+2026-09-26 20:16:10,066 [INFO] HTTP Request: GET https://huggingface.co/api/models/Abiray/MiniMax-H3-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:10,067 [INFO] 0 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:10,068 [INFO] Lade Dateibaum für Repository: 'Abiray/MiniMax-H3-GGUF'
+2026-09-26 20:16:10,190 [INFO] HTTP Request: GET https://huggingface.co/api/models/Abiray/MiniMax-H3-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:10,192 [INFO] 0 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:10,208 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'def'
+2026-09-26 20:16:10,210 [INFO] Lade Dateibaum für Repository: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'
+2026-09-26 20:16:10,340 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:10,342 [INFO] 27 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:10,343 [INFO] Lade Dateibaum für Repository: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'
+2026-09-26 20:16:10,465 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:10,468 [INFO] 27 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:10,484 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'deff'
+2026-09-26 20:16:11,511 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'def'
+2026-09-26 20:16:11,512 [INFO] Lade Dateibaum für Repository: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'
+2026-09-26 20:16:11,638 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:11,641 [INFO] 27 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:11,642 [INFO] Lade Dateibaum für Repository: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'
+2026-09-26 20:16:11,768 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:11,770 [INFO] 27 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:11,787 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'de'
+2026-09-26 20:16:11,788 [INFO] Lade Dateibaum für Repository: 'Abiray/MiniMax-H3-GGUF'
+2026-09-26 20:16:11,908 [INFO] HTTP Request: GET https://huggingface.co/api/models/Abiray/MiniMax-H3-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:11,910 [INFO] 0 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:11,912 [INFO] Lade Dateibaum für Repository: 'Abiray/MiniMax-H3-GGUF'
+2026-09-26 20:16:12,038 [INFO] HTTP Request: GET https://huggingface.co/api/models/Abiray/MiniMax-H3-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:12,039 [INFO] 0 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:12,157 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'd'
+2026-09-26 20:16:12,159 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:16:12,286 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:12,290 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:12,292 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:16:12,419 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:12,428 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:13,126 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'de'
+2026-09-26 20:16:13,127 [INFO] Lade Dateibaum für Repository: 'Abiray/MiniMax-H3-GGUF'
+2026-09-26 20:16:13,249 [INFO] HTTP Request: GET https://huggingface.co/api/models/Abiray/MiniMax-H3-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:13,250 [INFO] 0 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:13,252 [INFO] Lade Dateibaum für Repository: 'Abiray/MiniMax-H3-GGUF'
+2026-09-26 20:16:13,374 [INFO] HTTP Request: GET https://huggingface.co/api/models/Abiray/MiniMax-H3-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:13,375 [INFO] 0 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:13,566 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'dee'
+2026-09-26 20:16:13,567 [INFO] Lade Dateibaum für Repository: 'antirez/deepseek-v4-gguf'
+2026-09-26 20:16:13,689 [INFO] HTTP Request: GET https://huggingface.co/api/models/antirez/deepseek-v4-gguf/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:13,692 [INFO] 22 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:13,694 [INFO] Lade Dateibaum für Repository: 'antirez/deepseek-v4-gguf'
+2026-09-26 20:16:13,815 [INFO] HTTP Request: GET https://huggingface.co/api/models/antirez/deepseek-v4-gguf/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:13,816 [INFO] 22 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:16:13,965 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'deep'
+2026-09-26 20:16:13,966 [INFO] Lade Dateibaum für Repository: 'antirez/deepseek-v4-gguf'
+2026-09-26 20:16:14,091 [INFO] HTTP Request: GET https://huggingface.co/api/models/antirez/deepseek-v4-gguf/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:16:14,092 [INFO] 22 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:25:26,175 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 20:25:26,180 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 20:25:26,184 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 20:25:26,185 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 20:25:26,196 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:25:26,198 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:25:26,199 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:25:26,200 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:25:26,204 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:25:26,205 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:25:26,206 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:25:26,207 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:34,911 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:25:34,912 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:25:34,913 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:25:34,914 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:25:34,918 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:25:34,919 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:25:34,920 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:25:34,920 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:37,191 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'd'
+2026-09-26 20:25:37,192 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:37,429 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'de'
+2026-09-26 20:25:37,430 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:39,592 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'dee'
+2026-09-26 20:25:39,593 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:40,071 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'deep'
+2026-09-26 20:25:40,072 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:53,494 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'huggingface'
+2026-09-26 20:25:53,496 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: ''
+2026-09-26 20:25:53,497 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:25:53,498 [INFO] Starte Abruf der Top-50 GGUF-Modelle von Hugging Face...
+2026-09-26 20:25:53,705 [INFO] HTTP Request: GET https://huggingface.co/api/models?filter=gguf&sort=downloads&limit=50 "HTTP/1.1 200 OK"
+2026-09-26 20:25:53,708 [INFO] 50 GGUF-Modelle erfolgreich von Hugging Face geladen.
+2026-09-26 20:25:53,709 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: ''
+2026-09-26 20:25:53,711 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:25:53,840 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:25:53,849 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:25:53,851 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:25:53,981 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:25:53,992 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:25:58,520 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'q'
+2026-09-26 20:25:58,522 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:25:58,649 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:25:58,660 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:25:58,726 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qw'
+2026-09-26 20:25:58,727 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:25:58,850 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:25:58,862 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:25:59,030 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qwe'
+2026-09-26 20:25:59,031 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:25:59,157 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:25:59,163 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:25:59,456 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qwen'
+2026-09-26 20:25:59,457 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:25:59,588 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:25:59,596 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:26:39,908 [INFO] Lade Dateibaum für Repository: 'unsloth/Qwen3.8-27B-GGUF'
+2026-09-26 20:26:40,074 [INFO] HTTP Request: GET https://huggingface.co/api/models/unsloth/Qwen3.8-27B-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:26:40,076 [INFO] 27 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:27:00,414 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:27:00,416 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:27:00,419 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:27:00,420 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:27:00,421 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:27:00,426 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:27:00,427 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:27:00,429 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:27:00,429 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:57:15,279 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 20:57:15,285 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 20:57:15,289 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 20:57:15,291 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 20:57:15,303 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:57:15,305 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:57:15,306 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:57:15,306 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:57:15,311 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:57:15,312 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:57:15,313 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:57:15,314 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:57:21,748 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 20:57:21,749 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 20:57:21,750 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 20:57:21,751 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 20:57:21,754 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 20:57:21,755 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 20:57:21,755 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 20:57:21,756 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 20:57:26,731 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'huggingface'
+2026-09-26 20:57:26,733 [INFO] Starte Abruf der Top-50 GGUF-Modelle von Hugging Face...
+2026-09-26 20:57:26,927 [INFO] HTTP Request: GET https://huggingface.co/api/models?filter=gguf&sort=downloads&limit=50 "HTTP/1.1 200 OK"
+2026-09-26 20:57:26,931 [INFO] 50 GGUF-Modelle erfolgreich von Hugging Face geladen.
+2026-09-26 20:57:26,932 [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: ''
+2026-09-26 20:57:26,934 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:57:27,056 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:57:27,065 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 20:57:27,067 [INFO] Lade Dateibaum für Repository: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 20:57:27,192 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 20:57:27,201 [INFO] 105 .gguf-Dateien im Repository-Baum gefunden.
+2026-09-26 21:12:17,926 [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 21:12:17,932 [INFO] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 21:12:17,936 [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 21:12:17,937 [INFO] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 21:12:17,949 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:12:17,953 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:12:17,955 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:12:17,956 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 21:12:23,838 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:12:23,842 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:12:23,844 [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:12:23,845 [WARNING] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden.
+2026-09-26 21:13:32,402 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:13:40,989 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:13:46,398 [INFO] HTTP Request: GET https://huggingface.co/api/models?filter=gguf&sort=downloads&limit=50 "HTTP/1.1 200 OK"
+2026-09-26 21:13:46,535 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:13:46,686 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:13:49,561 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:31:22,865 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 21:31:22,869 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 21:31:22,871 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1075.7 GB frei
+2026-09-26 21:31:22,872 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 21:31:22,880 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 21:31:22,882 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 21:31:22,904 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:31:22,908 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:31:22,911 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:31:22,913 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 21:31:30,786 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'huggingface'
+2026-09-26 21:31:30,983 [INFO] HTTP Request: GET https://huggingface.co/api/models?filter=gguf&sort=downloads&limit=50 "HTTP/1.1 200 OK"
+2026-09-26 21:31:30,987 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: ''
+2026-09-26 21:31:30,988 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:30,989 [INFO] [INFO] 50 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:31,120 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:31,131 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:31,132 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:31,136 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:31,138 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:31,265 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:31,274 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:31,275 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:38,230 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'q'
+2026-09-26 21:31:38,232 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'q'
+2026-09-26 21:31:38,233 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:38,234 [INFO] [INFO] 23 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:38,235 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:38,236 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:38,414 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:38,421 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:38,422 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:38,580 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'qw'
+2026-09-26 21:31:38,581 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qw'
+2026-09-26 21:31:38,582 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:38,583 [INFO] [INFO] 21 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:38,584 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:38,585 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:38,712 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:38,725 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:38,726 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:39,016 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'qwe'
+2026-09-26 21:31:39,018 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qwe'
+2026-09-26 21:31:39,018 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:39,019 [INFO] [INFO] 21 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:39,020 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:39,021 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:39,147 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:39,161 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:39,162 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:39,493 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'qwen'
+2026-09-26 21:31:39,495 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qwen'
+2026-09-26 21:31:39,495 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:39,496 [INFO] [INFO] 21 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:39,497 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:39,498 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:39,633 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:39,639 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:39,640 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:40,590 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'qwen3'
+2026-09-26 21:31:40,592 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qwen3'
+2026-09-26 21:31:40,593 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:40,594 [INFO] [INFO] 21 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:40,595 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:40,596 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF'
+2026-09-26 21:31:40,727 [INFO] HTTP Request: GET https://huggingface.co/api/models/0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:40,733 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:40,734 [INFO] [DEBUG] Generiere Spec-Card für Modell: '0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:41,202 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'qwen3.5'
+2026-09-26 21:31:41,204 [INFO] [INFO] Starte Modellfilterung für Plattform 'huggingface' mit Suchbegriff: 'qwen3.5'
+2026-09-26 21:31:41,205 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 50
+2026-09-26 21:31:41,205 [INFO] [INFO] 3 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:31:41,334 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:41,340 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:41,341 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:41,344 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'
+2026-09-26 21:31:41,344 [INFO] [INFO] Lade Hugging Face Dateidownload-Optionen für Vorauswahl: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'
+2026-09-26 21:31:41,467 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/tree/main?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-09-26 21:31:41,471 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:31:41,472 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF' (Plattform: HUGGINGFACE)
+2026-09-26 21:31:54,906 [INFO] [INFO] Aktives Zielverzeichnis festgelegt auf: D:\Offline_AI_Models
+2026-09-26 21:31:54,909 [INFO] [INFO] Speichere letzten Speicherpfad: 'D:\\Offline_AI_Models' in 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json'...
+2026-09-26 21:31:54,910 [INFO] [✓] Speicherpfad erfolgreich unter 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' gespeichert.
+2026-09-26 21:31:54,915 [INFO] ============================================================
+2026-09-26 21:31:54,916 [INFO] --- START DOWNLOAD & INTEGRATION (HUGGINGFACE) ---
+2026-09-26 21:31:54,917 [INFO] Priorisiertes Zielverzeichnis: D:\Offline_AI_Models
+2026-09-26 21:31:54,917 [INFO] ============================================================
+2026-09-26 21:31:54,922 [INFO] [INFO] Hugging Face Download-Konfiguration - Repo: 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF', Datei: 'Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-plusIQ-TOOLS-NEO-MAX-MTP-Q8_0.gguf'
+2026-09-26 21:31:54,925 [INFO] [INFO] Übergebe an HuggingFaceBackend für Download von 'Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-plusIQ-TOOLS-NEO-MAX-MTP-Q8_0.gguf' aus 'DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF'...
+2026-09-26 21:31:54,937 [INFO] [HF Hub] Lade 'Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-plusIQ-TOOLS-NEO-MAX-MTP-Q8_0.gguf' von Hugging Face (DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF) herunter (Versuch 1)...
+2026-09-26 21:31:55,113 [INFO] HTTP Request: HEAD https://huggingface.co/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/resolve/main/Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-plusIQ-TOOLS-NEO-MAX-MTP-Q8_0.gguf "HTTP/1.1 302 Found"
+2026-09-26 21:31:55,115 [WARNING] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-26 21:31:55,278 [INFO] HTTP Request: GET https://huggingface.co/api/models/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF/xet-read-token/425937812d28d85a5b5bd70f90e66b590db1fb3c "HTTP/1.1 200 OK"
+2026-09-26 21:37:58,975 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 21:46:03,986 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:47:30,041 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:47:30,044 [INFO] [HF Hub] Registriere Modell 'qwen3-5-9b-the-defiant-fable-uncnr-heretic-plusiq-tools-neo-max-mtp-q8-0' in Ollama...
+2026-09-26 21:47:30,048 [INFO] HTTP Request: POST http://127.0.0.1:11434/api/create "HTTP/1.1 400 Bad Request"
+2026-09-26 21:47:30,052 [INFO] 
+[FEHLER] Kritischer Fehler im Download-Prozess: invalid model name (status code: 400)
+2026-09-26 21:50:17,969 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:50:20,668 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 21:50:24,067 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 21:50:24,068 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 21:50:24,069 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.7 GB frei
+2026-09-26 21:50:24,070 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 21:50:24,075 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 21:50:24,082 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 21:50:24,097 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:50:24,098 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 21:50:24,760 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 21:50:24,761 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 21:50:24,764 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:50:24,764 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 21:50:24,765 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:50:24,769 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:50:24,770 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 21:50:24,772 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 21:50:24,773 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:50:24,774 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 21:50:31,460 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:50:31,461 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 21:50:31,855 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 21:50:31,856 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 21:50:31,860 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:50:31,861 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 21:50:31,862 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 21:50:31,863 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 21:50:31,865 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 21:50:31,866 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 21:51:50,690 [INFO] [INFO] Aktives Zielverzeichnis festgelegt auf: D:\Offline_AI_Models
+2026-09-26 21:51:50,692 [INFO] [INFO] Speichere letzten Speicherpfad: 'D:\\Offline_AI_Models' in 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json'...
+2026-09-26 21:51:50,693 [INFO] [✓] Speicherpfad erfolgreich unter 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' gespeichert.
+2026-09-26 21:51:50,699 [INFO] ============================================================
+2026-09-26 21:51:50,700 [INFO] --- START DOWNLOAD & INTEGRATION (OLLAMA) ---
+2026-09-26 21:51:50,701 [INFO] Priorisiertes Zielverzeichnis: D:\Offline_AI_Models
+2026-09-26 21:51:50,701 [INFO] ============================================================
+2026-09-26 21:51:52,721 [INFO] [System] Starte entkoppelten Ollama-Dienst auf Wunschpfad...
+2026-09-26 21:51:52,722 [INFO] [INFO] Starte lokalen Ollama-Dienst mit OLLAMA_MODELS=D:\Offline_AI_Models...
+2026-09-26 21:51:56,751 [INFO] HTTP Request: POST http://127.0.0.1:11434/api/pull "HTTP/1.1 200 OK"
+2026-09-26 21:51:57,633 [INFO] 
+[Layer sha256:cb39e] pulling cb39eaabff82
+2026-09-26 21:52:04,659 [INFO] 
+[Layer sha256:c71d2] pulling c71d239df917
+2026-09-26 21:58:18,580 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:58:31,190 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 21:58:35,600 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 21:58:35,602 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 21:58:35,603 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 21:58:35,604 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 21:58:35,609 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 21:58:35,611 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 21:58:35,626 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:58:35,627 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 21:58:35,628 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 21:58:35,629 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 21:58:35,632 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:58:35,632 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 21:58:35,634 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:58:35,635 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 21:58:41,582 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:58:41,584 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 21:58:41,585 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 21:58:41,585 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 21:58:41,588 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:58:41,589 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 21:58:41,591 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:58:41,592 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 21:58:45,184 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:58:45,185 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 21:58:45,186 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 21:58:45,187 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 21:58:45,189 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:58:45,190 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 21:58:45,192 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:58:45,192 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 21:59:19,765 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 21:59:22,903 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 21:59:22,904 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 21:59:22,905 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 21:59:22,905 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 21:59:22,908 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 21:59:22,909 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 21:59:22,910 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 21:59:22,911 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:00:13,451 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:00:21,128 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:00:21,130 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:00:21,132 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:00:21,133 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:00:21,139 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:00:21,140 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:00:21,157 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:00:21,158 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:00:21,159 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:00:21,160 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:00:21,165 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:00:21,166 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:00:21,169 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:00:21,170 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:00:27,555 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:00:27,556 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:00:27,557 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:00:27,558 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:00:27,560 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:00:27,562 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:00:27,563 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:00:27,564 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:01:04,577 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:01:06,087 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:01:06,088 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:01:06,091 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:01:06,092 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:01:06,097 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:01:06,098 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:01:06,112 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:01:06,114 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:01:06,727 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:01:06,729 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:01:06,731 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:01:06,732 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:01:06,733 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:01:06,736 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:01:06,737 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:01:06,739 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:01:06,740 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:01:06,741 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:01:12,425 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:01:12,426 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:01:12,792 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:01:12,793 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:01:12,797 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:01:12,798 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:01:12,799 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:01:12,801 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:01:12,802 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:01:12,803 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:01:58,659 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:02:00,040 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:02:10,162 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:02:10,166 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:02:10,167 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:02:10,168 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:02:10,173 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:02:10,174 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:02:10,191 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:02:10,192 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:02:10,622 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:02:10,624 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:02:10,627 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:02:10,627 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:02:10,628 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:02:10,633 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:02:10,633 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:02:10,636 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:02:10,637 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:02:10,638 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:02:15,806 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:02:15,808 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:02:16,271 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:02:16,273 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:02:16,276 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:02:16,277 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:02:16,278 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:02:16,280 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:02:16,281 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:02:16,282 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:12:50,820 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:12:55,052 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:13:06,355 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:13:06,357 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:13:06,358 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:13:06,358 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:13:06,364 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:13:06,365 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:13:06,379 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:13:06,381 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:13:06,382 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:13:06,383 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:13:06,387 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:13:06,389 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:13:06,391 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:13:06,391 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:13:23,993 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:13:23,995 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:13:23,996 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:13:23,997 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:13:24,000 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:13:24,001 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:13:24,002 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:13:24,003 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:13:27,736 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:13:27,737 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:13:27,738 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:13:27,738 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:13:27,741 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:13:27,742 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:13:27,744 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:13:27,745 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:13:51,349 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:13:51,350 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:13:51,351 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:13:51,352 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:13:51,357 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:13:51,358 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:13:51,373 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:13:51,374 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:13:51,375 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:13:51,376 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:13:51,378 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:13:51,379 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:13:51,381 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:13:51,382 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:13:56,670 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:13:56,671 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:13:56,671 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:13:56,672 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:13:56,675 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:13:56,676 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:13:56,678 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:13:56,678 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:13:58,576 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:13:58,577 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:13:58,579 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:13:58,580 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:13:58,583 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:13:58,584 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:13:58,586 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:13:58,587 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:14:00,039 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:14:00,041 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:14:00,042 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:14:00,043 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:14:00,045 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:14:00,045 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:14:00,047 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:14:00,048 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:14:02,716 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:14:02,717 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:14:02,718 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:14:02,719 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:14:02,721 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:14:02,722 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:14:02,723 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:14:02,724 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:14:42,714 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:14:42,715 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:14:42,716 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:14:42,717 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:14:42,720 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:14:42,720 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:14:42,722 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:14:42,723 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:14:45,150 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:14:48,110 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:14:48,111 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:14:48,112 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:14:48,113 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:14:48,115 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:14:48,116 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:14:48,117 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:14:48,118 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:15:05,087 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:15:07,193 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:15:07,196 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:15:07,198 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:15:07,199 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:15:07,204 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:15:07,205 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:15:07,218 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:15:07,220 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:15:07,221 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:15:07,222 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:15:07,224 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:15:07,225 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:15:07,227 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:15:07,228 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:15:12,893 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:15:12,894 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:15:12,895 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:15:12,897 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:15:12,900 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:15:12,901 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:15:12,902 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:15:12,903 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:15:43,568 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:15:46,343 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:15:46,345 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:15:46,347 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:15:46,348 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:15:46,353 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:15:46,354 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:15:46,369 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:15:46,370 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:15:46,371 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:15:46,372 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:15:46,375 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:15:46,376 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:15:46,378 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:15:46,378 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:15:51,576 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:15:51,578 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:15:51,579 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:15:51,579 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:15:51,581 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:15:51,582 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:15:51,584 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:15:51,584 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:15:58,689 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:16:07,229 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:16:07,230 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:16:07,231 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:16:07,232 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:16:07,237 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:16:07,238 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:16:07,253 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:07,254 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:07,255 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:07,256 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:07,258 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:07,259 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:07,260 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:07,261 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:12,460 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:12,462 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:12,462 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:12,463 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:12,466 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:12,467 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:12,469 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:12,470 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:16,374 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:16,375 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:16,375 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:16,376 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:16,379 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:16,380 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:16,381 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:16,382 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:22,183 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:16:23,815 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:16:23,817 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:16:23,818 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:16:23,819 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:16:23,823 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:16:23,825 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:16:23,839 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:23,840 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:23,840 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:23,841 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:23,845 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:23,846 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:23,847 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:23,848 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:29,161 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:29,162 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:29,164 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:29,164 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:29,167 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:29,168 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:29,170 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:29,170 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:38,854 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:16:40,762 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:16:40,763 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:16:40,764 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:16:40,765 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:16:40,770 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:16:40,771 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:16:40,786 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:40,787 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:40,789 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:40,790 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:40,792 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:40,793 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:40,795 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:40,795 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:45,987 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:45,988 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:45,989 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:16:45,989 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:16:45,992 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:16:45,993 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:16:45,995 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:45,996 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:16:52,092 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:16:55,768 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:16:57,465 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:16:57,467 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:16:57,468 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:16:57,468 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:16:57,474 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:16:57,475 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:16:57,489 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:16:57,490 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:16:58,135 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:16:58,137 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:16:58,140 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:16:58,141 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:16:58,142 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:16:58,146 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:16:58,147 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:16:58,150 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:16:58,151 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:16:58,152 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:17:02,870 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:17:02,871 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:17:03,236 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:17:03,237 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:17:03,241 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:17:03,242 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:17:03,243 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:17:03,245 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:17:03,246 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:17:03,247 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:17:47,942 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:17:48,033 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:17:48,696 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:17:48,697 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:17:48,698 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:17:48,698 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:17:48,703 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:17:48,704 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:17:48,718 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:17:48,719 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:17:48,720 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:17:48,721 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:17:48,724 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:17:48,724 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:17:48,726 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:17:48,727 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:17:54,348 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:17:54,350 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:17:54,351 [WARNING] Online-Bibliothek nicht erreichbar (module 'urllib.request' has no attribute 'request'). Nutze lokalen Ollama-Daemon als Fallback...
+2026-09-26 22:17:54,352 [INFO] Frage lokale Modelle über Ollama-Client ab (Host: 127.0.0.1:11434)...
+2026-09-26 22:17:54,355 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:17:54,356 [INFO] 0 lokale Modelle erfolgreich über den Daemon geladen.
+2026-09-26 22:17:54,357 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:17:54,358 [INFO] [WARNUNG] Keine Modelle in 'CURRENT_LOADED_MODELS' vorhanden. Setze Dropdown auf 'Keine Modelle geladen'.
+2026-09-26 22:18:00,960 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:18:03,332 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:18:03,335 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:18:03,336 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:18:03,337 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:18:03,343 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:18:03,344 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:18:03,358 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:18:03,359 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:18:03,732 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:18:03,734 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:18:03,737 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:18:03,738 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:18:03,739 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:18:03,745 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:18:03,746 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:18:03,750 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:18:03,751 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:18:03,752 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:18:08,860 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:18:08,862 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:18:09,532 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:18:09,533 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:18:09,538 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:18:09,539 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:18:09,540 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:18:09,541 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:18:09,543 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:18:09,544 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:26:39,940 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:26:40,050 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:26:40,301 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:26:40,303 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:26:40,304 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:26:40,305 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:26:40,310 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:26:40,311 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:26:40,325 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:26:40,327 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:26:40,900 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:26:40,902 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:26:40,904 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:26:40,904 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:26:40,905 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:26:40,908 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:26:40,909 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:26:40,911 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:26:40,912 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:26:40,912 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:28:55,177 [INFO] HTTP Request: GET http://127.0.0.1:11434/api/tags "HTTP/1.1 200 OK"
+2026-09-26 22:28:56,949 [INFO] Backend-Module (OllamaBackend, HuggingFaceBackend, ModelConfigManager) erfolgreich initialisiert.
+2026-09-26 22:28:58,496 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:28:58,497 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:28:58,498 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:28:58,499 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:28:58,504 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:28:58,505 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:28:58,519 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:28:58,520 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:28:59,044 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:28:59,047 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:28:59,052 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:28:59,053 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:28:59,054 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:28:59,059 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:28:59,061 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:28:59,064 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:28:59,065 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:28:59,066 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:32:29,720 [INFO] [INFO] Ermittle verfügbare Systemlaufwerke und Speicherplätze...
+2026-09-26 22:32:29,724 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: C:\ (C:\) - 392.5 GB frei
+2026-09-26 22:32:29,725 [INFO] [DEBUG] Laufwerk erfolgreich eingelesen: D:\ (D:\) - 1065.6 GB frei
+2026-09-26 22:32:29,726 [INFO] [✓] Laufwerksermittlung abgeschlossen. 3 Optionen bereitgestellt.
+2026-09-26 22:32:29,731 [INFO] [INFO] Versuche, letzten Speicherpfad aus 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' zu laden...
+2026-09-26 22:32:29,733 [INFO] [✓] Speicherpfad erfolgreich geladen: 'D:\\Offline_AI_Models'
+2026-09-26 22:32:29,748 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:32:29,750 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:32:30,325 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:32:30,326 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:32:30,328 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:32:30,329 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:32:30,330 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:32:30,334 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:30,335 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:32:30,337 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:32:30,339 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:30,339 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:32:38,555 [INFO] Plattform-Bestätigung ausgelöst. Gewählte Plattform: 'ollama'
+2026-09-26 22:32:38,557 [INFO] Versuche, Modelle von Online-Bibliothek abzurufen: https://raw.githubusercontent.com/chrizzo84/OllamaScraper/refs/heads/main/out/ollama_models.json
+2026-09-26 22:32:38,971 [INFO] 238 Roheinträge aus Online-Bibliothek geladen.
+2026-09-26 22:32:38,972 [INFO] 313 Modelle erfolgreich aus Online-Bibliothek verarbeitet.
+2026-09-26 22:32:38,976 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: ''
+2026-09-26 22:32:38,977 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:32:38,978 [INFO] [INFO] 313 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:32:38,979 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:32:38,981 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:38,982 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:32:40,712 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'd'
+2026-09-26 22:32:40,713 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'd'
+2026-09-26 22:32:40,714 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:32:40,715 [INFO] [INFO] 309 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:32:40,718 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:32:40,719 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:40,720 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:32:40,907 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'de'
+2026-09-26 22:32:40,908 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'de'
+2026-09-26 22:32:40,909 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:32:40,910 [INFO] [INFO] 293 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:32:40,912 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'all-minilm:l12'
+2026-09-26 22:32:40,913 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:40,914 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'all-minilm:l12' (Plattform: OLLAMA)
+2026-09-26 22:32:41,154 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'dee'
+2026-09-26 22:32:41,155 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'dee'
+2026-09-26 22:32:41,156 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:32:41,157 [INFO] [INFO] 24 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:32:41,160 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:41,161 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'cogito:14b' (Plattform: OLLAMA)
+2026-09-26 22:32:41,165 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'cogito:14b'
+2026-09-26 22:32:41,166 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:41,167 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'cogito:14b' (Plattform: OLLAMA)
+2026-09-26 22:32:41,526 [INFO] [INFO] Suchfeld-Eingabe geändert. Neuer Suchbegriff: 'deep'
+2026-09-26 22:32:41,527 [INFO] [INFO] Starte Modellfilterung für Plattform 'ollama' mit Suchbegriff: 'deep'
+2026-09-26 22:32:41,528 [INFO] [INFO] Gesamtzahl verfügbarer Modelle vor Filterung: 313
+2026-09-26 22:32:41,529 [INFO] [INFO] 24 Modelle nach Filterung und alphabetischer Sortierung übrig.
+2026-09-26 22:32:41,529 [INFO] [✓] Automatische Vorauswahl gesetzt auf ID: 'cogito:14b'
+2026-09-26 22:32:41,531 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:41,531 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'cogito:14b' (Plattform: OLLAMA)
+2026-09-26 22:32:45,585 [INFO] [INFO] Starte Rendern der Modell-Spezifikationskarte...
+2026-09-26 22:32:45,586 [INFO] [DEBUG] Generiere Spec-Card für Modell: 'deepseek-v3:671b-q8_0' (Plattform: OLLAMA)
+2026-09-26 22:32:51,936 [INFO] [INFO] Aktives Zielverzeichnis festgelegt auf: D:\Offline_AI_Models
+2026-09-26 22:32:51,938 [INFO] [INFO] Speichere letzten Speicherpfad: 'D:\\Offline_AI_Models' in 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json'...
+2026-09-26 22:32:51,940 [INFO] [✓] Speicherpfad erfolgreich unter 'D:\Benutzern\Desktop\GITHUB\Offline_AI\config\last_storage_path.json' gespeichert.
+2026-09-26 22:32:51,945 [INFO] ============================================================
+2026-09-26 22:32:51,946 [INFO] START DOWNLOAD & INTEGRATION (OLLAMA)
+2026-09-26 22:32:51,947 [INFO] Priorisiertes Zielverzeichnis: D:\Offline_AI_Models
+2026-09-26 22:32:51,948 [INFO] ============================================================
+2026-09-26 22:32:53,962 [INFO] [System] Starte entkoppelten Ollama-Dienst auf Wunschpfad...
+2026-09-26 22:32:53,963 [INFO] [INFO] Starte lokalen Ollama-Dienst mit OLLAMA_MODELS=D:\Offline_AI_Models...
+2026-09-26 22:32:57,995 [INFO] HTTP Request: POST http://127.0.0.1:11434/api/pull "HTTP/1.1 200 OK"
+2026-09-26 22:32:59,083 [INFO] 
+[Layer sha256:832c4] pulling 832c4e4d49ef

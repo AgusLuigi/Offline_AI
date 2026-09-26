@@ -12,3 +12,4 @@ src/docker/__pycache__/*
 src/install/__pycache__/*
 src/jarvis/__pycache__/*
 src/security/__pycache__/*
+src/docker_py/__pycache__/*
