@@ -1,7 +1,7 @@
-2026-09-26 15:13:19,617 [ERROR] [HARDWARE EXCLUSION] Modul 'spacy' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:13:26,435 [ERROR] [HARDWARE EXCLUSION] Modul 'torch' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:13:30,288 [ERROR] [HARDWARE EXCLUSION] Modul 'torchvision' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:13:38,138 [ERROR] [HARDWARE EXCLUSION] Modul 'tensorflow' kann auf diesem System nicht geladen werden (Traceback (most recent call last):
+2026-09-27 01:53:53,302 [ERROR] [HARDWARE EXCLUSION] Modul 'spacy' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+2026-09-27 01:53:59,948 [ERROR] [HARDWARE EXCLUSION] Modul 'torch' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+2026-09-27 01:54:03,492 [ERROR] [HARDWARE EXCLUSION] Modul 'torchvision' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+2026-09-27 01:54:10,935 [ERROR] [HARDWARE EXCLUSION] Modul 'tensorflow' wurde aufgrund folgender Inkompatibilität permanent gesperrt: Traceback (most recent call last):
   File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\tensorflow\python\pywrap_tensorflow.py", line 74, in <module>
     from tensorflow.python._pywrap_tensorflow_internal import *
 ImportError: DLL load failed while importing _pywrap_tensorflow_internal: Eine DLL-Initialisierungsroutine ist fehlgeschlagen.
@@ -9,34 +9,6 @@ ImportError: DLL load failed while importing _pywrap_tensorflow_internal: Eine D
 
 Failed to load the native TensorFlow runtime.
 See https://www.tensorflow.org/install/errors for some common causes and solutions.
-If you need help, create an issue at https://github.com/tensorflow/tensorflow/issues and include the entire stack trace above this error message.). Neuinstallation wird ignoriert.
-2026-09-26 15:13:48,875 [ERROR] [HARDWARE EXCLUSION] Modul 'sentence_transformers' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:14:26,711 [ERROR] [HARDWARE EXCLUSION] Modul 'bertopic' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:24:12,573 [ERROR] [HARDWARE EXCLUSION] Modul 'spacy' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:24:20,763 [ERROR] [HARDWARE EXCLUSION] Modul 'torch' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:24:24,247 [ERROR] [HARDWARE EXCLUSION] Modul 'torchvision' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:24:32,438 [ERROR] [HARDWARE EXCLUSION] Modul 'tensorflow' kann auf diesem System nicht geladen werden (Traceback (most recent call last):
-  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\tensorflow\python\pywrap_tensorflow.py", line 74, in <module>
-    from tensorflow.python._pywrap_tensorflow_internal import *
-ImportError: DLL load failed while importing _pywrap_tensorflow_internal: Eine DLL-Initialisierungsroutine ist fehlgeschlagen.
-
-
-Failed to load the native TensorFlow runtime.
-See https://www.tensorflow.org/install/errors for some common causes and solutions.
-If you need help, create an issue at https://github.com/tensorflow/tensorflow/issues and include the entire stack trace above this error message.). Neuinstallation wird ignoriert.
-2026-09-26 15:24:45,636 [ERROR] [HARDWARE EXCLUSION] Modul 'sentence_transformers' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:25:23,817 [ERROR] [HARDWARE EXCLUSION] Modul 'bertopic' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:31:36,266 [ERROR] [HARDWARE EXCLUSION] Modul 'spacy' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:31:42,689 [ERROR] [HARDWARE EXCLUSION] Modul 'torch' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:31:46,218 [ERROR] [HARDWARE EXCLUSION] Modul 'torchvision' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:31:54,057 [ERROR] [HARDWARE EXCLUSION] Modul 'tensorflow' kann auf diesem System nicht geladen werden (Traceback (most recent call last):
-  File "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\tensorflow\python\pywrap_tensorflow.py", line 74, in <module>
-    from tensorflow.python._pywrap_tensorflow_internal import *
-ImportError: DLL load failed while importing _pywrap_tensorflow_internal: Eine DLL-Initialisierungsroutine ist fehlgeschlagen.
-
-
-Failed to load the native TensorFlow runtime.
-See https://www.tensorflow.org/install/errors for some common causes and solutions.
-If you need help, create an issue at https://github.com/tensorflow/tensorflow/issues and include the entire stack trace above this error message.). Neuinstallation wird ignoriert.
-2026-09-26 15:32:05,597 [ERROR] [HARDWARE EXCLUSION] Modul 'sentence_transformers' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
-2026-09-26 15:32:46,329 [ERROR] [HARDWARE EXCLUSION] Modul 'bertopic' kann auf diesem System nicht geladen werden ([WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.). Neuinstallation wird ignoriert.
+If you need help, create an issue at https://github.com/tensorflow/tensorflow/issues and include the entire stack trace above this error message.
+2026-09-27 01:54:20,756 [ERROR] [HARDWARE EXCLUSION] Modul 'sentence_transformers' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+2026-09-27 01:54:57,683 [ERROR] [HARDWARE EXCLUSION] Modul 'bertopic' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
