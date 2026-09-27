@@ -238,21 +238,22 @@ fuer die Lesbarkeit:
      mitgeloggt, fliesst aber (noch) nicht in Abschnitt 1b (proaktiver
      Vorfilter) ein. Kann spaeter nachgezogen werden, sobald GPU-bezogene
      patterns_filterung-Tags (z.B. "CUDA") definiert sind.
-  6. AUDIT-LOG-UMFANG (ANNAHME, bitte bestaetigen oder korrigieren):
-     Hybrid-Ansatz -- EVENT=IMPORT_OK wird pro PC_ID+Modul nur EINMAL
+  6. AUDIT-LOG-UMFANG: EVENT=IMPORT_OK wird pro PC_ID+Modul nur EINMAL
      geschrieben (beim ersten erfolgreichen Import), nicht bei jedem
-     einzelnen Programmlauf erneut. Grund: haelt das Log schlank (wie im
+     einzelnen Programmlauf erneut. Haelt das Log schlank (wie im
      Vorgaenger, der Erfolge gar nicht loggt), behaelt aber im Gegensatz
      zum Vorgaenger trotzdem einen Nachweis, WANN ein Modul zum ersten Mal
-     funktioniert hat. Falls ein voller Audit-Trail (jede OK-Zeile bei
-     jedem Lauf) gewuenscht ist, muss das explizit geaendert werden.
-  7. VC++-REDISTRIBUTABLE BEI WinError 1114 (ANNAHME, bitte bestaetigen
-     oder korrigieren): NUR ERKENNEN + IM LOG EMPFEHLEN, KEIN automatischer
-     Download/Silent-Install einer .exe aus dem Netz. Grund: das ist ein
-     Eingriff auf Systemebene ausserhalb von pip/Python und sollte nicht
-     ohne Zustimmung automatisch laufen. Der Vorgaenger-Code macht das
-     automatisch (Download + "/passive /norestart") -- das wird NICHT
-     uebernommen, es sei denn, das wird ausdruecklich gewuenscht.
+     funktioniert hat.
+  7. VC++-REDISTRIBUTABLE BEI WinError 1114: NUR ERKENNEN + HINWEIS AUSGEBEN,
+     KEIN automatischer Download/Silent-Install einer .exe aus dem Netz.
+     Der Vorgaenger-Code macht das automatisch (Download + "/passive
+     /norestart") -- wird NICHT uebernommen. Stattdessen wird ein Hinweis
+     geloggt UND auf der Konsole ausgegeben, z.B.:
+       "Bitte installiere Microsoft Visual C++ Redistributable
+        Version X.x.x oder neuer."
+     PHASE=INSTALL, EVENT=BANNED, DETAIL enthaelt den vollen Hinweistext
+     inkl. der konkret benoetigten Mindestversion (falls ermittelbar,
+     sonst allgemeiner Hinweis ohne Versionsnummer).
  
  
 7. BESTAETIGTE KONSTANTEN & LISTEN FUER DIE IMPLEMENTIERUNG
@@ -320,5 +321,6 @@ fuer die Lesbarkeit:
      Vorgaenger -- wird in dieser Skizze neu definiert (Abschnitt 1).
   5. Automatischer Download + Silent-Install (.exe aus dem Netz) beim
      VC++-Redistributable-Fix ohne Rueckfrage -- wird NICHT uebernommen
-     (siehe Abschnitt 6, Entscheidung 7: nur Erkennung + Empfehlung im Log).
+     (siehe Abschnitt 6, Entscheidung 7: nur Erkennung + Hinweistext mit
+     Mindestversion, Installation bleibt manuelle Aufgabe des Nutzers).
  
