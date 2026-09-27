@@ -1,0 +1,40 @@
+                       ┌──────────────────────────────┐
+                       │   Standard Library Check     │
+                       │ (sys, subprocess, importlib) │
+                       └──────────────┬───────────────┘
+                                      │
+                                      ▼
+                        ┌──────────────────────────┐
+                        │ Persistent Blacklist     │
+                        │ (excluded_packages.json) │
+                        └─────────────┬────────────┘
+                                      │
+                   ┌──────────────────┴──────────────────┐
+                   ▼                                     ▼
+        [Paket auf Blacklist]                 [Paket NICHT auf Blacklist]
+                   │                                     │
+                   ▼                                     ▼
+            [SKIP & FALLBACK]                    [Import-Versuch]
+                                                         │
+                                        ┌────────────────┴────────────────┐
+                                        ▼                                 ▼
+                                    [Erfolg]                          [Fehler]
+                                        │                                 │
+                                        ▼                                 ▼
+                                 [Modul bereit]                  [Fehler-Analyse]
+                                                                          │
+                                              ┌───────────────────────────┴───────────────────────────┐
+                                              ▼                                                       ▼
+                                   [Hardware / C-DLL Fehler]                               [Fehlendes Modul / Pip-Code]
+                                 (WinError 1114, C10.dll etc.)                                        │
+                                              │                                                       ▼
+                                              │                                             [1x Isolierter Pip Install]
+                                              │                                                       │
+                                              │                                           ┌───────────┴───────────┐
+                                              │                                           ▼                       ▼
+                                              │                                       [Erfolg]                [Fehlchlag]
+                                              │                                           │                       │
+                                              └───────────────────────┬───────────────────┘                       │
+                                                                      ▼                                           │
+                                                           [PERMANENTE SPERRE] ◄──────────────────────────────────┘
+                                                       (Save to JSON & Never retry)

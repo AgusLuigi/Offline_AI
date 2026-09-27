@@ -12,3 +12,24 @@ See https://www.tensorflow.org/install/errors for some common causes and solutio
 If you need help, create an issue at https://github.com/tensorflow/tensorflow/issues and include the entire stack trace above this error message.
 2026-09-27 01:54:20,756 [ERROR] [HARDWARE EXCLUSION] Modul 'sentence_transformers' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
 2026-09-27 01:54:57,683 [ERROR] [HARDWARE EXCLUSION] Modul 'bertopic' wurde aufgrund folgender Inkompatibilität permanent gesperrt: [WinError 1114] Eine DLL-Initialisierungsroutine ist fehlgeschlagen. Error loading "c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+2026-09-27 02:33:27,800 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:33:27,800 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:33:27,807 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:33:27,807 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:33:27,807 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:33:27,807 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:33:27,807 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:33:27,807 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:33:35,277 [WARNING] [AUTOMAGIC REPAIR] Warnung bei 'osmnx' erkannt: networkx backend defined more than once: nx_loopback
+2026-09-27 02:33:35,287 [WARNING] [AUTOMAGIC REPAIR] Warnung bei 'osmnx' erkannt: networkx backend defined more than once: nx_loopback
+2026-09-27 02:34:06,868 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:34:06,868 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:34:06,868 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:34:06,872 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:34:06,872 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:34:06,877 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:34:06,877 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+2026-09-27 02:34:06,882 [WARNING] In c:\Users\MacBookAir\miniconda3\envs\MaiOmni\Lib\site-packages\matplotlib\mpl-data\stylelib\classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+2026-09-27 02:34:16,709 [WARNING] [AUTOMAGIC REPAIR] Warnung bei 'osmnx' erkannt: networkx backend defined more than once: nx_loopback
+2026-09-27 02:34:16,709 [WARNING] [AUTOMAGIC REPAIR] Warnung bei 'osmnx' erkannt: networkx backend defined more than once: nx_loopback
+2026-09-27 02:35:11,317 [ERROR] [ERROR] Automatische Reparatur/Installation fehlgeschlagen für 'osmnx': Command '['c:\\Users\\MacBookAir\\miniconda3\\envs\\MaiOmni\\python.exe', '-m', 'pip', 'install', '--upgrade', '--force-reinstall', '--no-cache-dir', 'osmnx']' returned non-zero exit status 1.
