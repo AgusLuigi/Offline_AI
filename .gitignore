@@ -1,3 +1,10 @@
+# Log Folder
+logs/*
+
+# Notebooks Folder
+notebooks/import_master.py
+notebooks/xxx.py
+
 # Temporary files
 temp/*
 
