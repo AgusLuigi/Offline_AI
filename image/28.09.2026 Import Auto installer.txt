@@ -1,3 +1,4 @@
+Version 1
                        ┌──────────────────────────────┐
                        │   Standard Library Check     │
                        │ (sys, subprocess, importlib) │
@@ -38,3 +39,38 @@
                                                                       ▼                                           │
                                                            [PERMANENTE SPERRE] ◄──────────────────────────────────┘
                                                        (Save to JSON & Never retry)
+
+
+Variante 2
+---------------------------------------------------------------------------------------
+
+Logfile parsen & PC-Status einlesen
+        │
+        ▼
+Eintrag aus Liste nehmen
+        │
+        ▼
+[1] Log-Memory Check ─────────── (Aus Log als gesperrt erkannt?) ──► JA  ──► [SKIP] Überspringen
+        │
+        │ NEIN
+        ▼
+[2] Import-Versuch (Lokal)
+        │
+        ├─► ERFOLG ────────────────────────────────────────────────────────► [6] In globalen Scope einbinden
+        │
+        └─► FEHLER / FEHLT
+                │
+                ▼
+        [3] Fehler-Analyse ────── (Hardware / DLL / C-Error?) ─────► JA  ──► [LOG SPERRE] In Log schreiben & Ende
+                │
+                │ NEIN (Fehlt einfach oder Installation nötig)
+                ▼
+        [4] 1x Isolierter Pip-Install
+                │
+                ├─► ERFOLG ──► Re-Import Versuch ──► ERFOLG ───────────────► [6] In globalen Scope einbinden
+                │                                    │
+                │                                    └─► CRASH ────────────► [INLINE-REPAIR] 1x Force-Reinstall
+                │                                                                  │
+                │                                                                  ├─► ERFOLG ─► [6] Scope
+                │                                                                  └─► FEHLER ─► [LOG SPERRE]
+                └─► FEHLER ────────────────────────────────────────────────────────► [LOG RETRY] In Log schreiben +1
