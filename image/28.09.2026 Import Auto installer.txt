@@ -44,6 +44,26 @@ Version 1
 Variante 2
 ---------------------------------------------------------------------------------------
 
+
+Logfile Starten
+        │
+        ▼
+PC identification & Kürtzel filterung / Kürtzel Vergebung um den LOG Kurtz zu halten z.b. PC_01/ hardware einlesung um patterns Abzufangen
+
+patterns = [
+        r"0x45[aA]",                         # Windows DLL Initialization Failure (z. B. AVX-Fehlen)
+        r"WinError 1114",                    # DLL Initialization Routine failed
+        r"DllMain returned false",           # C-Extension Ladefehler
+        r"Illegal instruction",              # CPU kann Befehlssatz (AVX/AVX2/FMA/BMI2) nicht verarbeiten
+        r"AVX[2]?",                          # AVX/AVX2-Spezifische Fehlermeldungen
+        r"instruction set",                  # Inkompatible CPU-Befehlssätze
+        r"not a valid Win32 application",    # Architektur-/Format-Inkompatibilität
+        r"wrong ELF class",                  # 32/64-Bit oder Architektur-Mismatch unter Linux
+        r"c10\.dll",                         # Torch Core C++ Bibliothek
+        r"_pywrap_tensorflow_internal"       # TensorFlow Core C++ Wrapper
+    ]
+        │
+        ▼
 Logfile parsen & PC-Status einlesen
         │
         ▼
