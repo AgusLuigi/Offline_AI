@@ -1,96 +1,256 @@
-Version 1
-                       ┌──────────────────────────────┐
-                       │   Standard Library Check     │
-                       │ (sys, subprocess, importlib) │
-                       └──────────────┬───────────────┘
-                                      │
-                                      ▼
-                        ┌──────────────────────────┐
-                        │ Persistent Blacklist     │
-                        │ (excluded_packages.json) │
-                        └─────────────┬────────────┘
-                                      │
-                   ┌──────────────────┴──────────────────┐
-                   ▼                                     ▼
-        [Paket auf Blacklist]                 [Paket NICHT auf Blacklist]
-                   │                                     │
-                   ▼                                     ▼
-            [SKIP & FALLBACK]                    [Import-Versuch]
-                                                         │
-                                        ┌────────────────┴────────────────┐
-                                        ▼                                 ▼
-                                    [Erfolg]                          [Fehler]
-                                        │                                 │
-                                        ▼                                 ▼
-                                 [Modul bereit]                  [Fehler-Analyse]
-                                                                          │
-                                              ┌───────────────────────────┴───────────────────────────┐
-                                              ▼                                                       ▼
-                                   [Hardware / C-DLL Fehler]                               [Fehlendes Modul / Pip-Code]
-                                 (WinError 1114, C10.dll etc.)                                        │
-                                              │                                                       ▼
-                                              │                                             [1x Isolierter Pip Install]
-                                              │                                                       │
-                                              │                                           ┌───────────┴───────────┐
-                                              │                                           ▼                       ▼
-                                              │                                       [Erfolg]                [Fehlchlag]
-                                              │                                           │                       │
-                                              └───────────────────────┬───────────────────┘                       │
-                                                                      ▼                                           │
-                                                           [PERMANENTE SPERRE] ◄──────────────────────────────────┘
-                                                       (Save to LOG & Never retry)
 
-
-Variante 2
----------------------------------------------------------------------------------------
-
-
-Logfile Starten
-        │
-        ▼
-PC identification & Kürtzel filterung / Kürtzel Vergebung um den LOG Kurtz zu halten z.b. PC_01/ hardware einlesung um patterns Abzufangen
-
-patterns = [
-        r"0x45[aA]",                         # Windows DLL Initialization Failure (z. B. AVX-Fehlen)
-        r"WinError 1114",                    # DLL Initialization Routine failed
-        r"DllMain returned false",           # C-Extension Ladefehler
-        r"Illegal instruction",              # CPU kann Befehlssatz (AVX/AVX2/FMA/BMI2) nicht verarbeiten
-        r"AVX[2]?",                          # AVX/AVX2-Spezifische Fehlermeldungen
-        r"instruction set",                  # Inkompatible CPU-Befehlssätze
-        r"not a valid Win32 application",    # Architektur-/Format-Inkompatibilität
-        r"wrong ELF class",                  # 32/64-Bit oder Architektur-Mismatch unter Linux
-        r"c10\.dll",                         # Torch Core C++ Bibliothek
-        r"_pywrap_tensorflow_internal"       # TensorFlow Core C++ Wrapper
-    ]
-        │
-        ▼
-Logfile parsen & PC-Status einlesen
-        │
-        ▼
-Eintrag aus Liste nehmen
-        │
-        ▼
-[1] Log-Memory Check ─────────── (Aus Log als gesperrt erkannt?) ──► JA  ──► [SKIP] Überspringen
-        │
-        │ NEIN
-        ▼
-[2] Import-Versuch (Lokal)
-        │
-        ├─► ERFOLG ────────────────────────────────────────────────────────► [6] In globalen Scope einbinden
-        │
-        └─► FEHLER / FEHLT
-                │
-                ▼
-        [3] Fehler-Analyse ────── (Hardware / DLL / C-Error?) ─────► JA  ──► [LOG SPERRE] In Log schreiben & Ende
-                │
-                │ NEIN (Fehlt einfach oder Installation nötig)
-                ▼
-        [4] 1x Isolierter Pip-Install
-                │
-                ├─► ERFOLG ──► Re-Import Versuch ──► ERFOLG ───────────────► [6] In globalen Scope einbinden
-                │                                    │
-                │                                    └─► CRASH ────────────► [INLINE-REPAIR] 1x Force-Reinstall
-                │                                                                  │
-                │                                                                  ├─► ERFOLG ─► [6] Scope
-                │                                                                  └─► FEHLER ─► [LOG SPERRE]
-                └─► FEHLER ────────────────────────────────────────────────────────► [LOG RETRY] In Log schreiben +1
+Ablauf logik skizze · TXT
+ABLAUF-LOGIK: AUTO-IMPORT & KOMPATIBILITAETS-AGENT
+====================================================
+Reine Planungsskizze (kein Code). Ziel: exakte Begriffe, Datenfelder und
+Log-Zeilenformat festlegen, bevor irgendetwas implementiert wird.
+ 
+ 
+1. DATENFELDER PRO HARDWARE-PROFIL (HARDWARE_INFORMATION)
+------------------------------------------------------------
+Erfasst einmal pro Programmstart, bevor irgendein fremdes Paket importiert wird.
+Feldnamen wie vorgegeben (Grundgeruest):
+ 
+  Feldname        Typ     Quelle                            Zweck
+  --------------  ------  --------------------------------  -------------------------------
+  CORE            int     os.cpu_count() / psutil            Kern-/Thread-Anzahl (informativ)
+  RAM             float   psutil.virtual_memory().total      informativ, evtl. Grenzwert-Filter
+  GPU_RAM         float   optional, falls GPU erkennbar       informativ (CUDA-Pakete)
+  PLATFORM        str     platform.system()                  Windows / Linux / Darwin
+  OS_BITNESS      str     platform.architecture()            32bit / 64bit
+  CPU_ARCH        str     platform.machine()                 z.B. AMD64, x86_64, ARM64
+ 
+Zusaetzlich, NICHT Teil der sechs Grundfelder, aber fuer den proaktiven
+Vorfilter zwingend noetig:
+ 
+  Feldname        Typ           Quelle                       Zweck
+  --------------  ------------  ---------------------------  -------------------------------
+  CPU_FLAGS       set[str]      CPUID via ctypes             Menge unterstuetzter Instruction-
+                                                               Sets, z.B. {"AVX","AVX2","SSE4"}
+  pc_id           str           Vergabe durch Log (PC1,PC2..) kompakter Schluessel im Log
+  hw_hash         str           Hash ueber Felder oben        Wiedererkennung derselben Maschine
+ 
+  hw_hash = Hash ueber (CPU_ARCH, PLATFORM, OS_BITNESS, CORE) -- OHNE RAM/GPU_RAM,
+  da diese sich z.B. durch RAM-Nachruesten aendern koennen, ohne dass es eine
+  "neue" Maschine ist.
+  CPU_FLAGS ist eine Eigenschaft, kein Identitaetsmerkmal -> fliesst NICHT in den Hash ein.
+ 
+ 
+1b. PROAKTIVE AVX/AVX2-ERKENNUNG UEBER patterns_filterung
+--------------------------------------------------------------
+Das Feld "patterns_filterung" (5. Tupel-Element in LIBRARY_IMPORT/LIBRARY_FROM)
+hat zwei verschiedene Inhaltsarten, die getrennt behandelt werden:
+ 
+  a) FAEHIGKEITS-TAGS  (feste Whitelist, siehe unten)
+     Beispiel: ["AVX2"], ["AVX", "AVX2", "AVX512"]
+     -> werden VOR jedem Importversuch gegen CPU_FLAGS geprueft.
+     -> Tag nicht in CPU_FLAGS enthalten => PHASE=FILTER EVENT=SKIP_HW,
+        Status=HW_INCOMPATIBLE, kein Import-/Install-Versuch.
+ 
+  b) FEHLERTEXT-MUSTER  (alles, was NICHT auf der Whitelist steht)
+     Beispiel: ["0x45a", "WinError 1114"]
+     -> werden NUR verwendet, falls trotzdem ein Fehler auftritt
+        (zusammen mit der globalen patterns[]-Liste), also reaktiv,
+        PHASE=INSTALL EVENT=BANNED.
+ 
+  CPU_CAPABILITY_TAGS (feste Whitelist, bestimmt a) vs. b)):
+    { "AVX", "AVX2", "AVX512", "FMA", "BMI2", "SSE4" }
+ 
+  Damit ist z.B. bei torch (["AVX2"]) der komplette Inhalt ein Faehigkeits-Tag
+  -> rein proaktiver Check. Bei tensorflow (["AVX","AVX2","0x45a","WinError 1114"])
+  sind "AVX"/"AVX2" proaktiv, "0x45a"/"WinError 1114" bleiben reaktiv.
+ 
+ 
+2. PC-ID VERGABE
+------------------
+  Format:   PC<N>          Beispiele: PC1, PC2, PC3 ...
+  Regeln:
+    - kein Unterstrich, kein fuehrendes Nullpadding
+    - N steigt rein zaehlend mit jedem neuen hw_hash (kein Wiederverwenden
+      von Luecken, falls ein Eintrag jemals entfernt wuerde)
+    - naechste freie Nummer = Anzahl bisheriger HW_NEW-Eintraege + 1
+ 
+ 
+3. BEGRIFFE FUER DEN MODUL-STATUS (pro PC_ID + Modulname)
+-----------------------------------------------------------
+  Status-Begriff       Bedeutung
+  --------------------  --------------------------------------------------------
+  UNKNOWN               noch nie versucht auf dieser PC_ID
+  HW_INCOMPATIBLE        Vorfilter: Hardware kann es nicht (kein Versuch)
+  OK                     Import erfolgreich, Modul im globalen Scope
+  RETRYING               Fehler war "harmlos", RETRY_COUNT < MAX_RETRIES
+  BANNED                 Fehler passte auf ein patterns_filterung-Muster -> aus
+  RETRY_EXHAUSTED        RETRY_COUNT erreicht MAX_RETRIES, kein Hardwarefehler
+ 
+ 
+4. LOG-ZEILENFORMAT (einzige Datenquelle, keine Zweitdatei)
+---------------------------------------------------------------
+Ein Eintrag pro Zeile, mit Pipe getrennt, Reihenfolge fix:
+ 
+  [PC_ID] | [JJJJ,MM,TT,hh,mm,ss] | [PHASE] | EVENT=<event> | MODULE=<name|-> | DETAIL=<k:v,k:v,...> | VERSUCH=<n|->
+ 
+  PHASE  = grobe Kategorie, in der der Ablauf gerade steckt
+  EVENT  = genauer Ausgang innerhalb dieser Phase
+  VERSUCH = Versuchszaehler fuer dieses Modul auf dieser PC_ID ("-" wenn
+            der Eintrag keinen Versuchsbezug hat, z.B. HW_NEW, SESSION_START)
+ 
+  DETAIL-Escaping (Entscheidung: JA):
+    Vor dem Schreiben werden in jedem Wert innerhalb von DETAIL folgende
+    Zeichen ersetzt, damit das Pipe/Komma-Format beim Parsen nicht bricht:
+      "|"  -> "\|"
+      ","  -> "\,"
+      Zeilenumbruch -> " "  (Fehlertexte werden auf eine Zeile reduziert)
+    Beim Einlesen wird in umgekehrter Reihenfolge entschaert.
+ 
+  PHASE -> moegliche EVENTs:
+ 
+  PHASE       EVENTs
+  ----------  ------------------------------------------------------------------
+  HARDWARE    HW_NEW, HW_KNOWN
+  SESSION     SESSION_START
+  FILTER      SKIP_HW
+  IMPORT      IMPORT_OK, IMPORT_FAIL
+  INSTALL     INSTALL_TRY, INSTALL_OK, INSTALL_FAIL, RETRY, RETRY_EXHAUSTED, BANNED
+  REPAIR      INLINE_REPAIR_TRY, INLINE_REPAIR_OK, INLINE_REPAIR_FAIL
+ 
+  Beispielzeilen:
+ 
+  [PC1]|[2026,09,27,10,15,03]|[HARDWARE]|EVENT=HW_NEW|MODULE=-|DETAIL=hash:8f3a1c,arch:AMD64,os:Windows,flags:SSE4;AVX|VERSUCH=-
+  [PC1]|[2026,09,27,10,15,04]|[SESSION]|EVENT=SESSION_START|MODULE=-|DETAIL=-|VERSUCH=-
+  [PC1]|[2026,09,27,10,15,05]|[FILTER]|EVENT=SKIP_HW|MODULE=torch|DETAIL=pattern:AVX2,benoetigt:AVX2|VERSUCH=-
+  [PC1]|[2026,09,27,10,15,07]|[INSTALL]|EVENT=INSTALL_TRY|MODULE=faiss|DETAIL=pip_name:faiss-cpu|VERSUCH=1
+  [PC1]|[2026,09,27,10,15,09]|[INSTALL]|EVENT=BANNED|MODULE=tensorflow|DETAIL=matched_pattern:WinError 1114,fehler_kurz:DLL init failed|VERSUCH=2
+  [PC2]|[2026,09,27,11,02,00]|[HARDWARE]|EVENT=HW_NEW|MODULE=-|DETAIL=hash:2b91f0,arch:ARM64,os:Linux,flags:SSE4;AVX;AVX2|VERSUCH=-
+ 
+  Hinweis: mehrere CPU_FLAGS-Werte innerhalb EINES DETAIL-Werts werden mit
+  ";" getrennt, NICHT mit "," -- das Komma bleibt ausschliesslich der
+  Trenner zwischen den k:v-Paaren selbst (Escaping-Regel aus diesem Abschnitt).
+ 
+ 
+5. GESAMT-ABLAUF (Textskizze)
+--------------------------------
+ 
+  [0] SESSION_START
+      Log-Datei oeffnen (anlegen falls nicht vorhanden)
+              |
+              v
+  [1] HARDWARE_INFORMATION erfassen
+      CPU_ARCH, CPU_FLAGS, CORE, RAM, GPU_RAM, PLATFORM, OS_BITNESS
+      -> HW_HASH berechnen (Basis: CPU_ARCH, PLATFORM, OS_BITNESS, CORE)
+              |
+              v
+      HW_HASH bereits im Log?
+        JA  -> PHASE=HARDWARE EVENT=HW_KNOWN   -> PC_ID uebernehmen
+        NEIN -> PHASE=HARDWARE EVENT=HW_NEW    -> naechste freie PC<N> vergeben
+              |
+              v
+  [2] Log nach PC_ID filtern
+      -> Modul-Status-Tabelle im Speicher aufbauen:
+         { modulname: status, retry_count, matched_pattern }
+              |
+              v
+      Fuer jedes Modul aus LIBRARY_IMPORT + LIBRARY_FROM:
+              |
+              v
+  [3] Status-Check aus Speicher
+      BANNED / RETRY_EXHAUSTED  -> SKIP (kein neuer Versuch)
+      HW_INCOMPATIBLE           -> SKIP
+      OK                        -> direkt importieren
+      UNKNOWN / RETRYING        -> weiter zu [4]
+              |
+              v
+  [4] Vorfilter: FAEHIGKEITS-TAGS aus patterns_filterung vs. CPU_FLAGS (siehe 1b)
+      z.B. Tag "AVX2" im patterns_filterung des Moduls UND "AVX2" NICHT in CPU_FLAGS
+      -> PHASE=FILTER EVENT=SKIP_HW, Status=HW_INCOMPATIBLE,
+         weiter zum naechsten Modul (kein Import-/Install-Versuch)
+              |
+              v (Hardware passt)
+  [5] Lokaler Import-Versuch (importlib)
+              |
+      +-------+-------+
+      |               |
+   ERFOLG           FEHLER
+      |               |
+      v               v
+  PHASE=IMPORT    [6] Fehlertext gegen patterns[] matchen
+  EVENT=IMPORT_OK          |
+  Status=OK        +-------+-------+
+                   MATCH         NO MATCH
+                    |               |
+                    v               v
+          PHASE=INSTALL      RETRY_COUNT < MAX_RETRIES?
+          EVENT=BANNED         NEIN            JA
+          Status=BANNED         |               |
+          (kein weiterer         v               v
+           Versuch)     PHASE=INSTALL     PHASE=INSTALL
+                         EVENT=RETRY_      EVENT=INSTALL_TRY
+                         EXHAUSTED         pip install <pip_name><version>
+                         Status=           VERSUCH=<n+1>
+                         RETRY_EXHAUSTED           |
+                                          +---------+---------+
+                                        FEHLER              ERFOLG
+                                          |                    |
+                                          v                    v
+                                PHASE=INSTALL         Re-Import-Versuch
+                                EVENT=INSTALL_FAIL             |
+                                EVENT=RETRY (count+1)  +--------+--------+
+                                Status=RETRYING       ERFOLG          CRASH
+                                                        |                |
+                                                        v                v
+                                              PHASE=IMPORT      PHASE=REPAIR
+                                              EVENT=IMPORT_OK   EVENT=INLINE_REPAIR_TRY
+                                              Status=OK         pip install --force-reinstall
+                                                                        |
+                                                              +---------+---------+
+                                                            ERFOLG              FEHLER
+                                                              |                    |
+                                                              v                    v
+                                                   PHASE=REPAIR          PHASE=REPAIR
+                                                   EVENT=INLINE_         EVENT=INLINE_
+                                                   REPAIR_OK             REPAIR_FAIL
+                                                   Status=OK             PHASE=INSTALL
+                                                                         EVENT=BANNED
+                                                                         Status=BANNED
+ 
+ 
+6. ENTSCHIEDEN
+-----------------
+  1. AVX/AVX2-Erkennung: PROAKTIV ueber CPU_FLAGS + CPU_CAPABILITY_TAGS
+     (siehe Abschnitt 1b). Kein Warten auf einen ersten Crash mehr.
+  2. hw_hash-Basis: (CPU_ARCH, PLATFORM, OS_BITNESS, CORE) -- siehe Abschnitt 1.
+  3. DETAIL-Feld wird escaped ("|" und "," werden maskiert) -- siehe Abschnitt 4.
+  4. Status-Schluessel pro Modul: PIP_NAME, falls vorhanden (Position "Pip
+     Install Name" im Tuple); ist keiner angegeben (None/fehlt), wird der
+     IMPORT-NAME als Schluessel genutzt (bei LIBRARY_FROM: das MODULE-Feld,
+     also z.B. "torch.nn.functional" -> Schluessel "torch", weil pip_name
+     dort explizit "torch" ist). So landen torch / torch.nn.functional /
+     torchvision unter zwei Schluesseln ("torch" und "torchvision"), nicht
+     unter drei -- das entspricht der tatsaechlichen Installationseinheit.
+  5. GPU_RAM: INFORMATIV fuer spaetere Schritte, kein Vorfilter-Kriterium.
+     Grund: GPU-Erkennung (CUDA vorhanden? welche Compute Capability?)
+     ist ein eigenes, groesseres Thema und wuerde diese Ablauf-Skizze
+     sprengen. GPU_RAM wird im HARDWARE_INFORMATION-Block miterfasst und
+     mitgeloggt, fliesst aber (noch) nicht in Abschnitt 1b (proaktiver
+     Vorfilter) ein. Kann spaeter nachgezogen werden, sobald GPU-bezogene
+     patterns_filterung-Tags (z.B. "CUDA") definiert sind.
+ 
+ 
+7. BESTAETIGTE KONSTANTEN & LISTEN FUER DIE IMPLEMENTIERUNG
+------------------------------------------------------------------
+  LOG_FILE_NAME = "LOG_ai_loghic_agent_LOG.log"
+  MAX_RETRIES   = 2
+ 
+  Log-Pfad-Ermittlung ueber get_project_root():
+    - sucht ab dem aktuellen Arbeitsverzeichnis bis zu 7 Ebenen nach oben
+      nach einem "src"-Ordner (oder erkennt, ob man selbst bereits in "src" steht)
+    - LOGS_DIR = PROJECT_ROOT / "logs"  (wird bei Bedarf angelegt)
+    - TARGET_LOG_PATH = LOGS_DIR / LOG_FILE_NAME
+ 
+  LIBRARY_IMPORT und LIBRARY_FROM: wie vom Nutzer vorgegeben, Tuple-Struktur
+    LIBRARY_IMPORT: (Import Name, Alias, Pip Install Name, version_constraint, patterns_filterung)
+    LIBRARY_FROM:   (Module, Import Target, Alias, Pip Install Name, version_constraint, patterns_filterung)
+  Inhalt (Kategorien): Standard-Bibliotheken, Data Science, Netz-Utilities,
+    AI/LLM/Hubs, Vektor-Suche & NLP, Vision & Deep Learning, Geodaten,
+    ML & Time Series, Audio & Interaktivitaet -- exakte Listen siehe
+    separates Code-Dokument (nicht Teil dieser Ablauf-Skizze).
+ 
