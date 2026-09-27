@@ -38,7 +38,7 @@ Version 1
                                               └───────────────────────┬───────────────────┘                       │
                                                                       ▼                                           │
                                                            [PERMANENTE SPERRE] ◄──────────────────────────────────┘
-                                                       (Save to JSON & Never retry)
+                                                       (Save to LOG & Never retry)
 
 
 Variante 2
