@@ -85,22 +85,27 @@ hat zwei verschiedene Inhaltsarten, die getrennt behandelt werden:
  
 4. LOG-ZEILENFORMAT (einzige Datenquelle, keine Zweitdatei)
 ---------------------------------------------------------------
-Ein Eintrag pro Zeile, mit Pipe getrennt, Reihenfolge fix:
+Ein Eintrag pro Zeile, Reihenfolge fix, Layout mit eckigen Klammern/Pipes
+fuer die Lesbarkeit:
  
-  [PC_ID] | [JJJJ,MM,TT,hh,mm,ss] | [PHASE] | EVENT=<event> | MODULE=<name|-> | DETAIL=<k:v,k:v,...> | VERSUCH=<n|->
+  [PC_ID] | [JJJJ,MM,TT,hh,mm,ss] | [PHASE] | EVENT=<event> | MODULE=<name|-> | DETAIL=<freitext> | VERSUCH=<n|->
  
   PHASE  = grobe Kategorie, in der der Ablauf gerade steckt
   EVENT  = genauer Ausgang innerhalb dieser Phase
   VERSUCH = Versuchszaehler fuer dieses Modul auf dieser PC_ID ("-" wenn
             der Eintrag keinen Versuchsbezug hat, z.B. HW_NEW, SESSION_START)
  
-  DETAIL-Escaping (Entscheidung: JA):
-    Vor dem Schreiben werden in jedem Wert innerhalb von DETAIL folgende
-    Zeichen ersetzt, damit das Pipe/Komma-Format beim Parsen nicht bricht:
-      "|"  -> "\|"
-      ","  -> "\,"
-      Zeilenumbruch -> " "  (Fehlertexte werden auf eine Zeile reduziert)
-    Beim Einlesen wird in umgekehrter Reihenfolge entschaert.
+  PARSING-METHODE (Aenderung ggue. vorheriger Fassung -- Erkenntnis aus dem
+  Vorgaenger-Code): Es wird NICHT mehr naiv an "|" und "," gesplittet.
+  Stattdessen wird jedes Feld per Label-Regex herausgezogen, z.B.
+    r"\[PC_ID:\s*(PC\d+)\]"            -- fuer PC_ID
+    r"MODULE=([^\|]*)\|"                -- fuer MODULE
+    r"DETAIL=(.*)\|VERSUCH="            -- fuer DETAIL (bis zum naechsten Label)
+  Vorteil: DETAIL darf beliebige Kommas/Pipes aus echten Fehlertexten
+  enthalten, OHNE dass vorher escaped werden muss. Einzige Einschraenkung:
+  DETAIL darf nicht zufaellig die literale Zeichenfolge "|VERSUCH=" enthalten
+  (praktisch ausgeschlossen bei normalen Fehlertexten). Kein Escaping mehr
+  noetig -- ersetzt die fruehere Escaping-Regel.
  
   PHASE -> moegliche EVENTs:
  
@@ -119,12 +124,11 @@ Ein Eintrag pro Zeile, mit Pipe getrennt, Reihenfolge fix:
   [PC1]|[2026,09,27,10,15,04]|[SESSION]|EVENT=SESSION_START|MODULE=-|DETAIL=-|VERSUCH=-
   [PC1]|[2026,09,27,10,15,05]|[FILTER]|EVENT=SKIP_HW|MODULE=torch|DETAIL=pattern:AVX2,benoetigt:AVX2|VERSUCH=-
   [PC1]|[2026,09,27,10,15,07]|[INSTALL]|EVENT=INSTALL_TRY|MODULE=faiss|DETAIL=pip_name:faiss-cpu|VERSUCH=1
-  [PC1]|[2026,09,27,10,15,09]|[INSTALL]|EVENT=BANNED|MODULE=tensorflow|DETAIL=matched_pattern:WinError 1114,fehler_kurz:DLL init failed|VERSUCH=2
+  [PC1]|[2026,09,27,10,15,09]|[INSTALL]|EVENT=BANNED|MODULE=tensorflow|DETAIL=matched_pattern:WinError 1114, DLL init failed (voller, unveraenderter Fehlertext erlaubt)|VERSUCH=2
   [PC2]|[2026,09,27,11,02,00]|[HARDWARE]|EVENT=HW_NEW|MODULE=-|DETAIL=hash:2b91f0,arch:ARM64,os:Linux,flags:SSE4;AVX;AVX2|VERSUCH=-
  
-  Hinweis: mehrere CPU_FLAGS-Werte innerhalb EINES DETAIL-Werts werden mit
-  ";" getrennt, NICHT mit "," -- das Komma bleibt ausschliesslich der
-  Trenner zwischen den k:v-Paaren selbst (Escaping-Regel aus diesem Abschnitt).
+  Hinweis: mehrere CPU_FLAGS-Werte innerhalb EINES DETAIL-Werts werden weiterhin
+  mit ";" getrennt (reine Lesbarkeits-Konvention, kein Parsing-Zwang mehr).
  
  
 5. GESAMT-ABLAUF (Textskizze)
@@ -218,14 +222,15 @@ Ein Eintrag pro Zeile, mit Pipe getrennt, Reihenfolge fix:
   1. AVX/AVX2-Erkennung: PROAKTIV ueber CPU_FLAGS + CPU_CAPABILITY_TAGS
      (siehe Abschnitt 1b). Kein Warten auf einen ersten Crash mehr.
   2. hw_hash-Basis: (CPU_ARCH, PLATFORM, OS_BITNESS, CORE) -- siehe Abschnitt 1.
-  3. DETAIL-Feld wird escaped ("|" und "," werden maskiert) -- siehe Abschnitt 4.
-  4. Status-Schluessel pro Modul: PIP_NAME, falls vorhanden (Position "Pip
-     Install Name" im Tuple); ist keiner angegeben (None/fehlt), wird der
-     IMPORT-NAME als Schluessel genutzt (bei LIBRARY_FROM: das MODULE-Feld,
-     also z.B. "torch.nn.functional" -> Schluessel "torch", weil pip_name
-     dort explizit "torch" ist). So landen torch / torch.nn.functional /
-     torchvision unter zwei Schluesseln ("torch" und "torchvision"), nicht
-     unter drei -- das entspricht der tatsaechlichen Installationseinheit.
+  3. DETAIL-Feld: KEIN Escaping mehr -- stattdessen Label-basierte Regex-
+     Extraktion (siehe Abschnitt 4). Aenderung ggue. vorheriger Fassung,
+     ausgeloest durch die Analyse des Vorgaenger-Codes.
+  4. Status-Schluessel pro Modul: IMMER der Top-Level-Import-Name
+     (mod_name.split(".")[0]), z.B. "torch.nn.functional" -> "torch".
+     Vereinfacht ggue. vorheriger Fassung (kein PIP_NAME-Vorrang mehr noetig,
+     da beide Regeln in der vorliegenden LIBRARY_IMPORT/LIBRARY_FROM-Liste
+     ohnehin zum selben Ergebnis fuehren; Top-Level-Name ist die einfachere
+     Regel und entspricht dem bewaehrten Vorgaenger-Ansatz).
   5. GPU_RAM: INFORMATIV fuer spaetere Schritte, kein Vorfilter-Kriterium.
      Grund: GPU-Erkennung (CUDA vorhanden? welche Compute Capability?)
      ist ein eigenes, groesseres Thema und wuerde diese Ablauf-Skizze
@@ -233,6 +238,21 @@ Ein Eintrag pro Zeile, mit Pipe getrennt, Reihenfolge fix:
      mitgeloggt, fliesst aber (noch) nicht in Abschnitt 1b (proaktiver
      Vorfilter) ein. Kann spaeter nachgezogen werden, sobald GPU-bezogene
      patterns_filterung-Tags (z.B. "CUDA") definiert sind.
+  6. AUDIT-LOG-UMFANG (ANNAHME, bitte bestaetigen oder korrigieren):
+     Hybrid-Ansatz -- EVENT=IMPORT_OK wird pro PC_ID+Modul nur EINMAL
+     geschrieben (beim ersten erfolgreichen Import), nicht bei jedem
+     einzelnen Programmlauf erneut. Grund: haelt das Log schlank (wie im
+     Vorgaenger, der Erfolge gar nicht loggt), behaelt aber im Gegensatz
+     zum Vorgaenger trotzdem einen Nachweis, WANN ein Modul zum ersten Mal
+     funktioniert hat. Falls ein voller Audit-Trail (jede OK-Zeile bei
+     jedem Lauf) gewuenscht ist, muss das explizit geaendert werden.
+  7. VC++-REDISTRIBUTABLE BEI WinError 1114 (ANNAHME, bitte bestaetigen
+     oder korrigieren): NUR ERKENNEN + IM LOG EMPFEHLEN, KEIN automatischer
+     Download/Silent-Install einer .exe aus dem Netz. Grund: das ist ein
+     Eingriff auf Systemebene ausserhalb von pip/Python und sollte nicht
+     ohne Zustimmung automatisch laufen. Der Vorgaenger-Code macht das
+     automatisch (Download + "/passive /norestart") -- das wird NICHT
+     uebernommen, es sei denn, das wird ausdruecklich gewuenscht.
  
  
 7. BESTAETIGTE KONSTANTEN & LISTEN FUER DIE IMPLEMENTIERUNG
@@ -253,4 +273,52 @@ Ein Eintrag pro Zeile, mit Pipe getrennt, Reihenfolge fix:
     AI/LLM/Hubs, Vektor-Suche & NLP, Vision & Deep Learning, Geodaten,
     ML & Time Series, Audio & Interaktivitaet -- exakte Listen siehe
     separates Code-Dokument (nicht Teil dieser Ablauf-Skizze).
+ 
+  PLATTFORM-SPEZIFISCHE PIP-NAMEN (uebernommen aus Vorgaenger-Code):
+    - tensorflow  + PLATFORM=Darwin + CPU_ARCH=arm64  -> Pip-Paket "tensorflow-macos"
+                    statt "tensorflow" (Apple Silicon)
+    - torch / torchvision + PLATFORM=Windows -> Installation ueber separaten
+                    CPU-Wheel-Index (https://download.pytorch.org/whl/cpu),
+                    sonst laedt pip standardmaessig die grosse CUDA-Variante
+ 
+ 
+8. UEBERNOMMENE MUSTER AUS DEM VORGAENGER-CODE
+------------------------------------------------------------------
+  1. Python-Standard "logging" als Log-Backend (statt eigenem File-Writer):
+     Format "%(asctime)s [PC_ID: ...] [%(levelname)s] %(message)s",
+     gleichzeitig StreamHandler (Konsole) + FileHandler (Datei).
+  2. Label-basierte Regex-Extraktion statt striktem Spalten-Split (siehe
+     Abschnitt 4) -- macht Escaping ueberfluessig.
+  3. Plattform-Sonderfaelle bei Pip-Namen (siehe Abschnitt 7).
+  4. Status-Schluessel = Top-Level-Import-Name (siehe Abschnitt 6, Punkt 4).
+  5. Zwei-stufige Reparatur bei Installationsfehlern: normaler Install ->
+     bei erneutem Fehlschlag EIN Force-Reinstall-Versuch (--force-reinstall)
+     -> erst danach BANNED. Deckt sich mit unserem REPAIR-Ablauf (Abschnitt 5).
+ 
+ 
+9. BEKANNTE FEHLER AUS DEM VORGAENGER-CODE (NICHT UEBERNEHMEN)
+------------------------------------------------------------------
+  1. has_avx2_support() prueft NUR unter Linux echt (liest /proc/cpuinfo);
+     unter Windows/macOS gibt die Funktion immer "True" zurueck --
+     genau auf den Plattformen, auf denen die meisten Fehlermuster
+     (WinError 1114, not a valid Win32 application) ueberhaupt auftreten.
+     Damit war der proaktive Vorfilter unter Windows faktisch wirkungslos.
+     -> In dieser Skizze wird CPU_FLAGS plattformuebergreifend per
+     CPUID/ctypes ermittelt (Abschnitt 1), nicht per /proc/cpuinfo-Textsuche.
+  2. check_hardware_compatibility() im Vorgaenger prueft nur die Tags
+     "AVX2" und "32BIT" explizit -- das reine Tag "AVX" (ohne die "2") wird
+     nie behandelt und faellt bei z.B. tensorflow (["AVX","AVX2",...])
+     stillschweigend durch. -> Abschnitt 1b verwendet stattdessen eine
+     generische Whitelist (CPU_CAPABILITY_TAGS) mit Mengenvergleich gegen
+     CPU_FLAGS, damit KEIN Tag mehr uebersehen werden kann.
+  3. HW_KEY im Vorgaenger basiert auf MAC-Adresse und RAM-Groesse. Beides
+     kann sich aendern, ohne dass es sich um eine neue Maschine handelt
+     (MAC bei neuem Netzwerkadapter/VPN, RAM bei Aufruestung) -- das wuerde
+     faelschlich eine neue PC_ID erzeugen. -> HW_HASH-Basis in dieser
+     Skizze bewusst OHNE MAC/RAM (siehe Abschnitt 1, Entscheidung 2).
+  4. Erfassung von CORE, OS_BITNESS, GPU_RAM, CPU_FLAGS fehlt komplett im
+     Vorgaenger -- wird in dieser Skizze neu definiert (Abschnitt 1).
+  5. Automatischer Download + Silent-Install (.exe aus dem Netz) beim
+     VC++-Redistributable-Fix ohne Rueckfrage -- wird NICHT uebernommen
+     (siehe Abschnitt 6, Entscheidung 7: nur Erkennung + Empfehlung im Log).
  
