@@ -29,3 +29,4 @@ import.py
 import_master.py
 xxx.py
 notebooks/Ollama& GGUF Management.py
+data/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
