@@ -1,5 +1,5 @@
 {
-    "model_name": "mixtral:instruct",
+    "model_name": "qwen3"
     "allocated_size_gb": 4.0,
     "detected_ram_gb": 31.87,
     "platform": "ollama",
