@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
+# AUTO_IMPORT_LAZY_LOAD  –  Class-Based Lazy-Load & Dependency Manager
 """
 AUTO_IMPORT_LAZY_LOAD - Stochastic & Self-Healing Dependency Manager
 Offline-AI Platform Pipeline Component
 
-Retains established pipeline architecture (logging, hardware profiling,
-PC_ID hashing, download manager with wheel fallback, Ollama & Hermes guard).
-Removes rigid package whitelists in favor of dynamic runtime interception,
-stochastic package name resolution, absence verification, autonomous installation,
-and a seamless retry loop.
+Strikte 3-Teilung des Skripts:
+1. Kopfbereich : Globale Konfiguration & die zwei zentralen Haupt-Bibliotheks-Datenstrukturen
+                 (DEFAULT_CORE_IMPORT und DEFAULT_ZONE_FROM) als Single Source of Truth
+2. Hauptbereich: Klassen & Funktionsdefinitionen (class & def)
+3. Fussbereich : Ausfuehrung / Triggering
 """
 
 import builtins
@@ -28,76 +28,363 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-# Module-level constants & defaults
-LOG_FILE_NAME          = "LOG_ollama_model_download_utility.log"
-MAX_RETRIES            = 2
-CPU_CAPABILITY_TAGS: Set[str] = {"AVX", "AVX2", "AVX512", "FMA", "BMI2", "SSE4"}
-VC_REDIST_HINT_VERSION = "14.38.33130 (Visual C++ 2015-2022, x64) oder neuer"
-ERROR_PATTERNS: List[str] = [
+
+# 1. KOPFBEREICH: GLOBALE KONFIGURATION & ZENTRALE BIBLIOTHEKS-DATENSTRUKTUREN
+
+
+#  1.1 PROJEKT- & PFADKONFIGURATION 
+SRC_DIR_NAME: str                     = "src"
+LOGS_DIR_NAME: str                    = "logs"
+CONFIG_DIR_NAME: str                  = "config"
+DATA_DIR_NAME: str                    = "data"
+MODELS_DIR_NAME: str                  = "models"
+ACTIVE_MODEL_CONFIG_FILE: str         = "active_model_config.json"
+DEFAULT_PC_ID_PREFIX: str             = "PC"
+FALLBACK_PC_ID: str                   = "PC_SYSTEM"
+LOGGER_NAME: str                      = "AutoImporter"
+MAX_ROOT_SEARCH_DEPTH: int            = 7
+FALLBACK_LOG_FILE_NAME: str           = "app_import_terminal.log"
+
+
+def _detect_project_root() -> Path:
+    """Erkennt stochastisch das Projektverzeichnis anhand typischer Marker."""
+    start_paths = [Path.cwd()]
+    try:
+        if "__file__" in globals() and globals()["__file__"]:
+            start_paths.append(Path(globals()["__file__"]).resolve().parent)
+    except Exception:
+        pass
+    for start in start_paths:
+        d = start.resolve()
+        # Direkter Aufruf aus dem notebooks/ Unterverzeichnis
+        if d.name == "notebooks" and (d.parent / SRC_DIR_NAME).is_dir():
+            return d.parent
+        if d.name == SRC_DIR_NAME:
+            return d.parent
+        for _ in range(MAX_ROOT_SEARCH_DEPTH):
+            if (d / SRC_DIR_NAME).is_dir() or (d / CONFIG_DIR_NAME).is_dir() or (d / ".git").is_dir():
+                return d
+            if d.name == SRC_DIR_NAME:
+                return d.parent
+            if d.parent == d:
+                break
+            d = d.parent
+    return Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
+
+
+def _is_jupyter_environment() -> bool:
+    """Prüft verlässlich und exklusiv, ob der Code in einem Jupyter Notebook / IPKernel ausgeführt wird."""
+    try:
+        import IPython
+        ip = IPython.get_ipython()
+        if ip is not None:
+            shell_name = type(ip).__name__
+            if shell_name in ("ZMQInteractiveShell", "InteractiveShell"):
+                return True
+            if hasattr(ip, "kernel"):
+                return True
+            if hasattr(ip, "config") and "IPKernelApp" in ip.config:
+                return True
+    except Exception:
+        pass
+    if any(k in os.environ for k in ("JPY_SESSION_NAME", "VSCODE_NOTEBOOK_FILE", "JPY_PARENT_PID")):
+        return True
+    if any(arg.endswith(".ipynb") for arg in sys.argv):
+        return True
+    return False
+
+
+def _get_jupyter_notebook_name() -> Optional[str]:
+    """Ermittelt den tatsächlichen Notebook-Dateinamen dynamisch im Jupyter-Kontext."""
+    # 1. Umgebungsvariablen prüfen
+    for env_key in ("JPY_SESSION_NAME", "NOTEBOOK_NAME", "VSCODE_NOTEBOOK_FILE"):
+        val = os.environ.get(env_key)
+        if val:
+            return Path(val).stem
+
+    # 2. sys.argv nach .ipynb durchsuchen
+    for arg in sys.argv:
+        if arg.endswith(".ipynb"):
+            return Path(arg).stem
+
+    # 3. ipynbname Bibliothek (falls vorhanden)
+    try:
+        import ipynbname
+        name = ipynbname.name()
+        if name:
+            return name
+    except Exception:
+        pass
+
+    # 4. Über ipykernel Connection File / Jupyter Server Session
+    try:
+        import ipykernel
+        import json
+        conn_file = Path(ipykernel.get_connection_file()).name
+        if "kernel-" in conn_file:
+            kernel_id = conn_file.split("kernel-", 1)[1].split(".json", 1)[0]
+            servers = []
+            try:
+                from jupyter_server import serverapp
+                servers.extend(list(serverapp.list_running_servers()))
+            except Exception:
+                pass
+            if not servers:
+                try:
+                    from notebook import notebookapp
+                    servers.extend(list(notebookapp.list_running_servers()))
+                except Exception:
+                    pass
+            import urllib.request
+            for s in servers:
+                token = s.get("token", "")
+                url = s["url"] + "api/sessions"
+                if token:
+                    url += f"?token={token}"
+                req = urllib.request.Request(url)
+                with urllib.request.urlopen(req, timeout=0.5) as resp:
+                    sessions = json.loads(resp.read().decode())
+                    for sess in sessions:
+                        if sess.get("kernel", {}).get("id") == kernel_id:
+                            return Path(sess["notebook"]["path"]).stem
+    except Exception:
+        pass
+
+    # 5. Notebook-Kontext dieses Dienstprogramms
+    root = _detect_project_root()
+    nb_dir = root / "notebooks"
+    target_nb = nb_dir / "ollama_model_download_utility.ipynb"
+    if target_nb.exists():
+        return "ollama_model_download_utility"
+    elif nb_dir.is_dir():
+        nbs = list(nb_dir.glob("*.ipynb"))
+        if len(nbs) == 1:
+            return nbs[0].stem
+
+    return "ollama_model_download_utility"
+
+
+def _resolve_dynamic_log_file_name(fallback: str = FALLBACK_LOG_FILE_NAME) -> str:
+    """Ermittelt den Log-Dateinamen: Im Jupyter Notebook LOG_<Notebook_Name>.log, sonst Fallback-Dummy."""
+    if _is_jupyter_environment():
+        nb_name = _get_jupyter_notebook_name()
+        if nb_name:
+            clean_stem = re.sub(r"[^\w\-.]", "_", nb_name)
+            return f"LOG_{clean_stem}.log"
+        return "LOG_jupyter_notebook.log"
+    return fallback
+
+
+PROJECT_ANCHOR_DIR: str               = _detect_project_root().name
+LOG_FILE_NAME: str                    = _resolve_dynamic_log_file_name(FALLBACK_LOG_FILE_NAME)
+
+#  1.2 NETZWERK- & DIENSTKONFIGURATION (OLLAMA & HERMES) 
+OLLAMA_SERVICE_NAME: str              = "ollama"
+HERMES_SERVICE_NAME: str              = "hermes"
+OLLAMA_IP: str                        = "127.0.0.1"
+OLLAMA_PORT: int                      = 11434
+OLLAMA_HOST_BASE: str                 = f"http://{OLLAMA_IP}:{OLLAMA_PORT}"
+OLLAMA_API_TAGS_ENDPOINT: str         = f"{OLLAMA_HOST_BASE}/api/tags"
+HERMES_PREFERRED_KEYWORD: str         = "qwen3"
+HERMES_FALLBACK_MODEL: str            = "qwen3:8b"
+
+#  1.3 EXTERNE URLS, REPOSITORIES & DOWNLOAD-PFADE 
+OLLAMA_WIN_INSTALLER_URL: str         = "https://ollama.com/download/OllamaSetup.exe"
+OLLAMA_MAC_INSTALLER_URL: str         = "https://ollama.com/download/Ollama-darwin.zip"
+OLLAMA_LINUX_INSTALL_CMD: str         = "curl -fsSL https://ollama.com/install.sh | sh"
+OLLAMA_LINUX_FALLBACK_URLS: Dict[str, str] = {
+    "amd64": "https://ollama.com/download/ollama-linux-amd64.tgz",
+    "arm64": "https://ollama.com/download/ollama-linux-arm64.tgz",
+}
+OLLAMA_WIN_INSTALLER_EXE: str         = "OllamaSetup.exe"
+OLLAMA_MAC_INSTALLER_ZIP: str         = "Ollama-darwin.zip"
+TORCH_CPU_INDEX_URL: str              = "https://download.pytorch.org/whl/cpu"
+LLAMA_CPP_EXTRA_INDEX_URL: str        = "https://abetlen.github.io/llama-cpp-python/wheels/cpu"
+LLAMA_CPP_WHEEL_URL_TEMPLATE: str     = (
+    "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.90/"
+    "llama_cpp_python-0.2.90-{c_ver}-{c_ver}-{plat_tag}.whl"
+)
+LLAMA_CPP_PATCHED_WHEEL_NAME: str     = "llama_cpp_python-0.2.90-py3-none-any.whl"
+
+#  1.4 TIMEOUTS, RETRIES & SYSTEM-GRENZWERTE 
+MAX_RETRIES: int                      = 2
+SERVICE_TIMEOUT_SEC: float            = 1.5
+SERVICE_MAX_WAIT_SEC: int             = 30
+KILL_WAIT_SEC: int                    = 3
+PULL_STREAM_TIMEOUT_SEC: int          = 3600
+INACTIVITY_TIMEOUT_SEC: int           = 90
+HERMES_LAUNCH_TIMEOUT_SEC: int        = 10
+SAFE_RAM_BUDGET_FACTOR: float         = 0.70
+PROGRESS_POLL_INTERVAL_SEC: float     = 0.05
+
+#  1.5 HARDWARE-CAPABILITIES & SYSTEM-HINWEISE 
+CPU_CAPABILITY_TAGS: Set[str]         = {"AVX", "AVX2", "AVX512", "FMA", "BMI2", "SSE4"}
+VC_REDIST_HINT_VERSION: str           = "14.38.33130 (Visual C++ 2015-2022, x64) oder neuer"
+VC_REDIST_HINT_MESSAGE: str           = f"Bitte installiere Microsoft Visual C++ Redistributable Version {VC_REDIST_HINT_VERSION}."
+
+#  1.6 REGEX-MUSTER (FEHLER, LOGS, PIP-DOWNLOADS) 
+ERROR_PATTERNS: List[str]             = [
     r"0x45[aA]", r"WinError 1114", r"DllMain returned false",
     r"Illegal instruction", r"AVX[2]?", r"instruction set",
     r"not a valid Win32 application", r"wrong ELF class",
     r"c10\.dll", r"_pywrap_tensorflow_internal",
 ]
+BUILD_OR_CPP_ERROR_PATTERNS: List[str] = [
+    r"Failed building wheel for",
+    r"Microsoft Visual C\+\+ 14\.\d+ or greater is required",
+    r"error: command '.*' failed with exit status",
+    r"fatal error C\d+:",
+    r"error: [a-zA-Z0-9_\-]+: No such file or directory",
+    r"ninja: build stopped: subcommand failed",
+]
+PIP_PROGRESS_PATTERN_STR: str         = (
+    r"(?:Downloading\s+(?P<filename>\S+))?.*?"
+    r"(?P<downloaded>[\d\.]+)\s*(?P<d_unit>[kMG]?B)\s*/\s*"
+    r"(?P<total>[\d\.]+)\s*(?P<t_unit>[kMG]?B)"
+)
+LOG_LINE_PATTERN_STR: str             = (
+    r"^\[(?P<pc_id>[^\]]+)\]\|\[(?P<ts>[^\]]+)\]\|\[(?P<phase>[^\]]+)\]\|"
+    r"EVENT=(?P<event>[^|]*)\|MODULE=(?P<module>[^|]*)\|"
+    r"DETAIL=(?P<detail>.*)\|VERSUCH=(?P<versuch>[^|]*)$"
+)
 
-# Baseline core libraries (used as defaults, not a closed whitelist)
-DEFAULT_CORE_IMPORT: List[Tuple] = [
-    ("ctypes",         None,      "",           None),
-    ("importlib",      None,      "",           None),
-    ("json",           None,      "",           None),
-    ("logging",        None,      "",           None),
-    ("os",             None,      "",           None),
-    ("platform",       None,      "",           None),
-    ("re",             None,      "",           None),
-    ("shutil",         None,      "",           None),
-    ("subprocess",     None,      "",           None),
-    ("sys",            None,      "",           None),
-    ("threading",      None,      "",           None),
-    ("time",           None,      "",           None),
-    ("urllib.request", None,      "",           None),
-    ("ipywidgets",     "widgets", "ipywidgets", None),
-    ("ollama",         None,      "ollama",     None),
-    ("psutil",         None,      "psutil",     None),
-    ("requests",       None,      "requests",   None),
-    ("tqdm",           None,      "tqdm",       None),
+#  1.7 LOG-PHASEN, EVENTS & STATUS-MAPPINGS 
+LOG_PHASE_SESSION: str                = "SESSION"
+LOG_PHASE_HARDWARE: str               = "HARDWARE"
+LOG_PHASE_INSTALL: str                = "INSTALL"
+LOG_PHASE_IMPORT: str                 = "IMPORT"
+LOG_PHASE_REPAIR: str                 = "REPAIR"
+LOG_PHASE_FILTER: str                 = "FILTER"
+
+LOG_EVENT_SESSION_START: str          = "SESSION_START"
+LOG_EVENT_HW_NEW: str                 = "HW_NEW"
+LOG_EVENT_HW_KNOWN: str               = "HW_KNOWN"
+LOG_EVENT_INSTALL_TRY: str            = "INSTALL_TRY"
+LOG_EVENT_INSTALL_OK: str             = "INSTALL_OK"
+LOG_EVENT_INSTALL_FAIL: str           = "INSTALL_FAIL"
+LOG_EVENT_IMPORT_OK: str              = "IMPORT_OK"
+LOG_EVENT_RETRY: str                  = "RETRY"
+LOG_EVENT_RETRY_EXHAUSTED: str        = "RETRY_EXHAUSTED"
+LOG_EVENT_INLINE_REPAIR_TRY: str      = "INLINE_REPAIR_TRY"
+LOG_EVENT_INLINE_REPAIR_OK: str       = "INLINE_REPAIR_OK"
+LOG_EVENT_INLINE_REPAIR_FAIL: str     = "INLINE_REPAIR_FAIL"
+LOG_EVENT_SKIP_HW: str                = "SKIP_HW"
+LOG_EVENT_BANNED: str                 = "BANNED"
+
+STATUS_EVENT_MAP: Dict[str, str]      = {
+    LOG_EVENT_SKIP_HW:             "HW_INCOMPATIBLE",
+    LOG_EVENT_IMPORT_OK:           "OK",
+    LOG_EVENT_INLINE_REPAIR_OK:    "OK",
+    LOG_EVENT_BANNED:              "BANNED",
+    LOG_EVENT_RETRY_EXHAUSTED:     "RETRY_EXHAUSTED",
+}
+
+#  1.8 DIE ZWEI ZENTRALEN HAUPT-BIBLIOTHEKS-DATENSTRUKTUREN 
+# Konsolidierte Single Source of Truth fuer saemtliche Standard-, Third-Party-,
+# Ecosystem- und Bootstrap-Pakete.
+
+# HAUPTTABELLE 1: DEFAULT_CORE_IMPORT (fuer Direkt-Importe: 'import <name> [as <alias>]')
+# Extended Tuple: (import_name, alias, pip_name, version_constraint, patterns, is_bootstrap)
+DEFAULT_CORE_IMPORT: List[Tuple[str, Optional[str], str, Optional[str], Optional[List[str]], bool]] = [
+    # Standard-Bibliotheken (pip_name = "")
+    ("ctypes",                None,      "",                      None, None, False),
+    ("datetime",              None,      "",                      None, None, False),
+    ("hashlib",               None,      "",                      None, None, False),
+    ("importlib",             None,      "",                      None, None, False),
+    ("json",                  None,      "",                      None, None, False),
+    ("logging",               None,      "",                      None, None, False),
+    ("math",                  None,      "",                      None, None, False),
+    ("os",                    None,      "",                      None, None, False),
+    ("platform",              None,      "",                      None, None, False),
+    ("re",                    None,      "",                      None, None, False),
+    ("shutil",                None,      "",                      None, None, False),
+    ("subprocess",            None,      "",                      None, None, False),
+    ("sys",                   None,      "",                      None, None, False),
+    ("threading",             None,      "",                      None, None, False),
+    ("time",                  None,      "",                      None, None, False),
+    ("urllib.request",        None,      "",                      None, None, False),
+
+    # Foundational & Bootstrap-Bibliotheken (is_bootstrap = True)
+    ("psutil",                None,      "psutil",                None, None, True),
+    ("tqdm",                  None,      "tqdm",                  None, None, True),
+    ("ipywidgets",            "widgets", "ipywidgets",            None, None, False),
+    ("requests",              None,      "requests",              None, None, False),
+
+    # Ollama, Hermes, OpenWebUI & LLM-Ecosystem-Clients
+    ("ollama",                None,      "ollama",                None, None, False),
+    ("openwebui",             None,      "open-webui",            None, None, False),
+    ("open_webui",            None,      "open-webui",            None, None, False),
+    ("hermes",                None,      "hermes-agent",          None, None, False),
+    ("hermes_agent",          None,      "hermes-agent",          None, None, False),
+    ("litellm",               None,      "litellm",               None, None, False),
+    ("transformers",          None,      "transformers",          None, None, False),
+    ("datasets",              None,      "datasets",              None, None, False),
+    ("accelerate",            None,      "accelerate",            None, None, False),
+    ("sentence_transformers", None,      "sentence-transformers", None, None, False),
+    ("langchain",             None,      "langchain",             None, None, False),
+    ("langchain_core",        None,      "langchain-core",        None, None, False),
+    ("langchain_community",   None,      "langchain-community",   None, None, False),
+    ("vllm",                  None,      "vllm",                  None, None, False),
+    ("chromadb",              None,      "chromadb",              None, None, False),
+    ("duckdb",                None,      "duckdb",                None, None, False),
+
+    # Data Science, Vision, ML & Hilfswerkzeuge (inkl. Llama-Bootstrap-Pakete)
+    ("yaml",                  None,      "pyyaml",                None, None, False),
+    ("PIL",                   None,      "pillow",                None, None, False),
+    ("pillow",                None,      "pillow",                None, None, False),
+    ("cv2",                   None,      "opencv-python",         None, None, False),
+    ("sklearn",               None,      "scikit-learn",          None, None, False),
+    ("torch",                 None,      "torch",                 None, None, False),
+    ("torchvision",           None,      "torchvision",           None, None, False),
+    ("dotenv",                None,      "python-dotenv",         None, None, False),
+    ("fitz",                  None,      "pymupdf",               None, None, False),
+    ("bs4",                   None,      "beautifulsoup4",        None, None, False),
+    ("serial",                None,      "pyserial",              None, None, False),
+    ("dateutil",              None,      "python-dateutil",       None, None, False),
+    ("fastapi",               None,      "fastapi",               None, None, False),
+    ("uvicorn",               None,      "uvicorn",               None, None, False),
+    ("pydantic",              None,      "pydantic",              None, None, False),
+    ("typing_extensions",     None,      "typing-extensions",     None, None, False),
+    ("numpy",                 None,      "numpy",                 None, None, False),
+    ("diskcache",             None,      "diskcache",             None, None, False),
+    ("jwt",                   None,      "pyjwt",                 None, None, False),
+    ("magic",                 None,      "python-magic",          None, None, False),
+    ("mss",                   None,      "mss",                   None, None, False),
+    ("playwright",            None,      "playwright",            None, None, False),
+    ("sweetviz",              None,      "sweetviz",              None, None, False),
+    ("pandasai",              None,      "pandasai",              None, None, False),
 ]
 
-DEFAULT_CORE_FROM: List[Tuple] = [
-    ("pathlib",         "Path",            None, ""),
-    ("huggingface_hub", "HfApi",           None, "huggingface_hub"),
-    ("huggingface_hub", "hf_hub_download", None, "huggingface_hub"),
-    ("IPython.display", "HTML",            None, "ipython"),
-    ("IPython.display", "clear_output",    None, "ipython"),
-    ("IPython.display", "display",         None, "ipython"),
-    ("llama_cpp",       "Llama",           None, "llama-cpp-python"),
-    ("ollama",          "Client",          None, "ollama"),
-]
+# HAUPTTABELLE 2: DEFAULT_ZONE_FROM (fuer 'from <module> import <target> [as <alias>]')
+# Extended Tuple: (module, import_target, alias, pip_name, version, patterns, is_bootstrap)
+DEFAULT_ZONE_FROM: List[Tuple[str, str, Optional[str], str, Optional[str], Optional[List[str]], bool]] = [
+    # Standard-Bibliotheken (pip_name = "")
+    ("pathlib",               "Path",                 None, "",                  None, None, False),
+    ("importlib.metadata",     "version",              None, "",                  None, None, True),
+    ("importlib.metadata",     "PackageNotFoundError",  None, "",                  None, None, True),
 
-# Aliases for backward compatibility
-LIBRARY_IMPORT = DEFAULT_CORE_IMPORT
-LIBRARY_FROM   = DEFAULT_CORE_FROM
+    # Core Externe Bibliotheken & Visualisierung
+    ("huggingface_hub",       "HfApi",                None, "huggingface_hub",   None, None, False),
+    ("huggingface_hub",       "hf_hub_download",      None, "huggingface_hub",   None, None, False),
+    ("IPython.display",       "HTML",                 None, "ipython",           None, None, False),
+    ("IPython.display",       "clear_output",         None, "ipython",           None, None, False),
+    ("IPython.display",       "display",              None, "ipython",           None, None, False),
+    ("llama_cpp",             "Llama",                None, "llama-cpp-python",  None, None, False),
+    ("ollama",                "Client",               None, "ollama",            None, None, False),
 
-# Bootstrap packages mapping
-_BOOTSTRAP_DEPS: List[Tuple[str, str, List[Tuple[str, str]]]] = [
-    ("psutil",               "psutil",    [("psutil", "psutil")]),
-    ("tqdm",                 "tqdm",      [("tqdm", "_tqdm_mod"), ("tqdm.tqdm", "tqdm")]),
-    ("packaging.specifiers", "packaging", [
-        ("packaging.specifiers.InvalidSpecifier", "InvalidSpecifier"),
-        ("packaging.specifiers.SpecifierSet",     "SpecifierSet"),
-    ]),
-    ("importlib.metadata",   "",          [
-        ("importlib.metadata.PackageNotFoundError", "PackageNotFoundError"),
-        ("importlib.metadata.version",              "version"),
-    ]),
+    # Bootstrap & Versions-Spezifizierer
+    ("packaging.specifiers",  "SpecifierSet",          None, "packaging",         None, None, True),
+    ("packaging.specifiers",  "InvalidSpecifier",      None, "packaging",         None, None, True),
 ]
 
 
+
+# 2. HAUPTBEREICH: KLASSEN & FUNKTIONSDEFINITIONEN (CLASS & DEF)
 class AUTO_IMPORT_LAZY_LOAD:
     """
     Encapsulates the full stochastic lazy-load & self-healing dependency-management pipeline.
-
-    Single public entry point:
-        AUTO_IMPORT_LAZY_LOAD.bootstrap()
+    Liest saemtliche Modul- und Paketinformationen ausschliesslich aus den beiden
+    zentralen Haupttabellen DEFAULT_CORE_IMPORT und DEFAULT_ZONE_FROM aus.
     """
 
     _interceptor_installed: bool = False
@@ -108,26 +395,27 @@ class AUTO_IMPORT_LAZY_LOAD:
     # CHAPTER 2: PROJECT ROOT & LOG PATH
     @staticmethod
     def get_project_root() -> Path:
-        """Sucht rekursiv nach dem Projektverzeichnis ('Offline_AI' oder mit src-Ordner)."""
+        """Sucht rekursiv nach dem Projektverzeichnis anhand von PROJECT_ANCHOR_DIR oder SRC_DIR_NAME."""
         d = Path.cwd()
-        for _ in range(7):
-            if (d / "src").is_dir() or d.name == "Offline_AI":
+        for _ in range(MAX_ROOT_SEARCH_DEPTH):
+            if (d / SRC_DIR_NAME).is_dir() or (d / CONFIG_DIR_NAME).is_dir():
                 return d
-            if d.name == "src":
+            if d.name == SRC_DIR_NAME:
                 return d.parent
             if d.parent == d:
                 break
             d = d.parent
         return Path.cwd()
-
     @classmethod
     def _setup_logging_and_paths(cls) -> None:
-        """Initialises PROJECT_ROOT, LOGS_DIR, TARGET_LOG_PATH, and logging."""
+        """Initialisiert PROJECT_ROOT, LOGS_DIR, TARGET_LOG_PATH und logging aus Kopfbereich."""
         root = cls.get_project_root()
-        logs = root / "logs"
+        logs = root / LOGS_DIR_NAME
         logs.mkdir(parents=True, exist_ok=True)
         tgt  = logs / LOG_FILE_NAME
         g    = globals()
+        g['PROJECT_ANCHOR_DIR'] = get_project_root.__func__().name
+        g['LOG_FILE_NAME'] = f"LOG_{__import__('IPython').get_ipython().kernel.parent_header['session']}.log" if __import__('sys').modules.get('IPython') and __import__('IPython').get_ipython() else LOG_FILE_NAME
         g["PROJECT_ROOT"], g["LOGS_DIR"], g["TARGET_LOG_PATH"] = root, logs, tgt
         logging.basicConfig(
             level=logging.INFO,
@@ -137,7 +425,7 @@ class AUTO_IMPORT_LAZY_LOAD:
                 logging.StreamHandler(sys.stdout),
             ],
         )
-        g["logger"] = logging.getLogger("AutoImporter")
+        g["logger"] = logging.getLogger(LOGGER_NAME)
 
     # CHAPTER 3: LOG WRITER / PARSER
     @staticmethod
@@ -157,14 +445,11 @@ class AUTO_IMPORT_LAZY_LOAD:
                 Path(tgt).open("a", encoding="utf-8").write(line + "\n")
             except Exception as exc:
                 print(f"[LOG WRITE ERROR] {exc}", file=sys.stderr)
-        if event in ("BANNED", "INSTALL_FAIL", "RETRY_EXHAUSTED", "INLINE_REPAIR_FAIL", "SKIP_HW"):
+        if event in (LOG_EVENT_BANNED, LOG_EVENT_INSTALL_FAIL, LOG_EVENT_RETRY_EXHAUSTED,
+                     LOG_EVENT_INLINE_REPAIR_FAIL, LOG_EVENT_SKIP_HW):
             logging.warning(f"[IMPORT LOGIC] {line}")
 
-    _LOG_LINE_RE = re.compile(
-        r"^\[(?P<pc_id>[^\]]+)\]\|\[(?P<ts>[^\]]+)\]\|\[(?P<phase>[^\]]+)\]\|"
-        r"EVENT=(?P<event>[^|]*)\|MODULE=(?P<module>[^|]*)\|"
-        r"DETAIL=(?P<detail>.*)\|VERSUCH=(?P<versuch>[^|]*)$"
-    )
+    _LOG_LINE_RE = re.compile(LOG_LINE_PATTERN_STR)
 
     @classmethod
     def parse_log_lines(cls) -> List[Dict]:
@@ -276,16 +561,16 @@ class AUTO_IMPORT_LAZY_LOAD:
         known: Dict[str, str] = {}
         max_n = 0
         for e in entries:
-            if e["phase"] == "HARDWARE" and e["event"] in ("HW_NEW", "HW_KNOWN"):
+            if e["phase"] == LOG_PHASE_HARDWARE and e["event"] in (LOG_EVENT_HW_NEW, LOG_EVENT_HW_KNOWN):
                 if m := re.search(r"hash:([0-9a-fA-F]+)", e["detail"]):
                     known.setdefault(m.group(1), e["pc_id"])
-                if m2 := re.match(r"PC(\d+)$", e["pc_id"]):
+                if m2 := re.match(rf"{DEFAULT_PC_ID_PREFIX}(\d+)$", e["pc_id"]):
                     max_n = max(max_n, int(m2.group(1)))
         if hw_hash in known:
             pc_id = known[hw_hash]
-            cls.write_log(pc_id, "HARDWARE", "HW_KNOWN", detail=f"hash:{hw_hash}")
+            cls.write_log(pc_id, LOG_PHASE_HARDWARE, LOG_EVENT_HW_KNOWN, detail=f"hash:{hw_hash}")
             return pc_id
-        pc_id = f"PC{max_n + 1}"
+        pc_id = f"{DEFAULT_PC_ID_PREFIX}{max_n + 1}"
         flags_str      = ";".join(sorted(hw_info["CPU_FLAGS"])) or "-"
         gpus_formatted = (";".join(f"{g['name']} ({g['vram_gb']}GB)" for g in hw_info["GPU_DETAILS"])
                           if hw_info["GPU_DETAILS"] else "None")
@@ -295,28 +580,21 @@ class AUTO_IMPORT_LAZY_LOAD:
             f"gpu_count:{hw_info['GPU_COUNT']},gpu_total_vram:{hw_info['GPU_TOTAL_VRAM']},"
             f"gpus:{gpus_formatted},flags:{flags_str}"
         )
-        cls.write_log(pc_id, "HARDWARE", "HW_NEW", detail=detail)
+        cls.write_log(pc_id, LOG_PHASE_HARDWARE, LOG_EVENT_HW_NEW, detail=detail)
         return pc_id
 
     # CHAPTER 6: MODULE STATUS FROM LOG
     @classmethod
     def build_status_table(cls, pc_id: str) -> Dict:
-        """Reconstructs { top_level_name: {status, retry_count} } from the log."""
-        _EV_STATUS = {
-            "SKIP_HW":          "HW_INCOMPATIBLE",
-            "IMPORT_OK":        "OK",
-            "INLINE_REPAIR_OK": "OK",
-            "BANNED":           "BANNED",
-            "RETRY_EXHAUSTED":  "RETRY_EXHAUSTED",
-        }
+        """Reconstructs { top_level_name: {status, retry_count} } from the log via STATUS_EVENT_MAP."""
         table: Dict = {}
         for e in cls.parse_log_lines():
             if e["pc_id"] != pc_id or e["module"] in ("-", ""):
                 continue
             row = table.setdefault(e["module"], {"status": "UNKNOWN", "retry_count": 0})
-            if e["event"] in _EV_STATUS:
-                row["status"] = _EV_STATUS[e["event"]]
-            elif e["event"] == "RETRY":
+            if e["event"] in STATUS_EVENT_MAP:
+                row["status"] = STATUS_EVENT_MAP[e["event"]]
+            elif e["event"] == LOG_EVENT_RETRY:
                 row["status"]      = "RETRYING"
                 row["retry_count"] = int(e["versuch"]) if e["versuch"].isdigit() else row["retry_count"] + 1
         return table
@@ -352,7 +630,7 @@ class AUTO_IMPORT_LAZY_LOAD:
         if platform.system() == "Windows" and re.search(
             r"1114|DllMain returned false|vcruntime|msvcp", err_msg, re.IGNORECASE
         ):
-            return f"Bitte installiere Microsoft Visual C++ Redistributable Version {VC_REDIST_HINT_VERSION}."
+            return VC_REDIST_HINT_MESSAGE
         return None
 
     # CHAPTER 9: STOCHASTIC PACKAGE RESOLUTION & VERIFICATION
@@ -361,27 +639,22 @@ class AUTO_IMPORT_LAZY_LOAD:
         """Status-Schluessel: IMMER der Top-Level-Import-Name."""
         return mod_name.split(".")[0]
 
-    @staticmethod
-    def _is_stdlib(mod_name: str) -> bool:
-        """Prueft, ob mod_name Teil der Python-Standardbibliothek ist."""
-        if hasattr(sys, "stdlib_module_names"):
-            return mod_name in sys.stdlib_module_names
-        stdlib_names = {
-            "abc", "argparse", "ast", "asyncio", "base64", "builtins", "collections",
-            "concurrent", "contextlib", "copy", "csv", "ctypes", "datetime", "decimal",
-            "difflib", "dis", "email", "enum", "errno", "faulthandler", "fcntl",
-            "fnmatch", "fractions", "functools", "gc", "getopt", "getpass", "glob",
-            "gzip", "hashlib", "heapq", "hmac", "html", "http", "importlib", "inspect",
-            "io", "ipaddress", "itertools", "json", "logging", "math", "mimetypes",
-            "mmap", "multiprocessing", "numbers", "operator", "os", "pathlib", "pickle",
-            "platform", "posixpath", "pprint", "queue", "random", "re", "select",
-            "selectors", "shelve", "shlex", "shutil", "signal", "socket", "sqlite3",
-            "ssl", "stat", "statistics", "string", "struct", "subprocess", "sys",
-            "sysconfig", "tarfile", "tempfile", "textwrap", "threading", "time",
-            "timeit", "traceback", "types", "typing", "unittest", "urllib", "uuid",
-            "warnings", "weakref", "zipfile", "zipimport", "zlib"
-        }
-        return mod_name in stdlib_names
+    @classmethod
+    def _is_stdlib(cls, mod_name: str) -> bool:
+        """
+        Prueft dynamisch, ob mod_name Teil der Python-Standardbibliothek ist.
+        Nutzt sys.stdlib_module_names und die Eintraege ohne pip_name aus den Haupttabellen.
+        """
+        if hasattr(sys, "stdlib_module_names") and mod_name in sys.stdlib_module_names:
+            return True
+        top = cls._top_level_name(mod_name)
+        for entry in DEFAULT_CORE_IMPORT:
+            if cls._top_level_name(entry[0]) == top and not (len(entry) > 2 and entry[2]):
+                return True
+        for entry in DEFAULT_ZONE_FROM:
+            if cls._top_level_name(entry[0]) == top and not (len(entry) > 3 and entry[3]):
+                return True
+        return False
 
     @staticmethod
     def _is_importable(mod: str) -> bool:
@@ -395,75 +668,29 @@ class AUTO_IMPORT_LAZY_LOAD:
     def resolve_canonical_pip_name(cls, mod_name: str) -> List[str]:
         """
         Stochastically derives candidate pip package names for a requested module.
-        Prioritizes known mappings (Ollama/LLM/AI ecosystem, data science tools),
-        followed by heuristic variations and fallback naming conventions.
+        Liest Primaer-Mappings dynamisch aus DEFAULT_CORE_IMPORT und DEFAULT_ZONE_FROM aus,
+        gefolgt von generischen heuristischen Ableitungen fuer unbekannte Module.
         """
         base = cls._top_level_name(mod_name)
         candidates: List[str] = []
-
-        # 1. Canonical Ecosystem & Common Mappings
-        known_map: Dict[str, List[str]] = {
-            # Ollama, Hermes, OpenWebUI & LLM client variants
-            "ollama": ["ollama"],
-            "openwebui": ["open-webui", "openwebui"],
-            "open_webui": ["open-webui", "openwebui"],
-            "hermes": ["hermes-agent", "hermes", "nous-hermes"],
-            "hermes_agent": ["hermes-agent", "hermes"],
-            "llama_cpp": ["llama-cpp-python"],
-            "huggingface_hub": ["huggingface_hub"],
-            "litellm": ["litellm"],
-            "transformers": ["transformers"],
-            "datasets": ["datasets"],
-            "accelerate": ["accelerate"],
-            "sentence_transformers": ["sentence-transformers"],
-            "langchain": ["langchain"],
-            "langchain_core": ["langchain-core"],
-            "langchain_community": ["langchain-community"],
-            "vllm": ["vllm"],
-            "chromadb": ["chromadb"],
-            "duckdb": ["duckdb"],
-
-            # Data Science / Core Tooling
-            "yaml": ["pyyaml"],
-            "PIL": ["pillow"],
-            "pillow": ["pillow"],
-            "cv2": ["opencv-python", "opencv-python-headless"],
-            "sklearn": ["scikit-learn"],
-            "IPython": ["ipython"],
-            "ipywidgets": ["ipywidgets"],
-            "psutil": ["psutil"],
-            "requests": ["requests"],
-            "tqdm": ["tqdm"],
-            "dotenv": ["python-dotenv"],
-            "fitz": ["pymupdf"],
-            "bs4": ["beautifulsoup4"],
-            "serial": ["pyserial"],
-            "dateutil": ["python-dateutil"],
-            "fastapi": ["fastapi"],
-            "uvicorn": ["uvicorn"],
-            "pydantic": ["pydantic"],
-            "jwt": ["pyjwt"],
-            "magic": ["python-magic", "python-magic-bin"],
-            "mss": ["mss"],
-            "playwright": ["playwright"],
-            "sweetviz": ["sweetviz"],
-            "pandasai": ["pandasai"],
-        }
-
-        if base in known_map:
-            candidates.extend(known_map[base])
-        elif base.lower() in known_map:
-            candidates.extend(known_map[base.lower()])
-
-        # 2. Heuristic derivation
+        # 1. Dynamisches Auslesen aus DEFAULT_CORE_IMPORT
+        for entry in DEFAULT_CORE_IMPORT:
+            if cls._top_level_name(entry[0]).lower() == base.lower():
+                pip_name = entry[2] if len(entry) > 2 and entry[2] else ""
+                if pip_name and pip_name not in candidates:
+                    candidates.append(pip_name)
+        # 2. Dynamisches Auslesen aus DEFAULT_ZONE_FROM
+        for entry in DEFAULT_ZONE_FROM:
+            if cls._top_level_name(entry[0]).lower() == base.lower():
+                pip_name = entry[3] if len(entry) > 3 and entry[3] else ""
+                if pip_name and pip_name not in candidates:
+                    candidates.append(pip_name)
+        # 3. Heuristische Ableitungen fuer unbekannte oder zukuenftige Pakete
         norm_base = base.lower()
         hyphenated = norm_base.replace("_", "-")
-
         for cand in [base, norm_base, hyphenated]:
             if cand not in candidates:
                 candidates.append(cand)
-
-        # 3. AI / Python ecosystem variants for unknown packages
         ecosystem_variants = [
             f"{hyphenated}-client",
             f"{hyphenated}-python",
@@ -473,7 +700,6 @@ class AUTO_IMPORT_LAZY_LOAD:
         for variant in ecosystem_variants:
             if variant not in candidates:
                 candidates.append(variant)
-
         return candidates
 
     @staticmethod
@@ -502,12 +728,11 @@ class AUTO_IMPORT_LAZY_LOAD:
         Autonomously intercepts missing package errors at runtime:
         1. Analyzes the required package name & sub-module context.
         2. Verifies presence in the local environment (bypasses if healthy).
-        3. Stochastically derives candidates and installs via pip / DOWNLOAD_MANAGER.
+        3. Stochastically derives candidates aus den Haupttabellen und installiert via pip.
         4. Executes a seamless retry loop and injects loaded symbols without manual intervention.
         """
         if cls._is_healing:
             return False
-
         cls._is_healing = True
         try:
             # Determine actual missing target symbol / module
@@ -523,72 +748,59 @@ class AUTO_IMPORT_LAZY_LOAD:
                     m2 = re.search(r"cannot import name\s+['\"]([^'\"]+)['\"]\s+from\s+['\"]([^'\"]+)['\"]", err_str)
                     if m2:
                         missing_name = m2.group(2)
-
             if not missing_name:
                 missing_name = requested_name
-
             if not missing_name:
                 return False
-
             base_pkg = cls._top_level_name(missing_name)
-
             # Never attempt to pip install standard library modules
             if cls._is_stdlib(base_pkg):
                 return False
-
             g = globals()
-            pc_id = g.get("PC_ID") or "PC_SYSTEM"
+            pc_id = g.get("PC_ID") or FALLBACK_PC_ID
             st = g.setdefault("STATUS_TABLE", {})
             row = st.setdefault(base_pkg, {"status": "UNKNOWN", "retry_count": 0})
-
             # Check if permanently banned or exhausted
             if row["status"] in ("BANNED", "RETRY_EXHAUSTED", "HW_INCOMPATIBLE"):
                 return False
-
             dm = g.get("download_manager")
             if not dm:
                 dm = cls.DOWNLOAD_MANAGER()
                 g["download_manager"] = dm
-
             # If module is already importable without error, bypass install
             if cls._is_importable(missing_name) and exc is None:
                 row["status"] = "OK"
                 return True
-
             attempt = row["retry_count"] + 1
             if attempt > MAX_RETRIES:
-                cls.write_log(pc_id, "INSTALL", "RETRY_EXHAUSTED", module=base_pkg, versuch=str(attempt))
+                cls.write_log(pc_id, LOG_PHASE_INSTALL, LOG_EVENT_RETRY_EXHAUSTED, module=base_pkg, versuch=str(attempt))
                 row["status"] = "RETRY_EXHAUSTED"
                 return False
-
             row["retry_count"] = attempt
             candidates = cls.resolve_canonical_pip_name(base_pkg)
-
             installed_candidate = None
             for cand in candidates:
                 pip_pkg = cls.get_platform_specific_pip_name(base_pkg, cand)
-                cls.write_log(pc_id, "INSTALL", "INSTALL_TRY", module=base_pkg,
+                cls.write_log(pc_id, LOG_PHASE_INSTALL, LOG_EVENT_INSTALL_TRY, module=base_pkg,
                               detail=f"stochastic_pip:{pip_pkg}", versuch=str(attempt))
-                logging.info(f"[AUTO_IMPORT_LAZY_LOAD] Stochastic install attempt for '{base_pkg}' using '{pip_pkg}' (attempt {attempt})...")
+                logging.info(f"[{LOGGER_NAME}] Stochastic install attempt for '{base_pkg}' using '{pip_pkg}' (attempt {attempt})...")
 
                 if dm.install_package_isolated(pip_pkg, base_pkg):
-                    cls.write_log(pc_id, "INSTALL", "INSTALL_OK", module=base_pkg, detail=f"pip:{pip_pkg}")
+                    cls.write_log(pc_id, LOG_PHASE_INSTALL, LOG_EVENT_INSTALL_OK, module=base_pkg, detail=f"pip:{pip_pkg}")
                     installed_candidate = pip_pkg
                     break
                 else:
-                    cls.write_log(pc_id, "INSTALL", "INSTALL_FAIL", module=base_pkg,
+                    cls.write_log(pc_id, LOG_PHASE_INSTALL, LOG_EVENT_INSTALL_FAIL, module=base_pkg,
                                   detail=f"pip:{pip_pkg}", versuch=str(attempt))
-
             if not installed_candidate:
-                cls.write_log(pc_id, "INSTALL", "RETRY", module=base_pkg, versuch=str(attempt))
+                cls.write_log(pc_id, LOG_PHASE_INSTALL, LOG_EVENT_RETRY, module=base_pkg, versuch=str(attempt))
                 row["status"] = "RETRYING"
                 return False
-
             # Seamless Retry Loop: Invalidate caches and verify immediate import
             importlib.invalidate_caches()
             try:
                 mod = importlib.import_module(missing_name)
-                cls.write_log(pc_id, "IMPORT", "IMPORT_OK", module=base_pkg)
+                cls.write_log(pc_id, LOG_PHASE_IMPORT, LOG_EVENT_IMPORT_OK, module=base_pkg)
                 row["status"] = "OK"
                 if base_pkg not in g:
                     g[base_pkg] = sys.modules.get(base_pkg, mod)
@@ -599,31 +811,28 @@ class AUTO_IMPORT_LAZY_LOAD:
                 if matched:
                     hint = cls.build_vcredist_hint(post_err_str)
                     detail = f"matched_pattern:{matched}, {post_err_str}" + (f" | HINWEIS: {hint}" if hint else "")
-                    cls.write_log(pc_id, "INSTALL", "BANNED", module=base_pkg, detail=detail, versuch=str(attempt))
+                    cls.write_log(pc_id, LOG_PHASE_INSTALL, LOG_EVENT_BANNED, module=base_pkg, detail=detail, versuch=str(attempt))
                     row["status"] = "BANNED"
                     return False
-
                 # Inline force-reinstall repair cascade
-                cls.write_log(pc_id, "REPAIR", "INLINE_REPAIR_TRY", module=base_pkg, versuch=str(attempt))
+                cls.write_log(pc_id, LOG_PHASE_REPAIR, LOG_EVENT_INLINE_REPAIR_TRY, module=base_pkg, versuch=str(attempt))
                 if dm.install_package_isolated(installed_candidate, base_pkg, force_reinstall=True):
                     importlib.invalidate_caches()
                     try:
                         mod = importlib.import_module(missing_name)
-                        cls.write_log(pc_id, "REPAIR", "INLINE_REPAIR_OK", module=base_pkg)
-                        cls.write_log(pc_id, "IMPORT", "IMPORT_OK", module=base_pkg)
+                        cls.write_log(pc_id, LOG_PHASE_REPAIR, LOG_EVENT_INLINE_REPAIR_OK, module=base_pkg)
+                        cls.write_log(pc_id, LOG_PHASE_IMPORT, LOG_EVENT_IMPORT_OK, module=base_pkg)
                         row["status"] = "OK"
                         if base_pkg not in g:
                             g[base_pkg] = sys.modules.get(base_pkg, mod)
                         return True
                     except Exception as final_err:
-                        cls.write_log(pc_id, "REPAIR", "INLINE_REPAIR_FAIL", module=base_pkg,
+                        cls.write_log(pc_id, LOG_PHASE_REPAIR, LOG_EVENT_INLINE_REPAIR_FAIL, module=base_pkg,
                                       detail=str(final_err), versuch=str(attempt))
                 else:
-                    cls.write_log(pc_id, "REPAIR", "INLINE_REPAIR_FAIL", module=base_pkg, versuch=str(attempt))
-
+                    cls.write_log(pc_id, LOG_PHASE_REPAIR, LOG_EVENT_INLINE_REPAIR_FAIL, module=base_pkg, versuch=str(attempt))
                 row["status"] = "BANNED"
                 return False
-
         finally:
             cls._is_healing = False
 
@@ -637,7 +846,6 @@ class AUTO_IMPORT_LAZY_LOAD:
         """
         if cls._interceptor_installed:
             return
-
         cls._orig_builtin_import = builtins.__import__
         cls._orig_importlib_import = importlib.import_module
 
@@ -662,11 +870,10 @@ class AUTO_IMPORT_LAZY_LOAD:
                     importlib.invalidate_caches()
                     return cls._orig_importlib_import(name, package=package)
                 raise
-
         builtins.__import__ = _builtin_interceptor
         importlib.import_module = _importlib_interceptor
         cls._interceptor_installed = True
-        logging.info("[AUTO_IMPORT_LAZY_LOAD] Dynamic Stochastic & Self-Healing Import Interceptor active.")
+        logging.info(f"[{LOGGER_NAME}] Dynamic Stochastic & Self-Healing Import Interceptor active.")
 
     @classmethod
     def uninstall_import_interceptor(cls) -> None:
@@ -714,30 +921,50 @@ class AUTO_IMPORT_LAZY_LOAD:
         return mod
 
     @classmethod
-    def _resolve_into_globals(cls, dotted: str, key: str) -> None:
-        """Imports symbol at dotted path and stores it in globals() under key."""
-        parts  = dotted.rsplit(".", 1)
-        mod_p, attr = (parts[0], parts[1]) if len(parts) == 2 else (parts[0], None)
-        try:
-            mod = importlib.import_module(mod_p)
-            obj = getattr(mod, attr) if attr else mod
-            globals()[key] = obj
-        except Exception as exc:
-            logging.error(f"[AUTO_IMPORT_LAZY_LOAD] Cannot resolve {dotted!r} -> {key!r}: {exc}")
-
-    @classmethod
     def _bootstrap_externals(cls) -> None:
         """
-        Ensures foundational dependencies (psutil, tqdm, packaging) are present
-        via the stochastic self-healing engine and resolves them into globals().
+        Ensures foundational dependencies are present by scanning DEFAULT_CORE_IMPORT
+        and DEFAULT_ZONE_FROM for entries marked with is_bootstrap=True, and resolves
+        required symbols into globals().
         """
-        for probe, pip_name, mappings in _BOOTSTRAP_DEPS:
-            if not cls._is_importable(probe):
-                if pip_name:
-                    logging.info(f"[AUTO_IMPORT_LAZY_LOAD] {probe} not found – installing {pip_name!r}...")
-                    cls.stochastic_self_heal(probe)
-            for dotted, key in mappings:
-                cls._resolve_into_globals(dotted, key)
+        g = globals()
+        # 1. Bootstrap-Module aus DEFAULT_CORE_IMPORT auflösen
+        for entry in DEFAULT_CORE_IMPORT:
+            is_boot = entry[5] if len(entry) > 5 else False
+            if not is_boot:
+                continue
+            mod_name = entry[0]
+            alias    = entry[1] if len(entry) > 1 and entry[1] else mod_name
+            pip_name = entry[2] if len(entry) > 2 and entry[2] else ""
+            if not cls._is_importable(mod_name) and pip_name:
+                logging.info(f"[{LOGGER_NAME}] {mod_name} not found – installing {pip_name!r}...")
+                cls.stochastic_self_heal(mod_name)
+            try:
+                mod = importlib.import_module(mod_name)
+                g[alias] = mod
+                if mod_name == "tqdm":
+                    g["_tqdm_mod"] = mod
+                    g["tqdm"] = getattr(mod, "tqdm", mod)
+            except Exception as exc:
+                logging.error(f"[{LOGGER_NAME}] Cannot resolve {mod_name!r} -> {alias!r}: {exc}")
+
+        # 2. Bootstrap-Targets aus DEFAULT_ZONE_FROM auflösen
+        for entry in DEFAULT_ZONE_FROM:
+            is_boot = entry[6] if len(entry) > 6 else False
+            if not is_boot:
+                continue
+            mod_name    = entry[0]
+            target_attr = entry[1]
+            alias       = entry[2] if len(entry) > 2 and entry[2] else target_attr
+            pip_name    = entry[3] if len(entry) > 3 and entry[3] else ""
+            if not cls._is_importable(mod_name) and pip_name:
+                logging.info(f"[{LOGGER_NAME}] {mod_name} not found – installing {pip_name!r}...")
+                cls.stochastic_self_heal(mod_name)
+            try:
+                mod = importlib.import_module(mod_name)
+                g[alias] = getattr(mod, target_attr, None)
+            except Exception as exc:
+                logging.error(f"[{LOGGER_NAME}] Cannot resolve {mod_name}.{target_attr} -> {alias}: {exc}")
 
     @classmethod
     def process_library_pipeline(
@@ -756,7 +983,7 @@ class AUTO_IMPORT_LAZY_LOAD:
         """
         g = globals()
         import_list = import_list if import_list is not None else DEFAULT_CORE_IMPORT
-        from_list   = from_list   if from_list   is not None else DEFAULT_CORE_FROM
+        from_list   = from_list   if from_list   is not None else DEFAULT_ZONE_FROM
         pc_id       = pc_id or g.get("PC_ID") or cls.get_or_register_pc_id()
         status_table = status_table if status_table is not None else g.get("STATUS_TABLE") or cls.build_status_table(pc_id)
         download_mgr = download_mgr or g.get("download_manager") or cls.DOWNLOAD_MANAGER()
@@ -784,30 +1011,27 @@ class AUTO_IMPORT_LAZY_LOAD:
             mod_name = entry[0]
             base_pkg = cls._top_level_name(mod_name)
             patterns = entry[5] if is_from and len(entry) > 5 else (entry[4] if not is_from and len(entry) > 4 else None)
-
             # Proactive hardware filtering
             cap_tags, err_texts = cls.split_patterns(patterns)
             if cap_tags:
                 ok, missing = cls.check_capability_compatibility(cap_tags, cpu_flags)
                 if not ok:
-                    cls.write_log(pc_id, "FILTER", "SKIP_HW", module=base_pkg,
+                    cls.write_log(pc_id, LOG_PHASE_FILTER, LOG_EVENT_SKIP_HW, module=base_pkg,
                                   detail=f"benoetigt:{';'.join(missing)}")
                     status_table.setdefault(base_pkg, {})["status"] = "HW_INCOMPATIBLE"
                     return
-
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     mod = importlib.import_module(mod_name)
                 if status_table.get(base_pkg, {}).get("status") != "OK":
-                    cls.write_log(pc_id, "IMPORT", "IMPORT_OK", module=base_pkg)
+                    cls.write_log(pc_id, LOG_PHASE_IMPORT, LOG_EVENT_IMPORT_OK, module=base_pkg)
                 status_table.setdefault(base_pkg, {})["status"] = "OK"
                 inject(mod, entry, is_from)
             except Exception as exc:
                 if cls.stochastic_self_heal(mod_name, exc=exc):
                     mod = importlib.import_module(mod_name)
                     inject(mod, entry, is_from)
-
         for entry in import_list:
             process_entry(entry, is_from=False)
         for entry in from_list:
@@ -820,14 +1044,8 @@ class AUTO_IMPORT_LAZY_LOAD:
         tqdm and packaging symbols are resolved from globals() after Step 4.
         Includes stochastic C++/Build failure recovery & Python 3.14+ ABI fallback matrix.
         """
-        PIP_PROGRESS_PATTERN = re.compile(
-            r"(?:Downloading\s+(?P<filename>\S+))?.*?"
-            r"(?P<downloaded>[\d\.]+)\s*(?P<d_unit>[kMG]?B)\s*/\s*"
-            r"(?P<total>[\d\.]+)\s*(?P<t_unit>[kMG]?B)",
-            re.IGNORECASE,
-        )
-
-        def __init__(self, inactivity_timeout_sec: int = 90):
+        PIP_PROGRESS_PATTERN = re.compile(PIP_PROGRESS_PATTERN_STR, re.IGNORECASE)
+        def __init__(self, inactivity_timeout_sec: int = INACTIVITY_TIMEOUT_SEC):
             self.inactivity_timeout_sec = inactivity_timeout_sec
 
         def _to_bytes(self, val_str: str, unit_str: str) -> int:
@@ -840,16 +1058,8 @@ class AUTO_IMPORT_LAZY_LOAD:
             return int(val)
 
         def _is_build_or_cpp_error(self, log_output: str) -> bool:
-            """Erkennt typische C++-Compiler-, Wheel-Build- oder Header-Fehler."""
-            patterns = [
-                r"Failed building wheel for",
-                r"Microsoft Visual C\+\+ 14\.\d+ or greater is required",
-                r"error: command '.*' failed with exit status",
-                r"fatal error C\d+:",
-                r"error: [a-zA-Z0-9_\-]+: No such file or directory",
-                r"ninja: build stopped: subcommand failed",
-            ]
-            return any(re.search(p, log_output, re.IGNORECASE) for p in patterns)
+            """Erkennt typische C++-Compiler-, Wheel-Build- oder Header-Fehler aus Kopfbereich."""
+            return any(re.search(p, log_output, re.IGNORECASE) for p in BUILD_OR_CPP_ERROR_PATTERNS)
 
         def download_and_install_pkg(self, cmd: list) -> tuple[bool, str]:
             """
@@ -884,7 +1094,7 @@ class AUTO_IMPORT_LAZY_LOAD:
                     elif proc.poll() is not None:
                         break
                     else:
-                        time.sleep(0.05)
+                        time.sleep(PROGRESS_POLL_INTERVAL_SEC)
                         if time.time() - last_read_ts > self.inactivity_timeout_sec:
                             logging.warning("[DOWN_PIP] Inactivity timeout reached! Terminating process tree...")
                             try:
@@ -956,16 +1166,20 @@ class AUTO_IMPORT_LAZY_LOAD:
                 except (_PNF,): pass
             if "llama" in base.lower():
                 logging.info(f"[DOWN_PIP] Bereite Bootstrapping fuer {base} vor...")
+                llama_bootstrap_pkgs = [
+                    entry[2] for entry in DEFAULT_CORE_IMPORT
+                    if len(entry) > 2 and entry[2] in ("typing-extensions", "numpy", "diskcache", "pydantic")
+                ]
                 bootstrap_cmd = [
                     sys.executable, "-m", "pip", "install",
-                    "typing-extensions", "numpy", "diskcache", "pydantic",
+                    *llama_bootstrap_pkgs,
                     "--prefer-binary", "--only-binary=:all:"
                 ]
                 self.download_and_install_pkg(bootstrap_cmd)
             cmd = [sys.executable, "-m", "pip", "install", "--no-cache-dir"]
             if force_reinstall: cmd.extend(["--upgrade", "--force-reinstall"])
             if base in ("torch", "torchvision") and sys.platform == "win32":
-                cmd.extend(["--index-url", "https://download.pytorch.org/whl/cpu"])
+                cmd.extend(["--index-url", TORCH_CPU_INDEX_URL])
             cmd.append(pip_pkg)
             logging.info(f"[DOWN_PIP] Starte Installation von: {pip_pkg}")
             success, logs = self.download_and_install_pkg(cmd)
@@ -977,7 +1191,7 @@ class AUTO_IMPORT_LAZY_LOAD:
                 cmd_b2a = [
                     sys.executable, "-m", "pip", "install", pip_pkg,
                     "--prefer-binary", "--only-binary=:all:", "--no-cache-dir",
-                    "--extra-index-url", "https://abetlen.github.io/llama-cpp-python/wheels/cpu"
+                    "--extra-index-url", LLAMA_CPP_EXTRA_INDEX_URL
                 ]
                 success_b2a, _ = self.download_and_install_pkg(cmd_b2a)
                 if success_b2a:
@@ -987,12 +1201,12 @@ class AUTO_IMPORT_LAZY_LOAD:
                 plat_tag = "win_amd64" if sys.platform == "win32" else "manylinux_2_28_x86_64"
                 candidate_vers = [py_ver, "cp312", "cp311"]
                 for c_ver in dict.fromkeys(candidate_vers):
-                    wheel_url = f"https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.90/llama_cpp_python-0.2.90-{c_ver}-{c_ver}-{plat_tag}.whl"
+                    wheel_url = LLAMA_CPP_WHEEL_URL_TEMPLATE.format(c_ver=c_ver, plat_tag=plat_tag)
                     logging.warning(f"[DOWN_PIP] Versuche Download & Bypass fuer Wheel ({c_ver})...")
                     try:
                         with tempfile.TemporaryDirectory() as tmpdir:
                             raw_whl = os.path.join(tmpdir, "downloaded.whl")
-                            patched_whl = os.path.join(tmpdir, "llama_cpp_python-0.2.90-py3-none-any.whl")
+                            patched_whl = os.path.join(tmpdir, LLAMA_CPP_PATCHED_WHEEL_NAME)
                             req = urllib.request.Request(wheel_url, headers={"User-Agent": "Mozilla/5.0"})
                             with urllib.request.urlopen(req) as resp, open(raw_whl, "wb") as f:
                                 f.write(resp.read())
@@ -1030,28 +1244,13 @@ class AUTO_IMPORT_LAZY_LOAD:
     class OLLAMA_SERVICE_GUARD:
         """
         Unified lazy-loading guard for Ollama service + Hermes Agent.
+        Verwendet direkt die globalen Dienstnamen, Adressen und URLs aus dem Kopfbereich.
         """
-        OLLAMA_HOST_BASE       = "http://127.0.0.1:11434"
-        OLLAMA_IP              = '127.0.0.1'
-        OLLAMA_PORT            = 11434
-        SERVICE_TIMEOUT_SEC    = 1.5
-        SERVICE_MAX_WAIT_SEC   = 30
-        KILL_WAIT_SEC          = 3
-        HERMES_PREFERRED       = "qwen3"
-        HERMES_FALLBACK_MODEL  = "qwen3:8b"
-        PULL_STREAM_TIMEOUT    = 3600
-        WIN_INSTALLER_URL      = "https://ollama.com/download/OllamaSetup.exe"
-        MAC_INSTALLER_URL      = "https://ollama.com/download/Ollama-darwin.zip"
-        LINUX_INSTALL_CMD      = "curl -fsSL https://ollama.com/install.sh | sh"
-        LINUX_FALLBACK_URLS    = {
-            "amd64": "https://ollama.com/download/ollama-linux-amd64.tgz",
-            "arm64": "https://ollama.com/download/ollama-linux-arm64.tgz",
-        }
-        _guard_active: bool = False
+        _guard_active: bool    = False
 
         @classmethod
         def _log(cls, msg: str, level: str = "info") -> None:
-            _logger = globals().get("logger", logging.getLogger("AutoImporter"))
+            _logger = globals().get("logger", logging.getLogger(LOGGER_NAME))
             fn = getattr(_logger, level, _logger.info)
             fn(f"[OLLAMA_GUARD] {msg}")
 
@@ -1060,9 +1259,8 @@ class AUTO_IMPORT_LAZY_LOAD:
             """True iff HTTP GET /api/tags responds within SERVICE_TIMEOUT_SEC."""
             import urllib.request as _urlr
             try:
-                url = f"{cls.OLLAMA_HOST_BASE}/api/tags"
-                req = _urlr.Request(url, headers={"User-Agent": "OllamaGuard/1.0"})
-                with _urlr.urlopen(req, timeout=cls.SERVICE_TIMEOUT_SEC) as resp:
+                req = _urlr.Request(OLLAMA_API_TAGS_ENDPOINT, headers={"User-Agent": "OllamaGuard/1.0"})
+                with _urlr.urlopen(req, timeout=SERVICE_TIMEOUT_SEC) as resp:
                     return resp.status == 200
             except Exception:
                 return False
@@ -1072,19 +1270,19 @@ class AUTO_IMPORT_LAZY_LOAD:
             """Polls _is_service_running() every second up to SERVICE_MAX_WAIT_SEC."""
             cls._log("Waiting for Ollama service to respond...")
             start = time.time()
-            while time.time() - start < cls.SERVICE_MAX_WAIT_SEC:
+            while time.time() - start < SERVICE_MAX_WAIT_SEC:
                 if cls._is_service_running():
                     cls._log(f"Service online after {time.time() - start:.1f}s.")
                     return True
                 time.sleep(1.0)
-            cls._log(f"Service did not start within {cls.SERVICE_MAX_WAIT_SEC}s.", "error")
+            cls._log(f"Service did not start within {SERVICE_MAX_WAIT_SEC}s.", "error")
             return False
 
         @classmethod
         def _resolve_ollama_binary(cls) -> Optional[str]:
             """Returns the absolute path to the ollama binary or None."""
             import shutil as _sh
-            found = _sh.which("ollama")
+            found = _sh.which(OLLAMA_SERVICE_NAME)
             if found:
                 return str(Path(found).resolve())
             sys_name = platform.system()
@@ -1123,9 +1321,9 @@ class AUTO_IMPORT_LAZY_LOAD:
             cls._log(f"Ollama binary not found. Starting auto-install for {sys_name}...")
             if sys_name == "Windows":
                 try:
-                    installer = Path(tempfile.gettempdir()) / "OllamaSetup.exe"
-                    cls._log(f"Downloading Windows installer from {cls.WIN_INSTALLER_URL}...")
-                    _urlr.urlretrieve(cls.WIN_INSTALLER_URL, str(installer))
+                    installer = Path(tempfile.gettempdir()) / OLLAMA_WIN_INSTALLER_EXE
+                    cls._log(f"Downloading Windows installer from {OLLAMA_WIN_INSTALLER_URL}...")
+                    _urlr.urlretrieve(OLLAMA_WIN_INSTALLER_URL, str(installer))
                     cls._log("Running installer silently (/SILENT)...")
                     subprocess.run([str(installer), "/SILENT"], check=True)
                     time.sleep(3)
@@ -1137,8 +1335,8 @@ class AUTO_IMPORT_LAZY_LOAD:
                     cls._log(f"Windows install failed: {exc}", "error")
             elif sys_name == "Darwin":
                 try:
-                    zip_path = Path(tempfile.gettempdir()) / "Ollama-darwin.zip"
-                    _urlr.urlretrieve(cls.MAC_INSTALLER_URL, str(zip_path))
+                    zip_path = Path(tempfile.gettempdir()) / OLLAMA_MAC_INSTALLER_ZIP
+                    _urlr.urlretrieve(OLLAMA_MAC_INSTALLER_URL, str(zip_path))
                     subprocess.run(["unzip", "-q", "-o", str(zip_path), "-d", "/Applications"], check=True)
                     bin_path = cls._resolve_ollama_binary()
                     if bin_path: return bin_path
@@ -1146,7 +1344,7 @@ class AUTO_IMPORT_LAZY_LOAD:
                     cls._log(f"macOS install failed: {exc}", "error")
             elif sys_name == "Linux":
                 try:
-                    subprocess.run(cls.LINUX_INSTALL_CMD, shell=True, check=True)
+                    subprocess.run(OLLAMA_LINUX_INSTALL_CMD, shell=True, check=True)
                     bin_path = cls._resolve_ollama_binary()
                     if bin_path: return bin_path
                 except Exception as exc:
@@ -1162,12 +1360,12 @@ class AUTO_IMPORT_LAZY_LOAD:
             if _psutil:
                 for proc in _psutil.process_iter(["name", "pid"]):
                     try:
-                        if "ollama" in (proc.info["name"] or "").lower():
+                        if OLLAMA_SERVICE_NAME in (proc.info["name"] or "").lower():
                             cls._log(f"Killing stale process {proc.info['name']} (PID {proc.info['pid']})...")
                             proc.kill()
                     except Exception:
                         pass
-                time.sleep(cls.KILL_WAIT_SEC)
+                time.sleep(KILL_WAIT_SEC)
             cls._log(f"Starting 'ollama serve' via: {binary_path}")
             flags = subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
             try:
@@ -1187,8 +1385,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             """Returns list of locally installed ollama model names via REST."""
             import json as _json, urllib.request as _urlr
             try:
-                url = f"{cls.OLLAMA_HOST_BASE}/api/tags"
-                with _urlr.urlopen(_urlr.Request(url), timeout=cls.SERVICE_TIMEOUT_SEC) as resp:
+                with _urlr.urlopen(_urlr.Request(OLLAMA_API_TAGS_ENDPOINT), timeout=SERVICE_TIMEOUT_SEC) as resp:
                     data = _json.loads(resp.read().decode("utf-8"))
                     return [m.get("name", "") for m in data.get("models", []) if m.get("name")]
             except Exception:
@@ -1200,7 +1397,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             import json as _json
             try:
                 root = globals().get("PROJECT_ROOT")
-                cfg = Path(root) / "config" / "active_model_config.json" if root else None
+                cfg = Path(root) / CONFIG_DIR_NAME / ACTIVE_MODEL_CONFIG_FILE if root else None
                 if cfg and cfg.exists():
                     txt = cfg.read_text(encoding="utf-8")
                     txt = re.sub(r'("model_name":\s*"[^"]+")\s*\n\s*"', r'\1,\n"', txt)
@@ -1210,11 +1407,11 @@ class AUTO_IMPORT_LAZY_LOAD:
             except Exception:
                 pass
             if local_models:
-                matched = [m for m in local_models if cls.HERMES_PREFERRED.lower() in m.lower()]
+                matched = [m for m in local_models if HERMES_PREFERRED_KEYWORD.lower() in m.lower()]
                 if matched:
                     return matched[0]
                 return local_models[0]
-            return cls.HERMES_FALLBACK_MODEL
+            return HERMES_FALLBACK_MODEL
 
         @classmethod
         def _is_model_local(cls, model_name: str, local_models: List[str]) -> bool:
@@ -1238,8 +1435,8 @@ class AUTO_IMPORT_LAZY_LOAD:
                     return False
             try:
                 client = _Client(
-                    host=cls.OLLAMA_HOST_BASE,
-                    timeout=cls.PULL_STREAM_TIMEOUT
+                    host=OLLAMA_HOST_BASE,
+                    timeout=PULL_STREAM_TIMEOUT_SEC
                 )
                 current_digest = None
                 for progress in client.pull(model=model_name, stream=True):
@@ -1268,8 +1465,8 @@ class AUTO_IMPORT_LAZY_LOAD:
             try:
                 cls._log(f"Associating Hermes agent with model '{model_name}'...")
                 res = subprocess.run(
-                    ["ollama", "launch", "hermes", "--model", model_name],
-                    capture_output=True, text=True, timeout=10, check=False,
+                    [OLLAMA_SERVICE_NAME, "launch", HERMES_SERVICE_NAME, "--model", model_name],
+                    capture_output=True, text=True, timeout=HERMES_LAUNCH_TIMEOUT_SEC, check=False,
                 )
                 if res.returncode == 0:
                     cls._log("Hermes association verified.")
@@ -1284,7 +1481,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             ram_gb  = round(_psutil.virtual_memory().total / 1024**3, 1) if _psutil else 0.0
             return {
                 "total_ram":   ram_gb,
-                "safe_budget": round(ram_gb * 0.70, 1),
+                "safe_budget": round(ram_gb * SAFE_RAM_BUDGET_FACTOR, 1),
                 "cpu_count":   os.cpu_count() or 1,
             }
 
@@ -1297,7 +1494,7 @@ class AUTO_IMPORT_LAZY_LOAD:
                 return globals().get("OLLAMA_READY", False)
             g = globals()
             cls._log("=" * 60)
-            cls._log("Lazy-load trigger: Ollama + Hermes Auto Downloader")
+            cls._log(f"Lazy-load trigger: {OLLAMA_SERVICE_NAME.capitalize()} + {HERMES_SERVICE_NAME.capitalize()} Auto Downloader")
             cls._log("=" * 60)
 
             bin_path = cls._resolve_ollama_binary()
@@ -1308,16 +1505,16 @@ class AUTO_IMPORT_LAZY_LOAD:
                 cls._log(f"Ollama binary: {bin_path}")
             else:
                 cls._log("Binary not found – Ollama unavailable.", "error")
-                g["OLLAMA_READY"] = g["ollama_ready"] = False
+                g["OLLAMA_READY"] = False
                 return False
 
             if cls._is_service_running():
-                cls._log(f"Service already running on port {cls.OLLAMA_PORT}.")
+                cls._log(f"Service already running on port {OLLAMA_PORT}.")
             else:
                 ok = cls._start_service(bin_path)
                 if not ok:
                     cls._log("Service could not be started.", "error")
-                    g["OLLAMA_READY"] = g["ollama_ready"] = False
+                    g["OLLAMA_READY"] = False
                     return False
 
             local_models = cls._get_local_models()
@@ -1338,15 +1535,14 @@ class AUTO_IMPORT_LAZY_LOAD:
 
             try:
                 cls._log("Installed models on this system:")
-                subprocess.run(["ollama", "list"], check=False)
+                subprocess.run([OLLAMA_SERVICE_NAME, "list"], check=False)
             except Exception: pass
 
             hw = cls._collect_hardware()
 
             g["OLLAMA_READY"]       = cls._is_service_running()
-            g["ollama_ready"]       = g["OLLAMA_READY"]
             g["OLLAMA_BIN"]         = bin_path
-            g["OLLAMA_HOST"]        = cls.OLLAMA_HOST_BASE
+            g["OLLAMA_HOST"]        = OLLAMA_HOST_BASE
             g["HERMES_MODEL"]       = model_name
             g["LOCAL_MODELS"]       = local_models
             g["service_manager"]    = cls
@@ -1355,7 +1551,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             g["CPU_COUNT"]          = hw["cpu_count"]
             if "HF_MODELS_DIR" not in g:
                 root = g.get("PROJECT_ROOT")
-                g["HF_MODELS_DIR"] = str(Path(root) / "data" / "models") if root else str(Path.cwd() / "data" / "models")
+                g["HF_MODELS_DIR"] = str(Path(root) / DATA_DIR_NAME / MODELS_DIR_NAME) if root else str(Path.cwd() / DATA_DIR_NAME / MODELS_DIR_NAME)
             cls._guard_active = True
 
             status = "[OK] READY" if g["OLLAMA_READY"] else "[!] NOT READY"
@@ -1378,33 +1574,30 @@ class AUTO_IMPORT_LAZY_LOAD:
         Step 1 – Setup logging, directories, and target paths.
         Step 2 – Hardware profiling and PC_ID registration.
         Step 3 – Install Stochastic & Self-Healing Import Interceptor on Python runtime.
-        Step 4 – Bootstrap foundational externals (psutil, tqdm, packaging).
-        Step 5 – Dynamic baseline library pipeline.
+        Step 4 – Bootstrap foundational externals (psutil, tqdm, packaging) aus DEFAULT_CORE_IMPORT & DEFAULT_ZONE_FROM.
+        Step 5 – Dynamic baseline library pipeline aus DEFAULT_CORE_IMPORT & DEFAULT_ZONE_FROM.
         Step 6 – Ollama & Hermes lazy-load guard (service + model on demand).
         Step 7 – Readiness summary banner.
         """
         g = globals()
-        logging.info("[AUTO_IMPORT_LAZY_LOAD] Step 1: stdlib & logging setup...")
+        logging.info(f"[{LOGGER_NAME}] Step 1: stdlib & logging setup...")
         cls._setup_logging_and_paths()
 
         dm = cls.DOWNLOAD_MANAGER()
         g["download_manager"] = dm
         pc_id = cls.get_or_register_pc_id()
         g["PC_ID"] = pc_id
-        cls.write_log(pc_id, "SESSION", "SESSION_START")
+        cls.write_log(pc_id, LOG_PHASE_SESSION, LOG_EVENT_SESSION_START)
         hw_info = cls.get_hardware_information()
         g["_HW_INFO"], g["_CPU_FLAGS"] = hw_info, hw_info["CPU_FLAGS"]
         st = cls.build_status_table(pc_id)
         g["STATUS_TABLE"] = st
-
         # Step 3: Install dynamic import interceptor
-        logging.info("[AUTO_IMPORT_LAZY_LOAD] Step 3: Activating Stochastic Self-Healing Interceptor...")
+        logging.info(f"[{LOGGER_NAME}] Step 3: Activating Stochastic Self-Healing Interceptor...")
         cls.install_import_interceptor()
-
-        # Step 4: Bootstrap externals
-        logging.info("[AUTO_IMPORT_LAZY_LOAD] Step 4: Bootstrapping externals...")
+        # Step 4: Bootstrap externals aus den zwei Haupttabellen
+        logging.info(f"[{LOGGER_NAME}] Step 4: Bootstrapping externals...")
         cls._bootstrap_externals()
-
         # Export public helper bindings into globals
         for name, fn in [
             ("write_log",                      cls.write_log),
@@ -1428,37 +1621,41 @@ class AUTO_IMPORT_LAZY_LOAD:
         ]:
             g[name] = fn
 
-        _log = g.get("logger", logging.getLogger("AutoImporter"))
-        _log.info("[AUTO_IMPORT_LAZY_LOAD] Step 5: Executing dynamic library pipeline...")
+        _log = g.get("logger", logging.getLogger(LOGGER_NAME))
+        _log.info(f"[{LOGGER_NAME}] Step 5: Executing dynamic library pipeline...")
         cls.process_library_pipeline(
-            import_list=DEFAULT_CORE_IMPORT, from_list=DEFAULT_CORE_FROM,
+            import_list=DEFAULT_CORE_IMPORT, from_list=DEFAULT_ZONE_FROM,
             pc_id=pc_id, status_table=st,
             download_mgr=dm, cpu_flags=hw_info["CPU_FLAGS"],
         )
-        _log.info("[AUTO_IMPORT_LAZY_LOAD] Library pipeline complete.")
+        _log.info(f"[{LOGGER_NAME}] Library pipeline complete.")
 
         # Step 6 – Activate Ollama / Hermes guard
-        _log.info("[AUTO_IMPORT_LAZY_LOAD] Step 6: Activating Ollama/Hermes guard...")
+        _log.info(f"[{LOGGER_NAME}] Step 6: Activating Ollama/Hermes guard...")
         cls.ensure_ollama_and_hermes()
 
         # Step 7 – Readiness summary banner
-        _log.info("[AUTO_IMPORT_LAZY_LOAD] Step 7: Readiness summary.")
+        _log.info(f"[{LOGGER_NAME}] Step 7: Readiness summary.")
         g2 = globals()
         _ready   = g2.get("OLLAMA_READY", False)
         _model   = g2.get("HERMES_MODEL", "n/a")
         _ram     = g2.get("TOTAL_RAM_GB", 0.0)
         _budget  = g2.get("SAFE_RAM_BUDGET_GB", 0.0)
         _cpu     = g2.get("CPU_COUNT", 0)
-        _host    = g2.get("OLLAMA_HOST", cls.OLLAMA_SERVICE_GUARD.OLLAMA_HOST_BASE)
+        _host    = g2.get("OLLAMA_HOST", OLLAMA_HOST_BASE)
         _sym     = "[OK]" if _ready else "[!]"
         print()
         print("=" * 64)
         print(f"  AUTO_IMPORT_LAZY_LOAD - Stochastic & Self-Healing Active")
         print("=" * 64)
         print(f"  System    : {platform.system()} {platform.machine()} | {_cpu} cores | {_ram} GB RAM")
-        print(f"  RAM budget: {_budget} GB (70 % safety cap)")
+        print(f"  RAM budget: {_budget} GB ({int(SAFE_RAM_BUDGET_FACTOR * 100)} % safety cap)")
         print(f"  Ollama    : {_sym} {'READY' if _ready else 'NOT READY'} at {_host}")
         print(f"  Model     : {_model}")
         print(f"  PC_ID     : {pc_id}")
         print("=" * 64)
         print()
+
+
+# 3. FUSSBEREICH: AUSFUEHRUNG / TRIGGERING
+AUTO_IMPORT_LAZY_LOAD.bootstrap()
