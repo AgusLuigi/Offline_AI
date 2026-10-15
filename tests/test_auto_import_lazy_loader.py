@@ -91,11 +91,8 @@ class TestAutoImportLazyLoader(unittest.TestCase):
         """1. Retain Existing Pipeline Structure: verify all structural stages & methods exist."""
         expected_methods = [
             "bootstrap",
-            "get_project_root",
-            "get_logs_dir",
-            "get_config_dir",
-            "get_data_dir",
-            "get_models_dir",
+            "_detect_project_root",
+            "get_dir",
             "get_active_model_config_path",
             "detect_notebook_name",
             "resolve_log_file_name",
@@ -125,6 +122,17 @@ class TestAutoImportLazyLoader(unittest.TestCase):
                 hasattr(AUTO_IMPORT_LAZY_LOAD, method_name),
                 f"Missing expected pipeline method: {method_name}"
             )
+
+        # DICT_FOLDERS dict muss global vorhanden und befüllt sein (nicht in der Klasse dupliziert)
+        import src.Install.auto_import_lazy_loader as loader_mod
+        self.assertTrue(hasattr(loader_mod, "DICT_FOLDERS"))
+        self.assertIsInstance(loader_mod.DICT_FOLDERS, dict)
+        self.assertFalse(hasattr(AUTO_IMPORT_LAZY_LOAD, "DICT_FOLDERS"))
+        self.assertIn("src",    loader_mod.DICT_FOLDERS)
+        self.assertIn("logs",   loader_mod.DICT_FOLDERS)
+        self.assertIn("config", loader_mod.DICT_FOLDERS)
+        self.assertIn("data",   loader_mod.DICT_FOLDERS)
+        self.assertIn("models", loader_mod.DICT_FOLDERS)
 
         # Check nested managers
         self.assertTrue(hasattr(AUTO_IMPORT_LAZY_LOAD, "DOWNLOAD_MANAGER"))
@@ -251,39 +259,41 @@ class TestAutoImportLazyLoader(unittest.TestCase):
         self.assertIsInstance(hw["CPU_FLAGS"], set)
 
     def test_dynamic_paths_and_context_sensitive_logging(self):
-        """Test dynamic path resolution via get_project_root() and context-sensitive log file naming."""
-        root = AUTO_IMPORT_LAZY_LOAD.get_project_root()
+        """Test dynamic path resolution via _detect_project_root() and context-sensitive log file naming."""
+        root = AUTO_IMPORT_LAZY_LOAD._detect_project_root()
         self.assertIsInstance(root, Path)
         self.assertTrue(root.is_dir())
 
-        # Test component paths
-        logs_dir = AUTO_IMPORT_LAZY_LOAD.get_logs_dir()
-        self.assertEqual(logs_dir, root / "logs")
-        self.assertTrue(logs_dir.is_dir())
-
-        config_dir = AUTO_IMPORT_LAZY_LOAD.get_config_dir()
+        # DICT_FOLDERS-Schleife – passiv: kein mkdir beim Pfad-Abruf
+        src_dir    = AUTO_IMPORT_LAZY_LOAD.get_dir("src")
+        logs_dir   = AUTO_IMPORT_LAZY_LOAD.get_dir("logs")
+        config_dir = AUTO_IMPORT_LAZY_LOAD.get_dir("config")
+        data_dir   = AUTO_IMPORT_LAZY_LOAD.get_dir("data")
+        models_dir = AUTO_IMPORT_LAZY_LOAD.get_dir("models")
+        self.assertEqual(src_dir,    root / "src")
+        self.assertEqual(logs_dir,   root / "logs")
         self.assertEqual(config_dir, root / "config")
-
-        data_dir = AUTO_IMPORT_LAZY_LOAD.get_data_dir()
-        self.assertEqual(data_dir, root / "data")
-
-        models_dir = AUTO_IMPORT_LAZY_LOAD.get_models_dir()
+        self.assertEqual(data_dir,   root / "data")
         self.assertEqual(models_dir, root / "data" / "models")
+
+
+        # ensure=True legt den Ordner bei Bedarf an (bedarfsgesteuert)
+        self.assertTrue(AUTO_IMPORT_LAZY_LOAD.get_dir("logs", ensure=True).is_dir())
 
         cfg_path = AUTO_IMPORT_LAZY_LOAD.get_active_model_config_path()
         self.assertEqual(cfg_path, config_dir / "active_model_config.json")
 
-        # Verify PROJECT_ANCHOR_DIR stochastic resolution
-        self.assertEqual(AUTO_IMPORT_LAZY_LOAD.PROJECT_ANCHOR_DIR, root.name)
+        # PROJECT_ANCHOR_DIR ist im Kopfbereich ein Rohling – wird erst nach Bootstrap gesetzt.
         import src.Install.auto_import_lazy_loader as loader_mod
-        self.assertEqual(loader_mod.PROJECT_ANCHOR_DIR, root.name)
-        self.assertEqual(loader_mod.FALLBACK_LOG_FILE_NAME, "app_import_terminal.log")
+        self.assertEqual(loader_mod.PROJECT_ANCHOR_DIR, "Project_Folder_Name")   # Rohling
+        self.assertEqual(loader_mod.LOG_FILE_NAME, "app_import_terminal.log")
+        self.assertFalse(hasattr(loader_mod, "LOG_FILE_FALLBACK"))
+        self.assertEqual(AUTO_IMPORT_LAZY_LOAD._detect_project_root().name, root.name)
 
         # Fallback in terminal/script context
         with patch.dict(os.environ, {}, clear=True):
             with patch("sys.argv", ["script.py"]):
-                log_name = AUTO_IMPORT_LAZY_LOAD.resolve_log_file_name()
-                self.assertEqual(log_name, "app_import_terminal.log")
+                self.assertEqual(AUTO_IMPORT_LAZY_LOAD.resolve_log_file_name(), "app_import_terminal.log")
                 self.assertEqual(AUTO_IMPORT_LAZY_LOAD.get_target_log_path(), logs_dir / "app_import_terminal.log")
 
         # Jupyter notebook context via JPY_SESSION_NAME
@@ -308,15 +318,15 @@ class TestAutoImportLazyLoader(unittest.TestCase):
         mock_ipython.get_ipython.return_value = mock_zmq_shell
         with patch.dict(sys.modules, {"IPython": mock_ipython}):
             self.assertTrue(AUTO_IMPORT_LAZY_LOAD.is_jupyter_environment())
-            # When name is unknown inside Jupyter
-            with patch("src.Install.auto_import_lazy_loader._get_jupyter_notebook_name", return_value=None):
+            # Wenn Notebook-Name im Jupyter-Kontext nicht ermittelbar → LOG_jupyter_notebook.log
+            with patch.object(AUTO_IMPORT_LAZY_LOAD, "_resolve_notebook_name", return_value=None):
                 self.assertEqual(AUTO_IMPORT_LAZY_LOAD.resolve_log_file_name(), "LOG_jupyter_notebook.log")
 
         # Terminal interactive shell is NOT Jupyter notebook
         mock_ipython_term = MagicMock()
-        mock_terminal_shell = MagicMock()
+        mock_terminal_shell = MagicMock(spec=[])   # spec=[] → no auto-attributes
         type(mock_terminal_shell).__name__ = "TerminalInteractiveShell"
-        mock_terminal_shell.config = {}
+        mock_terminal_shell.configure_mock(**{"config": {}})
         mock_ipython_term.get_ipython.return_value = mock_terminal_shell
         with patch.dict(os.environ, {}, clear=True):
             with patch("sys.argv", ["python"]):

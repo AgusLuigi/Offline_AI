@@ -32,151 +32,32 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 # 1. KOPFBEREICH: GLOBALE KONFIGURATION & ZENTRALE BIBLIOTHEKS-DATENSTRUKTUREN
 
 
-#  1.1 PROJEKT- & PFADKONFIGURATION 
-SRC_DIR_NAME: str                     = "src"
-LOGS_DIR_NAME: str                    = "logs"
-CONFIG_DIR_NAME: str                  = "config"
-DATA_DIR_NAME: str                    = "data"
-MODELS_DIR_NAME: str                  = "models"
+#  1.1 PROJEKT- & PFADKONFIGURATION
+DIR_SRC: str                          = "src"
+DIR_LOGS: str                         = "logs"
+DIR_CONFIG: str                       = "config"
+DIR_DATA: str                         = "data"
+DIR_MODELS: str                       = "models"
+DIR_NOTEBOOKS: str                    = "notebooks"
+
+# Zentrales Ordner-Routing-Dictionary: Single Source of Truth für alle Verzeichnisanker
+DICT_FOLDERS: Dict[str, str] = {
+    DIR_SRC:        "src",
+    DIR_LOGS:       "logs",
+    DIR_CONFIG:     "config",
+    DIR_DATA:       "data",
+    DIR_MODELS:     "models",
+    DIR_NOTEBOOKS:  "notebooks",
+}
+
 ACTIVE_MODEL_CONFIG_FILE: str         = "active_model_config.json"
 DEFAULT_PC_ID_PREFIX: str             = "PC"
 FALLBACK_PC_ID: str                   = "PC_SYSTEM"
 LOGGER_NAME: str                      = "AutoImporter"
 MAX_ROOT_SEARCH_DEPTH: int            = 7
-FALLBACK_LOG_FILE_NAME: str           = "app_import_terminal.log"
+LOG_FILE_NAME: str                    = "app_import_terminal.log"   # Zentraler Standard- & Fallback-Logdateiname
+PROJECT_ANCHOR_DIR: str               = "Project_Folder_Name"       # Rohling – wird bei Bootstrap stochastisch ersetzt
 
-
-def _detect_project_root() -> Path:
-    """Erkennt stochastisch das Projektverzeichnis anhand typischer Marker."""
-    start_paths = [Path.cwd()]
-    try:
-        if "__file__" in globals() and globals()["__file__"]:
-            start_paths.append(Path(globals()["__file__"]).resolve().parent)
-    except Exception:
-        pass
-    for start in start_paths:
-        d = start.resolve()
-        # Direkter Aufruf aus dem notebooks/ Unterverzeichnis
-        if d.name == "notebooks" and (d.parent / SRC_DIR_NAME).is_dir():
-            return d.parent
-        if d.name == SRC_DIR_NAME:
-            return d.parent
-        for _ in range(MAX_ROOT_SEARCH_DEPTH):
-            if (d / SRC_DIR_NAME).is_dir() or (d / CONFIG_DIR_NAME).is_dir() or (d / ".git").is_dir():
-                return d
-            if d.name == SRC_DIR_NAME:
-                return d.parent
-            if d.parent == d:
-                break
-            d = d.parent
-    return Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
-
-
-def _is_jupyter_environment() -> bool:
-    """Prüft verlässlich und exklusiv, ob der Code in einem Jupyter Notebook / IPKernel ausgeführt wird."""
-    try:
-        import IPython
-        ip = IPython.get_ipython()
-        if ip is not None:
-            shell_name = type(ip).__name__
-            if shell_name in ("ZMQInteractiveShell", "InteractiveShell"):
-                return True
-            if hasattr(ip, "kernel"):
-                return True
-            if hasattr(ip, "config") and "IPKernelApp" in ip.config:
-                return True
-    except Exception:
-        pass
-    if any(k in os.environ for k in ("JPY_SESSION_NAME", "VSCODE_NOTEBOOK_FILE", "JPY_PARENT_PID")):
-        return True
-    if any(arg.endswith(".ipynb") for arg in sys.argv):
-        return True
-    return False
-
-
-def _get_jupyter_notebook_name() -> Optional[str]:
-    """Ermittelt den tatsächlichen Notebook-Dateinamen dynamisch im Jupyter-Kontext."""
-    # 1. Umgebungsvariablen prüfen
-    for env_key in ("JPY_SESSION_NAME", "NOTEBOOK_NAME", "VSCODE_NOTEBOOK_FILE"):
-        val = os.environ.get(env_key)
-        if val:
-            return Path(val).stem
-
-    # 2. sys.argv nach .ipynb durchsuchen
-    for arg in sys.argv:
-        if arg.endswith(".ipynb"):
-            return Path(arg).stem
-
-    # 3. ipynbname Bibliothek (falls vorhanden)
-    try:
-        import ipynbname
-        name = ipynbname.name()
-        if name:
-            return name
-    except Exception:
-        pass
-
-    # 4. Über ipykernel Connection File / Jupyter Server Session
-    try:
-        import ipykernel
-        import json
-        conn_file = Path(ipykernel.get_connection_file()).name
-        if "kernel-" in conn_file:
-            kernel_id = conn_file.split("kernel-", 1)[1].split(".json", 1)[0]
-            servers = []
-            try:
-                from jupyter_server import serverapp
-                servers.extend(list(serverapp.list_running_servers()))
-            except Exception:
-                pass
-            if not servers:
-                try:
-                    from notebook import notebookapp
-                    servers.extend(list(notebookapp.list_running_servers()))
-                except Exception:
-                    pass
-            import urllib.request
-            for s in servers:
-                token = s.get("token", "")
-                url = s["url"] + "api/sessions"
-                if token:
-                    url += f"?token={token}"
-                req = urllib.request.Request(url)
-                with urllib.request.urlopen(req, timeout=0.5) as resp:
-                    sessions = json.loads(resp.read().decode())
-                    for sess in sessions:
-                        if sess.get("kernel", {}).get("id") == kernel_id:
-                            return Path(sess["notebook"]["path"]).stem
-    except Exception:
-        pass
-
-    # 5. Notebook-Kontext dieses Dienstprogramms
-    root = _detect_project_root()
-    nb_dir = root / "notebooks"
-    target_nb = nb_dir / "ollama_model_download_utility.ipynb"
-    if target_nb.exists():
-        return "ollama_model_download_utility"
-    elif nb_dir.is_dir():
-        nbs = list(nb_dir.glob("*.ipynb"))
-        if len(nbs) == 1:
-            return nbs[0].stem
-
-    return "ollama_model_download_utility"
-
-
-def _resolve_dynamic_log_file_name(fallback: str = FALLBACK_LOG_FILE_NAME) -> str:
-    """Ermittelt den Log-Dateinamen: Im Jupyter Notebook LOG_<Notebook_Name>.log, sonst Fallback-Dummy."""
-    if _is_jupyter_environment():
-        nb_name = _get_jupyter_notebook_name()
-        if nb_name:
-            clean_stem = re.sub(r"[^\w\-.]", "_", nb_name)
-            return f"LOG_{clean_stem}.log"
-        return "LOG_jupyter_notebook.log"
-    return fallback
-
-
-PROJECT_ANCHOR_DIR: str               = _detect_project_root().name
-LOG_FILE_NAME: str                    = _resolve_dynamic_log_file_name(FALLBACK_LOG_FILE_NAME)
 
 #  1.2 NETZWERK- & DIENSTKONFIGURATION (OLLAMA & HERMES) 
 OLLAMA_SERVICE_NAME: str              = "ollama"
@@ -392,30 +273,161 @@ class AUTO_IMPORT_LAZY_LOAD:
     _orig_importlib_import = None
     _is_healing: bool = False
 
-    # CHAPTER 2: PROJECT ROOT & LOG PATH
+    # ══════════════════════════════════════════════════════════════════════════════════════
+    # CHAPTER 2: PROJECT ROOT & VERZEICHNIS-ANKER
+    #   Vollständig gekapselt · Passiv · Bedarfsgesteuert · Stochastische Schleife
+    # ══════════════════════════════════════════════════════════════════════════════════════
+
+    # 2a. PRIVATE KERN-LOGIKEN ─────────────────────────────────────────────────────────────
+
     @staticmethod
-    def get_project_root() -> Path:
-        """Sucht rekursiv nach dem Projektverzeichnis anhand von PROJECT_ANCHOR_DIR oder SRC_DIR_NAME."""
-        d = Path.cwd()
-        for _ in range(MAX_ROOT_SEARCH_DEPTH):
-            if (d / SRC_DIR_NAME).is_dir() or (d / CONFIG_DIR_NAME).is_dir():
-                return d
-            if d.name == SRC_DIR_NAME:
+    def _detect_project_root() -> Path:
+        """Stochastische Projekterkennung via CWD & __file__.
+        Erkennt src/, config/ und .git/ als Marker; exakter letzter Ordnername = Anker."""
+        start_paths: List[Path] = [Path.cwd()]
+        try:
+            f = globals().get("__file__")
+            if f:
+                start_paths.append(Path(f).resolve().parent)
+        except Exception:
+            pass
+        for start in start_paths:
+            d = start.resolve()
+            if d.name == "notebooks" and (d.parent / DIR_SRC).is_dir():
                 return d.parent
-            if d.parent == d:
-                break
-            d = d.parent
-        return Path.cwd()
+            if d.name == DIR_SRC:
+                return d.parent
+            for _ in range(MAX_ROOT_SEARCH_DEPTH):
+                if (d / DIR_SRC).is_dir() or (d / DIR_CONFIG).is_dir() or (d / ".git").is_dir():
+                    return d
+                if d.name == DIR_SRC:
+                    return d.parent
+                if d.parent == d:
+                    break
+                d = d.parent
+        return Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
+
+    @staticmethod
+    def _is_jupyter_context() -> bool:
+        """Erkennt zuverlässig Jupyter-Kernel-Kontext via Shell-Typ, Kernel-Attribut und Env-Variablen."""
+        try:
+            import IPython
+            ip = IPython.get_ipython()
+            if ip is not None:
+                if type(ip).__name__ in ("ZMQInteractiveShell", "InteractiveShell"):
+                    return True
+                if hasattr(ip, "kernel"):
+                    return True
+                if hasattr(ip, "config") and "IPKernelApp" in ip.config:
+                    return True
+        except Exception:
+            pass
+        if any(k in os.environ for k in ("JPY_SESSION_NAME", "VSCODE_NOTEBOOK_FILE", "JPY_PARENT_PID")):
+            return True
+        return any(arg.endswith(".ipynb") for arg in sys.argv)
+
+    @classmethod
+    def _resolve_notebook_name(cls) -> Optional[str]:
+        """5-stufige stochastische Kaskade zur Notebook-Namensermittlung.
+        Env-Variablen → sys.argv → ipynbname → ipykernel-Session-API → Dateisystem-Scan."""
+        for key in ("JPY_SESSION_NAME", "NOTEBOOK_NAME", "VSCODE_NOTEBOOK_FILE"):
+            if val := os.environ.get(key):
+                return Path(val).stem
+        for arg in sys.argv:
+            if arg.endswith(".ipynb"):
+                return Path(arg).stem
+        try:
+            import ipynbname
+            if name := ipynbname.name():
+                return name
+        except Exception:
+            pass
+        try:
+            import ipykernel, json, urllib.request
+            conn_file = Path(ipykernel.get_connection_file()).name
+            if "kernel-" in conn_file:
+                kid = conn_file.split("kernel-", 1)[1].split(".json", 1)[0]
+                servers: List[Any] = []
+                for mod_path in ("jupyter_server.serverapp", "notebook.notebookapp"):
+                    try:
+                        m = importlib.import_module(mod_path)
+                        servers.extend(list(m.list_running_servers()))
+                        if servers:
+                            break
+                    except Exception:
+                        pass
+                for s in servers:
+                    tok = s.get("token", "")
+                    url = s["url"] + "api/sessions" + (f"?token={tok}" if tok else "")
+                    with urllib.request.urlopen(urllib.request.Request(url), timeout=0.5) as r:
+                        for sess in json.loads(r.read().decode()):
+                            if sess.get("kernel", {}).get("id") == kid:
+                                return Path(sess["notebook"]["path"]).stem
+        except Exception:
+            pass
+        nb_dir = cls.get_dir("notebooks")
+        for nb in (nb_dir / "ollama_model_download_utility.ipynb",):
+            if nb.exists():
+                return nb.stem
+        if nb_dir.is_dir():
+            hits = list(nb_dir.glob("*.ipynb"))
+            if len(hits) == 1:
+                return hits[0].stem
+        return "ollama_model_download_utility"
+
+    # 2b. ÖFFENTLICHE PFAD- & KONTEXT-API ─────────────────────────────────────────────────
+
+    @classmethod
+    def get_dir(cls, key: str, *, ensure: bool = False) -> Path:
+        """Stochastische Verzeichnis-Auflösung via DICT_FOLDERS-Schleife."""
+        p = cls._detect_project_root()
+        val = DICT_FOLDERS[key]
+        for seg in ((DIR_DATA, val) if val == DIR_MODELS else (val,)):
+            p = p / seg
+        if ensure:
+            p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    @classmethod
+    def get_active_model_config_path(cls) -> Path:
+        """Pfad zur aktiven Modell-Konfigurationsdatei (passiv, kein mkdir)."""
+        return cls.get_dir(DIR_CONFIG) / ACTIVE_MODEL_CONFIG_FILE
+
+    @classmethod
+    def is_jupyter_environment(cls) -> bool:
+        """Prüft, ob der Code in einer Jupyter-Umgebung ausgeführt wird."""
+        return cls._is_jupyter_context()
+
+    @classmethod
+    def detect_notebook_name(cls) -> Optional[str]:
+        """Ermittelt den Namen des aktuellen Jupyter Notebooks."""
+        return cls._resolve_notebook_name()
+
+    @classmethod
+    def resolve_log_file_name(cls) -> str:
+        """Kontextsensitiver LOG_FILE_NAME: Jupyter → LOG_<Name>.log, Terminal → Fallback."""
+        if cls._is_jupyter_context():
+            nb = cls._resolve_notebook_name()
+            if nb:
+                return f"LOG_{re.sub(r'[^\w\-.]', '_', nb)}.log"
+            return "LOG_jupyter_notebook.log"
+        return LOG_FILE_NAME
+
+    @classmethod
+    def get_target_log_path(cls) -> Path:
+        """Vollständiger Pfad zur Log-Datei (passiv – kein mkdir, kein Schreiben)."""
+        return cls.get_dir(DIR_LOGS) / cls.resolve_log_file_name()
+
     @classmethod
     def _setup_logging_and_paths(cls) -> None:
-        """Initialisiert PROJECT_ROOT, LOGS_DIR, TARGET_LOG_PATH und logging aus Kopfbereich."""
-        root = cls.get_project_root()
-        logs = root / LOGS_DIR_NAME
-        logs.mkdir(parents=True, exist_ok=True)
-        tgt  = logs / LOG_FILE_NAME
-        g    = globals()
-        g['PROJECT_ANCHOR_DIR'] = get_project_root.__func__().name
-        g['LOG_FILE_NAME'] = f"LOG_{__import__('IPython').get_ipython().kernel.parent_header['session']}.log" if __import__('sys').modules.get('IPython') and __import__('IPython').get_ipython() else LOG_FILE_NAME
+        """Initialisiert Globals und logging. DIR_LOGS-Ordner entsteht erst hier – bedarfsgesteuert."""
+        root         = cls._detect_project_root()
+        logs         = cls.get_dir(DIR_LOGS, ensure=True)    # mkdir exakt hier, direkt vor FileHandler
+        resolved_log = cls.resolve_log_file_name()
+        tgt          = logs / resolved_log
+        g            = globals()
+        g["PROJECT_ANCHOR_DIR"]                                 = root.name
+        g["LOG_FILE_NAME"]                                      = resolved_log
         g["PROJECT_ROOT"], g["LOGS_DIR"], g["TARGET_LOG_PATH"] = root, logs, tgt
         logging.basicConfig(
             level=logging.INFO,
@@ -1396,8 +1408,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             """Resolves the best Hermes / Qwen model name."""
             import json as _json
             try:
-                root = globals().get("PROJECT_ROOT")
-                cfg = Path(root) / CONFIG_DIR_NAME / ACTIVE_MODEL_CONFIG_FILE if root else None
+                cfg = AUTO_IMPORT_LAZY_LOAD.get_active_model_config_path()
                 if cfg and cfg.exists():
                     txt = cfg.read_text(encoding="utf-8")
                     txt = re.sub(r'("model_name":\s*"[^"]+")\s*\n\s*"', r'\1,\n"', txt)
@@ -1550,8 +1561,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             g["SAFE_RAM_BUDGET_GB"] = hw["safe_budget"]
             g["CPU_COUNT"]          = hw["cpu_count"]
             if "HF_MODELS_DIR" not in g:
-                root = g.get("PROJECT_ROOT")
-                g["HF_MODELS_DIR"] = str(Path(root) / DATA_DIR_NAME / MODELS_DIR_NAME) if root else str(Path.cwd() / DATA_DIR_NAME / MODELS_DIR_NAME)
+                g["HF_MODELS_DIR"] = str(AUTO_IMPORT_LAZY_LOAD.get_dir(DIR_MODELS))
             cls._guard_active = True
 
             status = "[OK] READY" if g["OLLAMA_READY"] else "[!] NOT READY"
@@ -1611,7 +1621,6 @@ class AUTO_IMPORT_LAZY_LOAD:
             ("is_known_error_pattern",         cls.is_known_error_pattern),
             ("build_vcredist_hint",            cls.build_vcredist_hint),
             ("get_platform_specific_pip_name", cls.get_platform_specific_pip_name),
-            ("get_project_root",               cls.get_project_root),
             ("ensure_ollama_and_hermes",       cls.ensure_ollama_and_hermes),
             ("require",                        cls.require),
             ("lazy_import",                    cls.lazy_import),
@@ -1658,4 +1667,5 @@ class AUTO_IMPORT_LAZY_LOAD:
 
 
 # 3. FUSSBEREICH: AUSFUEHRUNG / TRIGGERING
-AUTO_IMPORT_LAZY_LOAD.bootstrap()
+if __name__ == "__main__":
+    AUTO_IMPORT_LAZY_LOAD.bootstrap()
