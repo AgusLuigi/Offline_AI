@@ -35,12 +35,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 #  1.1 PROJEKT- & PFADKONFIGURATION (ORDNER-ANKER, LOGS, CONFIG, DATA, MODELS)
 # Zentrales Ordner-Routing-Dictionary: Single Source of Truth für alle Verzeichnisanker
 DICT_FOLDERS: Dict[str, str] = {
-    DIR_SRC:        "src",
-    DIR_LOGS:       "logs",
-    DIR_CONFIG:     "config",
-    DIR_DATA:       "data",
-    DIR_MODELS:     "models",
-    DIR_NOTEBOOKS:  "notebooks",
+    "DIR_SRC":        "src",
+    "DIR_LOGS":       "logs",
+    "DIR_CONFIG":     "config",
+    "DIR_DATA":       "data",
+    "DIR_MODELS":     "models",
+    "DIR_NOTEBOOKS":  "notebooks",
 }
 
 ACTIVE_MODEL_CONFIG_FILE: str         = "active_model_config.json"
@@ -265,6 +265,8 @@ class AUTO_IMPORT_LAZY_LOAD:
     _orig_builtin_import = None
     _orig_importlib_import = None
     _is_healing: bool = False
+    _cached_root: Optional[Path] = None
+    _resolved_dirs: Dict[str, Path] = {}
 
     # ══════════════════════════════════════════════════════════════════════════════════════
     # CHAPTER 2: PROJECT ROOT & VERZEICHNIS-ANKER
@@ -276,7 +278,7 @@ class AUTO_IMPORT_LAZY_LOAD:
     @staticmethod
     def _detect_project_root() -> Path:
         """Stochastische Projekterkennung via CWD & __file__.
-        Erkennt src/, config/ und .git/ als Marker; exakter letzter Ordnername = Anker."""
+        Erkennt DIR_SRC/, DIR_CONFIG und .git/ als Marker; exakter letzter Ordnername = Anker."""
         start_paths: List[Path] = [Path.cwd()]
         try:
             f = globals().get("__file__")
@@ -286,14 +288,14 @@ class AUTO_IMPORT_LAZY_LOAD:
             pass
         for start in start_paths:
             d = start.resolve()
-            if d.name == "notebooks" and (d.parent / DIR_SRC).is_dir():
+            if d.name == "notebooks" and (d.parent / "DIR_SRC").is_dir():
                 return d.parent
-            if d.name == DIR_SRC:
+            if d.name == "DIR_SRC":
                 return d.parent
             for _ in range(MAX_ROOT_SEARCH_DEPTH):
-                if (d / DIR_SRC).is_dir() or (d / DIR_CONFIG).is_dir() or (d / ".git").is_dir():
+                if (d / "DIR_SRC").is_dir() or (d / "DIR_CONFIG").is_dir() or (d / ".git").is_dir():
                     return d
-                if d.name == DIR_SRC:
+                if d.name == "DIR_SRC":
                     return d.parent
                 if d.parent == d:
                     break

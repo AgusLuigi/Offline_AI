@@ -265,11 +265,11 @@ class TestAutoImportLazyLoader(unittest.TestCase):
         self.assertTrue(root.is_dir())
 
         # DICT_FOLDERS-Schleife – passiv: kein mkdir beim Pfad-Abruf
-        src_dir    = AUTO_IMPORT_LAZY_LOAD.get_dir("src")
-        logs_dir   = AUTO_IMPORT_LAZY_LOAD.get_dir("logs")
-        config_dir = AUTO_IMPORT_LAZY_LOAD.get_dir("config")
-        data_dir   = AUTO_IMPORT_LAZY_LOAD.get_dir("data")
-        models_dir = AUTO_IMPORT_LAZY_LOAD.get_dir("models")
+        src_dir    = AUTO_IMPORT_LAZY_LOAD.get_dir("DIR_SRC")
+        logs_dir   = AUTO_IMPORT_LAZY_LOAD.get_dir("DIR_LOGS")
+        config_dir = AUTO_IMPORT_LAZY_LOAD.get_dir("DIR_CONFIG")
+        data_dir   = AUTO_IMPORT_LAZY_LOAD.get_dir("DIR_DATA")
+        models_dir = AUTO_IMPORT_LAZY_LOAD.get_dir("DIR_MODELS")
         self.assertEqual(src_dir,    root / "src")
         self.assertEqual(logs_dir,   root / "logs")
         self.assertEqual(config_dir, root / "config")
@@ -278,7 +278,7 @@ class TestAutoImportLazyLoader(unittest.TestCase):
 
 
         # ensure=True legt den Ordner bei Bedarf an (bedarfsgesteuert)
-        self.assertTrue(AUTO_IMPORT_LAZY_LOAD.get_dir("logs", ensure=True).is_dir())
+        self.assertTrue(AUTO_IMPORT_LAZY_LOAD.get_dir("DIR_LOGS", ensure=True).is_dir())
 
         cfg_path = AUTO_IMPORT_LAZY_LOAD.get_active_model_config_path()
         self.assertEqual(cfg_path, config_dir / "active_model_config.json")
