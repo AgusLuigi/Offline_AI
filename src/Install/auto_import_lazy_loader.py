@@ -32,14 +32,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 # 1. KOPFBEREICH: GLOBALE KONFIGURATION & ZENTRALE BIBLIOTHEKS-DATENSTRUKTUREN
 
 
-#  1.1 PROJEKT- & PFADKONFIGURATION
-DIR_SRC: str                          = "src"
-DIR_LOGS: str                         = "logs"
-DIR_CONFIG: str                       = "config"
-DIR_DATA: str                         = "data"
-DIR_MODELS: str                       = "models"
-DIR_NOTEBOOKS: str                    = "notebooks"
-
+#  1.1 PROJEKT- & PFADKONFIGURATION (ORDNER-ANKER, LOGS, CONFIG, DATA, MODELS)
 # Zentrales Ordner-Routing-Dictionary: Single Source of Truth für alle Verzeichnisanker
 DICT_FOLDERS: Dict[str, str] = {
     DIR_SRC:        "src",
