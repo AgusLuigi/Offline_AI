@@ -1,0 +1,168 @@
+
+ MASTER-BLUEPRINT: JUPYTER NOTEBOOK AGENT (AGENT_IPYNB) – VERHALTENSREIHENFOLGE & ARCHITEKTUR
+
+
+[1] VOLLSTÄNDIGE FUNKTIONS-TABELLE: AGENT_IPYNB & ERWEITERUNGEN
+
+Nr. | Funktions- oder Architekturmodul   | Zugeordnete Komponente / Klasse        | Technischer Zweck & Logischer Aufbau
+------------------------------------------------------------------------------------------------------------------------
+ 1  | Modell- & Registry-Management      | get_active_model()                     | Kommuniziert per urllib, filtert Riesenmodelle (671b) 
+    |                                    |                                        | aus und priorisiert performante lokale Modelle (Qwen/Hermes).
+ 2  | Stochastische Projekterkennung     | _detect_project_root()                 | Analysiert CWD/`__file__` rekursiv und nutzt Projektanker 
+    |                                    |                                        | (src/, config/, .git/, notebooks/) als Sicherheitsgrenze.
+ 3  | Project Map Generation             | NotebookAgentScientificEngine          | Erstellt eine kompakte, git-bewusste Übersicht der Projekt-
+    |                                    |                                        | struktur als Kontext-Injektion für den LLM-Prompt.
+ 4  | Notebook-Pfad-Auflösung            | find_target_notebook()                 | Sucht rekursiv nach .ipynb-Dateien (ohne Checkpoints) und 
+    |                                    |                                        | bietet bei Mehrfachtreffern eine interaktive Terminal-Auswahl.
+ 5  | Plattformübergreifende CPU-Erken.  | _detect_cpu_flags()                    | Parst Befehlssätze (AVX, AVX2, AVX512, FMA, SSE4) über Linux 
+    |                                    |                                        | (/proc/cpuinfo), Windows (kernel32) und macOS (sysctl).
+ 6  | Dual-GPU & VRAM-Validierung        | _detect_gpu_ram()                      | Führt nvidia-smi mit Timeout aus und erfasst GPU-Namen 
+    |                                    |                                        | sowie VRAM in GB (z.B. Dual RTX 3090 Setup mit 48 GB).
+ 7  | System-Aggregations-Engine         | get_hardware_information()             | Führt CPU-Kerne, Arbeitsspeicher, GPU-Metadaten und 
+    |                                    |                                        | Plattform-Daten in einem strukturierten Dictionary zusammen.
+ 8  | Hardware-Hash-Generierung          | compute_hw_hash()                      | Erzeugt einen stabilen 8-stelligen SHA1-Hash der Architektur 
+    |                                    |                                        | (ohne volatile Werte wie RAM/VRAM) als System-Fingerabdruck.
+ 9  | LLM-Code-Extraktion                | extract_code_block_from_llm()          | Isoliert reinen Python-Code präzise aus Markdown-Blöcken 
+    |                                    |                                        | (```python ... ```) mittels regulärer Ausdrücke.
+ 10 | Strukturierte Sektionen-Extrakt.   | extract_section_from_llm()             | Parst spezifische Abschnitte aus LLM-Antworten anhand von 
+    |                                    |                                        | Markdown-Überschriften (###).
+ 11 | Anti-Shrinkage- & AST-Prüfung      | validate_code_anti_shrinkage()         | Schützt vor Code-Verlust (Vergleich neue vs. alte Zeilen $\ge$ 70%) 
+    |                                    |                                        | und erzwingt ein programmatisches ast.parse()-Syntax-Gate.
+ 12 | Loop Detection                     | run_sync() / Fehlerzählung             | Überwacht iterative Korrekturen und bricht Endlosschleifen 
+    |                                    |                                        | bei wiederholten Anti-Shrinkage-Verstößen automatisch ab.
+ 13 | Wissenschaftliches Reverse Eng.    | investigative_reverse_engineer()       | Analysiert dokumentationslose Code-Zellen und generiert 
+    |                                    |                                        | wissenschaftliche Markdown-Blueprints (Theorie, Flow, Edge Cases).
+ 14 | Code-Härtung & Synchronisation     | investigative_harden_and_sync()        | Gleicht Code mit Blueprints ab, fügt Type Hints, Docstrings 
+    |                                    |                                        | und defensive Try-Except-Blöcke hinzu (ohne Code-Schwund).
+ 15 | Deterministic Harness              | deterministic_harness_fix()            | Fängt Formatierungsfehler kleiner Modelle ab und korrigiert 
+    |                                    |                                        | unsaubere Ausgaben deterministisch in Markdown-Codeblöcke.
+ 16 | Zero-Dependency Standard           | urllib.request                         | Verwendung der Python-Standardbibliothek für die Ollama- 
+    |                                    |                                        | Kommunikation statt externer requests-Abhängigkeiten.
+ 17 | Secret- & Security-Scanning        | scan_for_secrets_and_security()        | Prüft Code-Zellen vor der Persistenz auf hartcodierte API-Keys, 
+    |                                    |                                        | Passwörter, Secrets oder unsichere eval()-Funktionen.
+ 18 | Interaktive Bestätigungsabfragen   | run_sync() / Eingabe-Check             | Fordert vor destruktiven Schreiboperationen eine explizite 
+    |                                    |                                        | Nutzererlaubnis an („Härtungen in das Notebook schreiben? [Y/n]“).
+ 19 | Round-Trip-Persistenz & Backup     | run_sync() / Dateisystem               | Erstellt automatisch eine .ipynb.bak-Sicherheitskopie und 
+    |                                    |                                        | schreibt modifizierte Zellen positionsgenau ins .ipynb-JSON zurück.
+========================================================================================================================
+
+
+[2] SEQUENZIELLES VERHALTENSVERHALTEN & ABLAUF-REIHENFOLGE (FLOWCHART)
+
+[START: python src/agent/ipynb_agent.py]
+  │
+  ▼
+[_detect_project_root()] ──────────────────────► [Projekt-Root gesichert: D:\...\Offline_AI]
+  │
+  ▼
+[generate_project_map()] ─────────────────────► [Erstellung der kompakten Project Map]
+  │
+  ▼
+[get_hardware_information()] ─────────────────► [Plattform, CPU Cores, VRAM, Instruction-Sets erfasst]
+  │
+  ▼
+[compute_hw_hash()] ──────────────────────────► [Erzeugung des stabilen Hardware-Hashes (z.B. 82023749)]
+  │
+  ▼
+[get_active_model()] ─────────────────────────► [Ollama Registry abfragen (/api/tags) via urllib]
+  │                                               ├── [Registry erreichbar] ──► [Filterung Riesenmodelle & Erkennung (z.B. qwen3:latest)]
+  │                                               └── [Fehler / Timeout]    ──► [Fallback auf DEFAULT_MODEL]
+  │
+  ▼
+[find_target_notebook()] ─────────────────────► [Rekursive Suche nach .ipynb-Dateien im Projekt]
+  │                                               ├── [1 Treffer] ──► [Direkt geladen]
+  │                                               └── [Mehrere]   ──► [Interaktive Terminal-Nummern-Auswahl durch Nutzer]
+  │
+  ▼
+[Laden des Ziel-Notebooks] ───────────────────► [JSON-Parsing der Zellen (cells, markdown, code, outputs)]
+  │
+  ▼
+[Iterativer Schleifendurchlauf über alle Zellen]
+  │
+  ├── [Zellentyp: MARKDOWN] ──────────────────► [Zwischenspeichern als `last_markdown` für Kontext]
+  │
+  └── [Zellentyp: CODE]
+        │
+        ├── [Prüfung auf Leerzellen] ─────────► [Überspringen falls leer]
+        │
+        ├── [scan_for_secrets_and_security()] ─► [Prüfung auf hartcodierte API-Keys, Passwörter, eval()]
+        │
+        ├── [Output-Last Check] ──────────────► [Zählen von Bloated Outputs (> 5 Einträge)]
+        │
+        ├── [Modus-Weichenstellung]
+        │     ├── [Kein Markdown davor] ──────► [INVESTIGATIV-MODUS: investigative_reverse_engineer()]
+        │     │                                 │ (Startet Spinner während Ollama `/api/generate` verarbeitet)
+        │     │                                 ▼
+        │     │                                 [Generierung Markdown-Bericht & Neuer Markdown-Zelle]
+        │     │
+        │     └── [Markdown vorhanden] ───────► [SYNCHRONISATIONS- & HÄRTUNGS-MODUS: investigative_harden_and_sync()]
+        │                                       │ (Startet Spinner während Ollama den Code auditiert)
+        │                                       ▼
+        │                                       [validate_code_anti_shrinkage()]
+        │                                       ├── [Schrumpfung < 70% oder Syntaxfehler] ──► [Anti-Shrinkage-Verstoß +1, Abbruch / Fallback]
+        │                                       └── [Validierung erfolgreich]              ──► [Übernahme des gehärteten Codes]
+        │
+        ▼
+[USER-KONTROLLE: „Härtungen in das Notebook schreiben? [Y/n]“]
+  │
+  ├── [Abgelehnt / 'n'] ──────────────────────► [Abbruch durch Benutzer – Keine Änderungen gespeichert]
+  │
+  └── [Bestätigt / 'Y']
+        │
+        ├── [Anti-Shrinkage-Verstöße > 0] ────► [Sicherheitsabbruch: Kein Überschreiben bei Code-Verlust]
+        │
+        └── [Keine Verstöße (0)]
+              │
+              ▼
+        [Erstellung des Backups: target_ipynb.with_suffix(".ipynb.bak")]
+              │
+              ▼
+        [Positionsgenaues Schreiben in das Ziel-Notebook (Round-Trip)]
+              │
+              ▼
+[GENERIERUNG DES ABSCHLUSSBERICHTS & AUDIT-PROTOKOLLS]
+  ├── Zusammenfassung der erbrachten Schritte
+  ├── Metriken & Qualitätskontrolle (Zellen, Bloated Outputs, Security Warnungen, Anti-Shrinkage-Verstöße)
+  └── Kritische Probleme / Status-Bestätigung
+  │
+  ▼
+[ENDE DES WORKFLOWS]
+========================================================================================================================
+
+
+[3] VISUELLE TERMINAL-KOMPONENTE: RESOURCE-AWARE SPINNER
+
+Der `ResourceAwareSpinner` läuft in einem entkoppelten Hintergrund-Thread (`threading.Thread`) und begleitet jeden 
+Ollama-API-Aufruf (`/api/tags` oder `/api/generate`) mit einer animierten Braille-Punkt-Sequenz und Live-Systemmetriken:
+
+  * Animations-Zeichen: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+  * Intervall: Taktung alle 1.0 Sekunde (`SPINNER_INTERVAL = 1`)
+  * Live-Überwachung via `psutil`:
+      - RAM-Prüfung: Fällt der freie Arbeitsspeicher unter das Limit (`MIN_RAM_MB = 2000` MB), wird automatisch der 
+        Python Garbage Collector (`gc.collect()`) ausgelöst und die Warnung `⚠️ RAM kritisch (...) | GC aktiv` angezeigt.
+      - CPU-Prüfung: Überschreitet die Last den Grenzwert (`MAX_CPU_THRESHOLD = 90.0` %), erscheint die Warnung 
+        `🔥 CPU Last hoch (...)`.
+      - Normalbetrieb: Zeigt kontinuierlich den Status `RAM frei: X.XGB | CPU: XX%`.
+  * Ausgabesteuerung: Nutzt Carriage Return (`\r`) und `sys.stdout.flush()`, um die Zeile dynamisch im Terminal zu 
+    aktualisieren, und säubert das Terminal nach Beendigung des Threads rückstandslos.
+========================================================================================================================
+
+
+[4] GEPLANTE ERWEITERUNGEN (ANGELEHNT AN ENTERPRISE- & DELOITTE-FRAMEWORKS)
+
+Um den Agenten von einem lokalen Skript zu einem vollständig qualifizierten Enterprise-System auszubauen, sind 
+folgende Module konzeptionell vorbereitet und für zukünftige Iterationen vorgesehen:
+
+ 1. Web Search & Fetch (Live-Recherche):
+    - Integration von DuckDuckGo- oder API-Suchwerkzeugen, damit der Agent bei Bedarf aktuelle Bibliotheks-Dokumentationen 
+      und Paket-Updates aus dem Internet abrufen kann.
+ 2. Interaktive REPL & Modulares Tool-System:
+    - Übergang vom reinen Batch-Durchlauf zu einer dauerhaften Read-Eval-Print-Loop (REPL) für zielgerichtete, 
+      interaktive Terminal-Abfragen.
+ 3. Session Resume & Checkpoints (Persistenz-Layer):
+    - Aktive Nutzung der Datei `.agent_state.json` (Event Sourcing Ledger), um unterbrochene oder abgebrochene 
+      Analysen nach einem Systemabsturz oder Stromausfall nahtlos an exakt derselben Zelle fortzusetzen.
+ 4. Erweiterte Agenten-Evaluation (RAG Triad & LLM-as-a-Judge):
+    - Implementierung automatisierter Qualitätsprüfungen für generierte Dokumentationen (Prüfung auf *Context Relevance*, 
+      *Groundedness / Faithfulness* und *Answer Relevance*).
+========================================================================================================================
