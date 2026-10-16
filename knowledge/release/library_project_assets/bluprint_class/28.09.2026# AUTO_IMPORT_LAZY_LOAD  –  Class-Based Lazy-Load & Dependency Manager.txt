@@ -1,6 +1,6 @@
 
 Ablauf logik skizze · TXT
-ABLAUF-LOGIK: AUTO-IMPORT & KOMPATIBILITAETS-AGENT
+ABLAUF-LOGIK: # AUTO_IMPORT_LAZY_LOAD  –  Class-Based Lazy-Load & Dependency Manager
 ====================================================
 Reine Planungsskizze (kein Code). Ziel: exakte Begriffe, Datenfelder und
 Log-Zeilenformat festlegen, bevor irgendetwas implementiert wird.
@@ -134,10 +134,16 @@ fuer die Lesbarkeit:
 5. GESAMT-ABLAUF (Textskizze)
 --------------------------------
  
+  [Start] Lazy erkennen das was importiert werden muss 
+  übergebe Ablauf -- erkenne ist installiert importiere und gebe zum SESSION_START 
+                  -- erkenne ist nicht instelliert gehe SESSION_START Laufe die Kette durch
+
   [0] SESSION_START
       Log-Datei oeffnen (anlegen falls nicht vorhanden)
+      trage im Log ein die importe
               |
               v
+      Laufe die Kette durch
   [1] HARDWARE_INFORMATION erfassen
       CPU_ARCH, CPU_FLAGS, CORE, RAM, GPU_RAM, PLATFORM, OS_BITNESS
       -> HW_HASH berechnen (Basis: CPU_ARCH, PLATFORM, OS_BITNESS, CORE)
