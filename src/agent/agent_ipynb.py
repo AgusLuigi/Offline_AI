@@ -35,8 +35,8 @@ MAX_ROOT_SEARCH_DEPTH = 5
 MAX_CPU_THRESHOLD = 90.0
 MIN_RAM_MB = 2000
 SPINNER_INTERVAL = 1
-TIMEOUT_OLLAMA_SEC = 120
-
+TIMEOUT_OLLAMA_SEC = 1800
+MAX_TORKENS = -1 # Offenes ende Nach modell
 
 class ResourceAwareSpinner:
     """
@@ -399,7 +399,12 @@ Strukturiere deine Analyse strikt in folgenden wissenschaftlichen Abschnitten:
 [Analyse von Speicherkomplexität, VRAM/RAM-Auslastung, Laufzeitkomplexität (Big-O) und potenziellen Fehlern.]
 [Präzise Beschreibung der mathematischen oder logischen Reihenfolge, Ein- und Ausgänge.]
 """
-    payload = {"model": model_name, "prompt": prompt, "stream": False}
+    payload = {
+        "model": model_name,
+        "prompt": prompt,
+        "stream": False,
+        "options": {"num_predict": MAX_TORKENS}
+        }
     success, resp_data = call_ollama("/api/generate", payload, agent_title="Reverse-Engineer")
 
     if not success:
@@ -438,7 +443,13 @@ Antworte strikt in diesem Format:
 Aktualisierter Markdown-Blueprint:
 [Erweiterter Beschreibungstext]
 """
-    payload = {"model": model_name, "prompt": prompt, "stream": False}
+    payload = {
+        "model": model_name,
+        "prompt": prompt, 
+        "stream": False,
+        "options": {"num_predict": MAX_TORKENS}
+        }
+
     success, resp_data = call_ollama("/api/generate", payload, agent_title="Code-Harden")
 
     if not success:
@@ -578,4 +589,4 @@ def run_sync():
 if __name__ == "__main__":
     run_sync()
 
-#python src/agent/IPYNB_AGENT_MARKDOWN_BIDIRECTIONAL.py
+#python src/agent/agent_ipynb.py
