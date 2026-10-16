@@ -34,14 +34,15 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 #  1.1 PROJEKT- & PFADKONFIGURATION (ORDNER-ANKER, LOGS, CONFIG, DATA, MODELS)
 # Zentrales Ordner-Routing-Dictionary: Single Source of Truth für alle Verzeichnisanker
-DICT_FOLDERS: Dict[str, str] = {
-    "DIR_SRC":        "src",
-    "DIR_LOGS":       "logs",
-    "DIR_CONFIG":     "config",
-    "DIR_DATA":       "data",
-    "DIR_MODELS":     "models",
-    "DIR_NOTEBOOKS":  "notebooks",
-}
+
+DIR_SRC=       "src"
+DIR_LOGS=       "logs"
+DIR_CONFIG=     "config"
+DIR_DATA=       "data"
+DIR_MODELS=     "models"
+DIR_NOTEBOOKS=  "notebooks"
+
+SET_FOLDERS= {"DIR_SRC","DIR_LOGS","DIR_CONFIG","DIR_DATA","DIR_MODELS","DIR_NOTEBOOKS"}
 
 ACTIVE_MODEL_CONFIG_FILE: str         = "active_model_config.json"
 DEFAULT_PC_ID_PREFIX: str             = "PC"
@@ -268,13 +269,9 @@ class AUTO_IMPORT_LAZY_LOAD:
     _cached_root: Optional[Path] = None
     _resolved_dirs: Dict[str, Path] = {}
 
-    # ══════════════════════════════════════════════════════════════════════════════════════
     # CHAPTER 2: PROJECT ROOT & VERZEICHNIS-ANKER
     #   Vollständig gekapselt · Passiv · Bedarfsgesteuert · Stochastische Schleife
-    # ══════════════════════════════════════════════════════════════════════════════════════
-
-    # 2a. PRIVATE KERN-LOGIKEN ─────────────────────────────────────────────────────────────
-
+    # 2a. PRIVATE KERN-LOGIKEN
     @staticmethod
     def _detect_project_root() -> Path:
         """Stochastische Projekterkennung via CWD & __file__.
@@ -370,15 +367,18 @@ class AUTO_IMPORT_LAZY_LOAD:
                 return hits[0].stem
         return "ollama_model_download_utility"
 
-    # 2b. ÖFFENTLICHE PFAD- & KONTEXT-API ─────────────────────────────────────────────────
+    # 2b. ÖFFENTLICHE PFAD- & KONTEXT-API
 
     @classmethod
-    def get_dir(cls, key: str, *, ensure: bool = False) -> Path:
-        """Stochastische Verzeichnis-Auflösung via DICT_FOLDERS-Schleife."""
+    def get_dir(cls, key_or_val, *, ensure: bool = False) -> Path:
+        """Stochastische Verzeichnis-Auflösung über SET_FOLDERS und globale Variablen."""
         p = cls._detect_project_root()
-        val = DICT_FOLDERS[key]
-        for seg in ((DIR_DATA, val) if val == DIR_MODELS else (val,)):
-            p = p / seg
+        val = globals().get(key_or_val, key_or_val) if key_or_val in SET_FOLDERS else key_or_val
+        if key_or_val == "DIR_MODELS" or val == "models":
+            data_val = globals().get("DIR_DATA", "data")
+            p = p / data_val / "models"
+        else:
+            p = p / val
         if ensure:
             p.mkdir(parents=True, exist_ok=True)
         return p
@@ -404,7 +404,8 @@ class AUTO_IMPORT_LAZY_LOAD:
         if cls._is_jupyter_context():
             nb = cls._resolve_notebook_name()
             if nb:
-                return f"LOG_{re.sub(r'[^\w\-.]', '_', nb)}.log"
+                safe_nb = re.sub(r'[^\w\-.]', '_', nb)
+                return f"LOG_{safe_nb}.log"
             return "LOG_jupyter_notebook.log"
         return LOG_FILE_NAME
 
@@ -1085,6 +1086,8 @@ class AUTO_IMPORT_LAZY_LOAD:
                     text=True,
                     bufsize=1,
                     universal_newlines=True,
+                    encoding="utf-8",
+                    errors="replace",
                 )
             except Exception as exc:
                 logging.error(f"[DOWN_PIP] Failed to spawn pip process: {exc}")
@@ -1574,8 +1577,8 @@ class AUTO_IMPORT_LAZY_LOAD:
     @classmethod
     def bootstrap(cls) -> None:
         """
-        Runs the complete stochastic self-healing lazy-load pipeline and populates globals.
-
+        Echtes Lazy-Load & Self-Healing Setup.
+        Installiert oder lädt Pakete AUSSCHLIESSLICH bei tatsächlicher Bedarfslage.
         Step 1 – Setup logging, directories, and target paths.
         Step 2 – Hardware profiling and PC_ID registration.
         Step 3 – Install Stochastic & Self-Healing Import Interceptor on Python runtime.
@@ -1597,10 +1600,10 @@ class AUTO_IMPORT_LAZY_LOAD:
         g["_HW_INFO"], g["_CPU_FLAGS"] = hw_info, hw_info["CPU_FLAGS"]
         st = cls.build_status_table(pc_id)
         g["STATUS_TABLE"] = st
-        # Step 3: Install dynamic import interceptor
+        # Step 3: Aktiviere den intelligenten Import-Interceptor
         logging.info(f"[{LOGGER_NAME}] Step 3: Activating Stochastic Self-Healing Interceptor...")
         cls.install_import_interceptor()
-        # Step 4: Bootstrap externals aus den zwei Haupttabellen
+        # Step 4: Nur absolute Kern-Bibliotheken (psutil, tqdm, etc.) bereitstellen
         logging.info(f"[{LOGGER_NAME}] Step 4: Bootstrapping externals...")
         cls._bootstrap_externals()
         # Export public helper bindings into globals
@@ -1625,18 +1628,17 @@ class AUTO_IMPORT_LAZY_LOAD:
         ]:
             g[name] = fn
 
+        # HINWEIS: Step 5 (process_library_pipeline) wurde hier bewusst Ausgeschaltet,
+        # damit keine ungefragten Vorab-Installationen beim Start mehr stattfinden!
         _log = g.get("logger", logging.getLogger(LOGGER_NAME))
-        _log.info(f"[{LOGGER_NAME}] Step 5: Executing dynamic library pipeline...")
-        cls.process_library_pipeline(
-            import_list=DEFAULT_CORE_IMPORT, from_list=DEFAULT_ZONE_FROM,
-            pc_id=pc_id, status_table=st,
-            download_mgr=dm, cpu_flags=hw_info["CPU_FLAGS"],
-        )
-        _log.info(f"[{LOGGER_NAME}] Library pipeline complete.")
+        #_log.info(f"[{LOGGER_NAME}] Step 5: Executing dynamic library pipeline...")
+        #cls.process_library_pipeline(import_list=DEFAULT_CORE_IMPORT, from_list=DEFAULT_ZONE_FROM,pc_id=pc_id, status_table=st,download_mgr=dm, cpu_flags=hw_info["CPU_FLAGS"],)
+        #_log.info(f"[{LOGGER_NAME}] Library pipeline complete.")
 
         # Step 6 – Activate Ollama / Hermes guard
-        _log.info(f"[{LOGGER_NAME}] Step 6: Activating Ollama/Hermes guard...")
-        cls.ensure_ollama_and_hermes()
+        #_log = g.get("logger", logging.getLogger(LOGGER_NAME))
+        #_log.info(f"[{LOGGER_NAME}] Step 6: Activating Ollama/Hermes guard...")
+        #cls.ensure_ollama_and_hermes()
 
         # Step 7 – Readiness summary banner
         _log.info(f"[{LOGGER_NAME}] Step 7: Readiness summary.")
@@ -1649,16 +1651,12 @@ class AUTO_IMPORT_LAZY_LOAD:
         _host    = g2.get("OLLAMA_HOST", OLLAMA_HOST_BASE)
         _sym     = "[OK]" if _ready else "[!]"
         print()
-        print("=" * 64)
-        print(f"  AUTO_IMPORT_LAZY_LOAD - Stochastic & Self-Healing Active")
-        print("=" * 64)
+        print(f"  AUTO_IMPORT_LAZY_LOAD - Ready & Listening - Stochastic & Self-Healing Active")
         print(f"  System    : {platform.system()} {platform.machine()} | {_cpu} cores | {_ram} GB RAM")
         print(f"  RAM budget: {_budget} GB ({int(SAFE_RAM_BUDGET_FACTOR * 100)} % safety cap)")
         print(f"  Ollama    : {_sym} {'READY' if _ready else 'NOT READY'} at {_host}")
         print(f"  Model     : {_model}")
         print(f"  PC_ID     : {pc_id}")
-        print("=" * 64)
-        print()
 
 
 # 3. FUSSBEREICH: AUSFUEHRUNG / TRIGGERING
