@@ -32,3 +32,4 @@ notebooks/Ollama& GGUF Management.py
 data/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 tests/__pycache__/
 *.pyc
+data/models/Qwen3.8-27B-UD-Q8_K_XL.gguf
