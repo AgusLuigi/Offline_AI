@@ -382,6 +382,27 @@ def get_active_model() -> str:
         print(f"[OLLAMA-WARNUNG] Konnte Modell-Registry nicht abrufen ({e}).")
     return DEFAULT_MODEL
 
+def global_stochastic_pre_guard(code_text: str) -> str:
+    """
+    Globaler stochastischer Vorverarbeitungs-Guard:
+    Behebt typische Agenten-Fehler (unnötige Leerzeilen, Signatur-Umbrüche,
+    verwaiste pass-Blöcke im Einstiegspunkt) deterministisch vor jeder Verarbeitung.
+    """
+    if not code_text:
+        return code_text
+    # 1. Unnötige mehrfache Leerzeilen normalisieren (maximal 2 Leerzeilen zulassen)
+    code_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', code_text)
+    # 2. Unmotiviert umgebrochene Funktionssignaturen (def name \n (...) :) in eine Zeile ziehen
+    code_text = re.sub(r'(def\s+\w+)\s*\n\s*\((.*?)\):', r'\1(\2):', code_text, flags=re.DOTALL)
+    # 3. Verwaiste pass-Blöcke im Main-Guard durch sicheren Fallback ersetzen
+    if "if __name__ == '__main__':" in code_text or "if __name__ == \"__main__\":" in code_text:
+        code_text = re.sub(
+            r"if\s+__name__\s*==\s*['\"]__main__['\"]:\s*(?:\n\s*)+pass",
+            "if __name__ == '__main__':\n    # Stochastischer Guard: Fallback-Initialisierung\n    try:\n        if 'OllamaServiceManager' in globals():\n            OllamaServiceManager().start_service()\n    except Exception as e:\n        print(f'[Guard Error]: {e}')",
+            code_text
+        )
+    return code_text
+
 class NotebookAgentScientificEngine:
     
     @staticmethod
@@ -717,7 +738,8 @@ def run_sync():
             last_markdown = "".join(cell.get("source", []))
             modified_cells.append(cell)
         elif cell_type == "code":
-            current_code = "".join(cell.get("source", []))
+            raw_code_content = "".join(cell.get("source", []))
+            current_code = global_stochastic_pre_guard(raw_code_content)
             if not current_code.strip():
                 modified_cells.append(cell)
                 continue 

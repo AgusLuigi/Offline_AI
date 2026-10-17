@@ -9,7 +9,7 @@ class class_agent_code_semantic_guard:
     AGENT_Code_Semantic_Guard:
     Ein deterministischer Hybrid-Trichter für Code-Validierung und Refactoring-Schutz.
     Kombiniert AST-Integrität, Fast-Path-Delta, Scope-Mapping, SHA-256-Prüfsummen,
-    essenzielle Token-Validierung und gezielte Self-Correction.
+    essenzielle Token-Validierung, Schlüsselwort-Erhaltung und gezielte Self-Correction.
     """
     def __init__(self, model_name: str, ollama_endpoint_fn: callable):
         self.model_name = model_name
@@ -45,6 +45,43 @@ class class_agent_code_semantic_guard:
         except SyntaxError:
             pass
         return signatures
+
+    def _extract_critical_tokens(self, code_text: str) -> Set[str]:
+        """Extrahiert kritische Bezeichner, Funktionsnamen und Schlüsselbegriffe zur Erhaltung."""
+        tokens = set()
+        try:
+            tree = ast.parse(code_text)
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                    tokens.add(node.name)
+                elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                    tokens.add(node.id)
+                elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    # Wichtige Strings / URLs / Konfigurationsschlüssel erfassen, sofern sie lang genug sind
+                    if len(node.value) > 4 and ("/" in node.value or "_" in node.value or "-" in node.value):
+                        tokens.add(node.value)
+        except SyntaxError:
+            pass
+        return tokens
+
+    def _validate_critical_keywords(self, original_code: str, new_code: str) -> Tuple[bool, str]:
+        """
+        [Vorher-Nachher Schlüsselwort-Prüfung]
+        Stellt sicher, dass wichtige Schlüsselbegriffe, Funktionsnamen und Konfigurations-Strings
+        vom Agenten nicht verändert oder gelöscht wurden.
+        """
+        orig_tokens = self._extract_critical_tokens(original_code)
+        missing_tokens = []
+        for token in orig_tokens:
+            # Prüfen ob das Token als String oder Bezeichner im neuen Code existiert
+            if token not in new_code:
+                missing_tokens.append(token)
+        
+        # Wenn zu viele essenzielle Identifier/Schlüsselwörter fehlen, greift der Schutz
+        if len(missing_tokens) > 2:
+            return False, f"[KEYWORD GUARD] Folgende essenzielle Schlüsselwörter/Identifier wurden verändert oder entfernt: {missing_tokens[:5]}"
+        
+        return True, "Schlüsselwort-Prüfung erfolgreich bestanden."
 
     def _validate_code_integrity(self, original_code: str, new_code: str) -> Tuple[bool, str]:
         """
@@ -145,7 +182,7 @@ FEHLER / URSACHE: {error_message}
 [DEIN LETZTER FEHLERHAFTER CODE]:
 {faulty_code}
 
-Korrigiere den Code so, dass alle Pflicht-Anker erhalten bleiben und keine Syntaxfehler existieren.
+Korrigiere den Code so, dass alle Pflicht-Anker, Schlüsselwörter und Identifier exakt erhalten bleiben und keine Syntaxfehler existieren.
 Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
 """
         success, resp = self.call_ollama_fn("/api/generate", {
@@ -163,17 +200,17 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
     def evaluate_and_repair(self, original_code: str, initial_new_code: str) -> Tuple[bool, str, str]:
         """
         Führt den hocheffizienten Trichter durch:
-        Fast-Path -> Syntax-Guard -> AST-Signatur -> Scope-Mapper -> Code-Integrität & Anti-Shrinkage -> Diff-Audit.
+        Fast-Path -> Syntax-Guard -> AST-Signatur -> Schlüsselwort-Prüfung -> Scope-Mapper -> Code-Integrität -> Diff-Audit.
         """
         current_code = initial_new_code
 
-        #  OPTIMIERUNG: FAST-PATH (Null Overhead bei identischem Code) 
+        # OPTIMIERUNG: FAST-PATH (Null Overhead bei identischem Code) 
         if original_code.strip() == current_code.strip():
             return True, current_code, "FAST_PATH: Code ist zu 100% identisch. Übersprungen."
         orig_sig = self._extract_all_signatures(original_code)
         for attempt in range(3):  # [DEF 3] Max 3 Versuche im Self-Correction-Loop
             
-            #  STUFE 5: Deterministischer Syntax-Guard 
+            # STUFE 5: Deterministischer Syntax-Guard 
             valid_syntax, syntax_err = self._validate_syntax(current_code)
             if not valid_syntax:
                 if attempt == 2:
@@ -181,13 +218,20 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
                 current_code = self._request_self_correction(original_code, current_code, syntax_err)
                 continue
 
-            #  STUFE 1: AST-Signatur-Integrität & Delta-Prüfung 
+            # STUFE 1.5: Vorher-Nachher Schlüsselwort- & Identifier-Prüfung 
+            kw_ok, kw_err = self._validate_critical_keywords(original_code, current_code)
+            if not kw_ok:
+                if attempt == 2:
+                    return False, original_code, kw_err
+                current_code = self._request_self_correction(original_code, current_code, kw_err)
+                continue
+
+            # STUFE 1: AST-Signatur-Integrität & Delta-Prüfung 
             new_sig = self._extract_all_signatures(current_code)
             missing_funcs = orig_sig["functions"] - new_sig["functions"]
             missing_classes = orig_sig["classes"] - new_sig["classes"]
             
             if missing_funcs or missing_classes:
-                # Prüfen, ob Funktionen nur den Scope gewechselt haben (Verschiebungserkennung)
                 scope_ok = self._structural_scope_mapper(original_code, current_code, missing_funcs)
                 if not scope_ok:
                     err_msg = f"[DEF 1] Fehlende Pflicht-Anker (gelöscht): Funktionen {missing_funcs}, Klassen {missing_classes}"
@@ -196,7 +240,7 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
                     current_code = self._request_self_correction(original_code, current_code, err_msg)
                     continue
 
-            #  STUFE 6: Code-Integrität & Anti-Shrinkage-Guard 
+            # STUFE 6: Code-Integrität & Anti-Shrinkage-Guard 
             integrity_ok, integrity_err = self._validate_code_integrity(original_code, current_code)
             if not integrity_ok:
                 if attempt == 2:
@@ -204,15 +248,15 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
                 current_code = self._request_self_correction(original_code, current_code, integrity_err)
                 continue
 
-            #  STUFE 2: Semantischer Diff-Audit (Nur bei echten Änderungen) 
-            preserved, reason = self._semantic_diff_audit(original_code, current_code)
+            # STUFE 2: Semantischer Diff-Audit (Nur bei echten Änderungen) 
+            preserved, reason = self._semantic_dict_audit = self._semantic_diff_audit(original_code, current_code) if hasattr(self, '_semantic_diff_audit') else (True, "OK")
             if not preserved:
                 err_msg = f"[DEF 2] Semantischer Diff-Audit fehlgeschlagen: {reason}"
                 if attempt == 2:
                     return False, original_code, err_msg
                 current_code = self._request_self_correction(original_code, current_code, err_msg)
                 continue
-            return True, current_code, "TRICHTER_PASSED: Alle Schutzebenen und Delta-Prüfungen erfolgreich durchlaufen."
+            return True, current_code, "TRICHTER_PASSED: Alle Schutzebenen, Schlüsselwort- und Delta-Prüfungen erfolgreich durchlaufen."
         return False, original_code, "Loop erschöpft nach 3 Versuchen."
 
 # Globale Registrierung im Namespace

@@ -14,6 +14,20 @@ class class_agent_code_py_iso_iec_25010_pep8_format_tool:
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
 
+    def _stochastic_pre_clean(self, code_text: str) -> str:
+        """
+        Stochastische Vorab-Bereinigung:
+        - Reduziert redundante, mehrfache Leerzeilen auf ein sauberes Maß.
+        - Zieht unnötig umgebrochene Funktionssignaturen wieder in eine Zeile zusammen.
+        """
+        # 1. Mehrfache Leerzeilen (3 oder mehr) auf maximal 2 reduzieren
+        code_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', code_text)
+        
+        # 2. Unmotiviert umgebrochene Funktionssignaturen (def name \n (...):) korrigieren
+        code_text = re.sub(r'(def\s+\w+)\s*\n\s*\((.*?)\):', r'\1(\2):', code_text, flags=re.DOTALL)
+        
+        return code_text
+
     def _extract_code_blocks(self, code_text: str) -> Dict[str, Any]:
         """Extrahiert und trennt Code-Segmente sicher mittels AST und bewahrt echten Entry-Point."""
         imports = []
@@ -43,7 +57,6 @@ class class_agent_code_py_iso_iec_25010_pep8_format_tool:
 
                 # Prüfen, ob es sich um einen if __name__ == "__main__": Block handelt
                 if isinstance(node, ast.If):
-                    # Testen, ob die Bedingung __name__ == "__main__" ist
                     test = node.test
                     is_main_guard = (
                         isinstance(test, ast.Compare)
@@ -92,6 +105,9 @@ class class_agent_code_py_iso_iec_25010_pep8_format_tool:
         try:
             cleaned_input = re.sub(r"```python\s*", "", raw_code_text)
             cleaned_input = re.sub(r"```\s*", "", cleaned_input).strip()
+
+            # Stochastische Vorab-Bereinigung anwenden, bevor der AST parsiert
+            cleaned_input = self._stochastic_pre_clean(cleaned_input)
 
             blocks = self._extract_code_blocks(cleaned_input)
 
