@@ -8,10 +8,10 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent))
 
 # Funktion importieren und direkt ausführen
-from agent_universal_skript.auto_bootstrap_and_register_agents import auto_bootstrap_and_register_agents
-auto_bootstrap_and_register_agents()
+from agent_universal_skript.auto_bootstrap_and_register_agent_tools import auto_bootstrap_and_register_agent_tools
+auto_bootstrap_and_register_agent_tools()
 
-class SubAgentVerifier(coreInfrastructure):
+class class_agent_sub_verifier(coreInfrastructure):
     """
     Closed-Loop Code Execution & Security Sandbox Verifier.
     Nutzt ausschließlich die zentrale CoreInfrastructure (Vererbung), 
@@ -127,4 +127,4 @@ class SubAgentVerifier(coreInfrastructure):
                     pass
 
 # Globale Registrierung im Namespace
-globals()['SubAgentVerifier'] = SubAgentVerifier
+globals()['class_agent_sub_verifier'] = class_agent_sub_verifier

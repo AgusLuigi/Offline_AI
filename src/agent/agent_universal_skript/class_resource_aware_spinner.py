@@ -4,7 +4,7 @@ import threading
 import time
 
 
-class ResourceAwareSpinner:
+class class_resource_aware_spinner:
     """
     Kapselt den visuellen Terminal-Spinner inklusive Live-Ressourcenüberwachung (CPU/RAM).
     Läuft fehlertolerant im Hintergrund-Thread, ohne den Hauptprozess zu blockieren.
@@ -85,4 +85,5 @@ class ResourceAwareSpinner:
             sys.stdout.write('\r' + ' ' * 100 + '\r')
             sys.stdout.flush()
 
-globals()['ResourceAwareSpinner'] = ResourceAwareSpinner
+# Globale Registrierung im Namespace
+globals()['class_resource_aware_spinner'] = class_resource_aware_spinner

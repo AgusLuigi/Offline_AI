@@ -8,7 +8,7 @@ import socket
 from pathlib import Path
 
 
-class OllamaManager:
+class class_ollama_manager:
     """
     Universeller Manager für Ollama-Dienste und LLM-Inferenz.
     Prüft autonom die Verfügbarkeit, startet Ollama bei Bedarf im Hintergrund,
@@ -209,5 +209,5 @@ class OllamaManager:
         except Exception as e:
             return {"status": "FAILED", "content": "", "error": str(e), "model": target_model}
 
-
-globals()["OllamaManager"] = OllamaManager
+# Globale Registrierung im Namespace
+globals()["class_ollama_manager"] = class_ollama_manager

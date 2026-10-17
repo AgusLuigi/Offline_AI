@@ -19,7 +19,7 @@ SUBFOLDER = "Knowledge_Agent_Hierarchical_Routing_Tree_SQL"
 DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
 OLLAMA_CHECKER_FILENAME = "__ollama_running.py"
 
-class ResourceAwareSpinner:
+class class_resource_aware_spinner:
     """
     Kapselt den visuellen Terminal-Spinner inklusive Live-Ressourcenüberwachung (CPU/RAM).
     Läuft fehlertolerant im Hintergrund-Thread, ohne den Hauptprozess zu blockieren.
@@ -832,7 +832,7 @@ Task:
 Rewrite and improve this Python class (MetaCodeBase) so that it proactively checks for and prevents the above error. 
 Return the COMPLETE, executable Python code for the new MetaCodeBase script inside markdown code blocks (```python ... ```).
 """
-        spinner = ResourceAwareSpinner(agent_name="MetaCoder-Evolution")
+        spinner = class_resource_aware_spinner(agent_name="MetaCoder-Evolution")
         stop_event = threading.Event()
         spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
         spinner_thread.start()
@@ -909,7 +909,7 @@ Mandatory Rules:
 2. The script must be fully self-contained, lightweight, resource-efficient, and runnable via `python`.
 3. Every single execution step must report its progress and log its state back to the SQLite database to remain crash-safe.
 """
-            spinner = ResourceAwareSpinner(agent_name=f"Worker-Gen-{gen}")
+            spinner = class_resource_aware_spinner(agent_name=f"Worker-Gen-{gen}")
             stop_event = threading.Event()
             spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
             spinner_thread.start()
@@ -1140,8 +1140,7 @@ Retrieved Knowledge & Past Patterns from SQLite DB:
 Your Task: Answer the user's request in German, keeping any code or technical keywords strictly in English. 
 Acknowledge and make use of the SQLite database context if relevant.
 """
-            # Korrekte Instanziierung des ResourceAwareSpinners im Hintergrund
-            spinner = ResourceAwareSpinner(agent_name="Codestral-Chat")
+            spinner = class_resource_aware_spinner(agent_name="Codestral-Chat")
             stop_event = threading.Event()
             spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
             spinner_thread.start()

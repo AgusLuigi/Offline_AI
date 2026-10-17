@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 
 
-class coreInfrastructure:
+class class_core_infrastructure:
     """
     Zentrale Basis-Infrastruktur für alle zukünftigen Agenten und Tools.
     Ermittelt das Projekt-Hauptverzeichnis rein dynamisch über das Auffinden des 'PROJECT_POINT'-Ordners.
@@ -166,4 +166,5 @@ class coreInfrastructure:
             print(f"[OLLAMA WARNUNG] Konnte keine Verbindung zu Ollama herstellen: {e}")
             return False
 
-globals()['coreInfrastructure'] = coreInfrastructure
+# Globale Registrierung im Namespace
+globals()['class_core_infrastructure'] = class_core_infrastructure

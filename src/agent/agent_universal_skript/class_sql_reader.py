@@ -1,14 +1,14 @@
-import os
-import sys
-import sqlite3
 import datetime
-import random
 import importlib.util
+import os
+import random
+import sqlite3
+import sys
 from pathlib import Path
 
 # Basis-Infrastruktur importieren
 from agent_universal_skript.class_coreInfrastructure import coreInfrastructure
-from agent_universal_skript.class_ollama_manager import OllamaManager
+from agent_universal_skript.class_ollama_manager import class_ollama_manager
 
 
 class class_sql_reader(coreInfrastructure):
@@ -20,14 +20,14 @@ class class_sql_reader(coreInfrastructure):
     nach DB-Vorgabe zeilenweise auszuführen und Rückmeldungen an den Benutzer zu liefern.
     """
 
-    # --- Datenbank & Projekt-Standards ---
+    # Datenbank & Projekt-Standards
     PROJECT_POINT = "src"
     DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
     AGENT_NAME = "MetaCoder-Agent"
     MODEL_LLM = "codestral"
     OLLAMA_HOST = "http://127.0.0.1:11434"
 
-    # --- Schwellenwerte & Limits ---
+    # Schwellenwerte & Limits
     MAX_EVOLUTION_GENERATIONS = 3
     MAX_USER_QUERY_ID_RANGE = (3, 999)
     EVOLUTION_RETRY_DELAY_SEC = 1
@@ -97,7 +97,6 @@ class class_sql_reader(coreInfrastructure):
             self.db_filename = str(self.get_file_path(target_db))
         except FileNotFoundError:
             self.db_filename = str(self.root_path / target_db)
-
         self.bootstrap_dna = []
         self.manifest_directives = {}
 
@@ -108,7 +107,6 @@ class class_sql_reader(coreInfrastructure):
             db_path = self.get_file_path(target_file)
         except Exception:
             db_path = Path(target_file) if Path(target_file).is_absolute() else self.root_path / target_file
-
         conn = sqlite3.connect(str(db_path))
         conn.row_factory = sqlite3.Row
         return conn
@@ -152,8 +150,6 @@ class class_sql_reader(coreInfrastructure):
 
     
     # DATABASE-DRIVEN DNA BOOTSTRAP (Phasen 000, 001, 999)
-    
-
     def bootstrap_from_database(self) -> list:
         """
         Lädt die Start-DNA des Agenten autonom aus der SQLite-Datenbank.
@@ -247,8 +243,6 @@ class class_sql_reader(coreInfrastructure):
 
     
     # SEQUENZIELLE PHASEN-AUSFÜHRUNG AUS DER SQL-DATENBANK (Regel 5)
-    
-
     def execute_query_with_db_phases(self, raw_query: str, model_name: str = None, 
                                      ollama_host: str = None, spinner_thread_starter=None) -> dict:
         """
@@ -278,9 +272,7 @@ class class_sql_reader(coreInfrastructure):
         cleaned_query_lower = clean_text.lower()
         now = datetime.datetime.now()
 
-        # -------------------------------------------------------------
         # Phase [002]: IDEMPOTENT QUERY CACHE & SEQUENTIAL INGESTION
-        # -------------------------------------------------------------
         phase_002 = phases_dict.get("002", {})
         query_node_id = None
         log_table_name = None
@@ -318,23 +310,19 @@ class class_sql_reader(coreInfrastructure):
             time_stamp_str = indexed_info.get("time_stamp")
             effective_query = indexed_info.get("sharpened_query") or raw_query
 
-        # -------------------------------------------------------------
         # Phase [003]: DYNAMIC BLUEPRINT DISPATCH & COGNITIVE ROUTING
-        # -------------------------------------------------------------
         phase_003 = phases_dict.get("003", {})
         domain = self._detect_domain(effective_query)
         db_tips = self._get_relevant_tips(effective_query)
         blueprint_info = self.initialize_blueprint_system(effective_query)
 
-        # -------------------------------------------------------------
         # Phase [004]: CLOSED-LOOP EXECUTION & SUB-AGENT CODE VERIFICATION
-        # -------------------------------------------------------------
         phase_004 = phases_dict.get("004", {})
         active_model = model_name or getattr(self, "model_name", None) or self.MODEL_LLM
         active_host = ollama_host or getattr(self, "ollama_host", None) or self.OLLAMA_HOST
 
         # Prüfen und ggf. automatischen Start von Ollama durchführen
-        ollama_ready = OllamaManager.ensure_ollama_running(active_host)
+        ollama_ready = class_ollama_manager.ensure_ollama_running(active_host)
 
         answer = ""
         codes = []
@@ -362,7 +350,7 @@ Acknowledge and make use of the SQLite database context if relevant.
                 stop_event, spinner_thread = spinner_thread_starter(f"{self.AGENT_NAME}-Chat")
 
             try:
-                chat_res = OllamaManager.chat(messages=messages, model=active_model, ollama_host=active_host)
+                chat_res = class_ollama_manager.chat(messages=messages, model=active_model, ollama_host=active_host)
                 if chat_res.get("status") == "SUCCESS":
                     answer = chat_res.get("content", "").strip()
             except Exception:
@@ -1053,7 +1041,7 @@ Task:
 Rewrite and improve this Python class so that it proactively checks for and prevents the above error. 
 Return the COMPLETE, executable Python code inside markdown code blocks (```python ... ```).
 """
-        res = OllamaManager.generate(prompt=prompt, model=self.MODEL_LLM, ollama_host=self.OLLAMA_HOST)
+        res = class_ollama_manager.generate(prompt=prompt, model=self.MODEL_LLM, ollama_host=self.OLLAMA_HOST)
         if res.get("status") == "SUCCESS":
             raw_text = res.get("content", "")
             try:
@@ -1076,5 +1064,5 @@ Return the COMPLETE, executable Python code inside markdown code blocks (```pyth
         self._ensure_core_tables()
         return self.execute_query_with_db_phases(raw_query=task_description)
 
-
+# Globale Registrierung im Namespace
 globals()["class_sql_reader"] = class_sql_reader

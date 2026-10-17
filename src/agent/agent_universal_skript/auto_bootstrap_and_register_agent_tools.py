@@ -4,7 +4,7 @@ import inspect
 from pathlib import Path
 import types
 
-def auto_bootstrap_and_register_agents():
+def auto_bootstrap_and_register_agent_tools():
     """
     Ermittelt stochastisch den 'agent_universal_skript'-Ordner im Projekt,
     fügt ihn dem Python-Pfad hinzu, scannt alle enthaltenen .py-Dateien 
@@ -71,4 +71,4 @@ def auto_bootstrap_and_register_agents():
 
 # Sofortige Ausführung beim Start des Skripts
 sys.path.append(str(Path(__file__).resolve().parent))
-auto_bootstrap_and_register_agents()
+auto_bootstrap_and_register_agent_tools()

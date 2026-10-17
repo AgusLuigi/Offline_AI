@@ -11,8 +11,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent))
 
 # 2. Funktion importieren und direkt ausführen (Auto-Bootstrap & globale Registrierung)
-from agent_universal_skript.auto_bootstrap_and_register_agents import auto_bootstrap_and_register_agents
-auto_bootstrap_and_register_agents()
+from agent_universal_skript.auto_bootstrap_and_register_agent_tools import auto_bootstrap_and_register_agent_tools
+auto_bootstrap_and_register_agent_tools()
 
 # Konfiguration des Loggers
 logging.basicConfig(
@@ -151,7 +151,7 @@ class MetaCoderSQLPipeline(class_sql_reader):
         self.evolution_loop.EVOLUTION_RETRY_DELAY_SEC = EVOLUTION_RETRY_DELAY_SEC
         
         # Ressourcen-Spinner initialisieren (Parameter aus globaler Konfiguration)
-        self.spinner = ResourceAwareSpinner(
+        self.spinner = class_resource_aware_spinner(
             agent_name=AGENT_NAME,
             min_ram_mb=MIN_RAM_MB,
             max_cpu_threshold=CPU_WARNING_THRESHOLD,
@@ -842,7 +842,7 @@ Task:
 Rewrite and improve this Python class so that it proactively checks for and prevents the above error. 
 Return the COMPLETE, executable Python code inside markdown code blocks (```python ... ```).
 """
-        spinner = ResourceAwareSpinner(agent_name="Evolution", min_ram_mb=MIN_RAM_MB,
+        spinner = class_resource_aware_spinner(agent_name="Evolution", min_ram_mb=MIN_RAM_MB,
                                        max_cpu_threshold=CPU_WARNING_THRESHOLD, spinner_interval=SPINNER_INTERVAL)
         stop_event = threading.Event()
         spinner_thread = threading.Thread(target=spinner.run, args=(stop_event, True))
@@ -889,7 +889,7 @@ Return the COMPLETE, executable Python code inside markdown code blocks (```pyth
         """
         Führt die Haupt-Pipeline aus:
         1. Cache-Prüfung oder Abfrage-Registrierung via SQL Reader.
-        2. Visuelle Begleitung mit dem ResourceAwareSpinner.
+        2. Visuelle Begleitung mit dem class_resource_aware_spinner.
         3. Ausführung im Closed-Loop (EvolveLoopTest + SubAgentVerifier).
         4. Protokollierung der Ergebnisse mit exaktem DB-Zeitstempel.
         """
@@ -1087,7 +1087,7 @@ Retrieved Knowledge & Past Patterns from SQLite DB:
 Your Task: Answer the user's request in German, keeping any code or technical keywords strictly in English. 
 Acknowledge and make use of the SQLite database context if relevant.
 """
-                spinner = ResourceAwareSpinner(agent_name=f"{AGENT_NAME}-Chat",
+                spinner = class_resource_aware_spinner(agent_name=f"{AGENT_NAME}-Chat",
                                                min_ram_mb=MIN_RAM_MB,
                                                max_cpu_threshold=CPU_WARNING_THRESHOLD,
                                                spinner_interval=SPINNER_INTERVAL)
