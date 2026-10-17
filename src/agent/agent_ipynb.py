@@ -721,7 +721,7 @@ def run_sync():
             if not current_code.strip():
                 modified_cells.append(cell)
                 continue 
-            # Secret & Security Scan 
+            # Secret & Security Scan
             sec_warnings = NotebookAgentScientificEngine.scan_for_secrets_and_security(current_code)
             if sec_warnings:
                 security_warnings_count += len(sec_warnings)
@@ -756,7 +756,10 @@ def run_sync():
                 success, sync_result = investigative_harden_and_sync(last_markdown, current_code, model_name)
                 if success:
                     print(sync_result)
-                    valid, msg, extracted_code = NotebookAgentScientificEngine.validate_code_anti_shrinkage(current_code, sync_result)
+                    cleaned_response = NotebookAgentScientificEngine.deterministic_harness_fix(sync_result)
+                    extracted_code = NotebookAgentScientificEngine.extract_code_block_from_llm(cleaned_response)
+                    guard = globals()['class_agent_code_semantic_guard'](model_name=model_name,ollama_endpoint_fn=call_ollama)
+                    valid, final_code, msg = guard.evaluate_and_repair(current_code, extracted_code)
                     if not valid:
                         anti_shrinkage_violations += 1
                         consecutive_failures += 1
@@ -769,9 +772,9 @@ def run_sync():
                                               module=f"Cell_{index}", detail=msg)
                     else:
                         consecutive_failures = 0
-                        cell["source"] = [line + "\n" for line in extracted_code.splitlines()]
+                        cell["source"] = [line + "\n" for line in final_code.splitlines()]
                         class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_REPAIR, class_agent_logger.LOG_EVENT_INLINE_REPAIR_OK, 
-                                              module=f"Cell_{index}", detail="Code erfolgreich gehärtet")
+                                              module=f"Cell_{index}", detail=f"Guard erfolgreich: {msg}")
                 else:
                     errors_encountered.append({"cell": index, "error": sync_result})
                     class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_REPAIR, class_agent_logger.LOG_EVENT_INLINE_REPAIR_FAIL, 
@@ -780,7 +783,6 @@ def run_sync():
             last_markdown = None
         else:
             modified_cells.append(cell)
-            
     proceed = input("\n[KONTROLLE] Härtungen in das Notebook schreiben? [Y/n]: ").strip().lower()
     if proceed in ["", "y", "yes"]:
         if anti_shrinkage_violations == 0:
@@ -806,17 +808,13 @@ def run_sync():
         print("\n[ABBRUCH] Vom Nutzer durch Bestätigungsabfrage abgebrochen.")
         class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_SESSION, class_agent_logger.LOG_EVENT_STEP_ACTION, 
                               module="RoundTrip", detail="Vom Nutzer abgebrochen")
-                              
     steps_performed.append(f"Investigativer Audit abgeschlossen: {total_cells_checked} Zellen geprüft ({reverse_engineered_count} dokumentiert)")
-
     print("\n" + "="*10)
     print("ABSCHLUSSBERICHT & AUDIT-PROTOKOLL")
     print("="*10)
-
     print("\n[1] ZUSAMMENFASSUNG DER ERBRACHTEN SCHRITTE:")
     for i, step in enumerate(steps_performed, 1):
         print(f"  {i}. {step}")
-        
     print("\n[2] METRIKEN & QUALITÄTSKONTROLLE:")
     print(f" • Ziel-Notebook:              {target_ipynb.name}")
     print(f" • Aktives LLM:                {model_name}")
@@ -826,14 +824,12 @@ def run_sync():
     print(f" • Security Warnungen:         {security_warnings_count} (Secrets / unsichere Patterns)")
     print(f" • Anti-Shrinkage-Verstöße:    {anti_shrinkage_violations} (Code-Verlust-Schutz)")
     print(f" • Aufgetretene Fehler:        {len(errors_encountered)}")
-
     if errors_encountered:
         print("\n[3] KRITISCHE PROBLEME:")
         for err in errors_encountered:
             print(f"  • Zelle {err['cell']}: {err['error']}")
     else:
         print("\n[3] STATUS: Notebook-Workflow erfolgreich ausgeführt und verifiziert!")
-        
     print("="*10)
 
 
