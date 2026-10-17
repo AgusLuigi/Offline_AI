@@ -1,6 +1,6 @@
 import ast
 import logging
-from typing import Set, Dict, List, Tuple, Any
+from typing import Optional, Dict, List, Set, Tuple, Any
 
 class class_agent_code_dependency_analyzer:
     """

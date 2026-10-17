@@ -88,7 +88,7 @@ class class_agent_logger:
 
     # Konfiguration & Dateinamen
     LOG_FILE_NAME: str = "LOG_agent_ipynb_execution.log"
-    LOGGER_NAME: str = "Agent_ipynb"
+    LOGGER_NAME: str = "agent_ipynb"
     DIR_SRC: str = "src"
     DIR_LOGS: str = "logs"
     MAX_ROOT_SEARCH_DEPTH: int = 5
@@ -758,8 +758,8 @@ def run_sync():
                     print(sync_result)
                     cleaned_response = NotebookAgentScientificEngine.deterministic_harness_fix(sync_result)
                     extracted_code = NotebookAgentScientificEngine.extract_code_block_from_llm(cleaned_response)
-                    guard = globals()['class_agent_code_semantic_guard'](model_name=model_name,ollama_endpoint_fn=call_ollama)
-                    valid, final_code, msg = guard.evaluate_and_repair(current_code, extracted_code)
+                    guard = globals()['class_agent_code_semantic_guard'](model_name=model_name, ollama_endpoint_fn=call_ollama)
+                    valid, final_code, msg = guard.evaluate_and_repair(current_code, extracted_code) 
                     if not valid:
                         anti_shrinkage_violations += 1
                         consecutive_failures += 1
@@ -772,9 +772,22 @@ def run_sync():
                                               module=f"Cell_{index}", detail=msg)
                     else:
                         consecutive_failures = 0
+                        analyzer_cls = globals().get('class_agent_code_dependency_analyzer')
+                        if analyzer_cls:
+                            analyzer = analyzer_cls()
+                            dep_report = analyzer.analyze_deep_dependencies(final_code)
+                            if dep_report.get("dead_code_count", 0) > 0:
+                                print(f"[DEPENDENCY ANALYZER] {dep_report['dead_code_count']} tote Code-Leichen in Zelle {index} erkannt.")
+                        formatter_cls = globals().get('class_agent_code_py_iso_iec_25010_pep8_format_tool')
+                        if formatter_cls:
+                            formatter = formatter_cls()
+                            fmt_success, formatted_code, fmt_msg = formatter.format_code(final_code)
+                            if fmt_success:
+                                final_code = formatted_code
+                                print(f"[FORMATTER] Zelle {index} erfolgreich nach ISO/IEC 25010 / PEP 8 formatiert.")
                         cell["source"] = [line + "\n" for line in final_code.splitlines()]
                         class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_REPAIR, class_agent_logger.LOG_EVENT_INLINE_REPAIR_OK, 
-                                              module=f"Cell_{index}", detail=f"Guard erfolgreich: {msg}")
+                                              module=f"Cell_{index}", detail=f"Guard, Analyzer & Formatter erfolgreich: {msg}")
                 else:
                     errors_encountered.append({"cell": index, "error": sync_result})
                     class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_REPAIR, class_agent_logger.LOG_EVENT_INLINE_REPAIR_FAIL, 
@@ -808,7 +821,6 @@ def run_sync():
         print("\n[ABBRUCH] Vom Nutzer durch Bestätigungsabfrage abgebrochen.")
         class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_SESSION, class_agent_logger.LOG_EVENT_STEP_ACTION, 
                               module="RoundTrip", detail="Vom Nutzer abgebrochen")
-                              
     steps_performed.append(f"Investigativer Audit abgeschlossen: {total_cells_checked} Zellen geprüft ({reverse_engineered_count} dokumentiert)")
     print("\n" + "="*10)
     print("ABSCHLUSSBERICHT & AUDIT-PROTOKOLL")

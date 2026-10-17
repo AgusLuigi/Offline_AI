@@ -7,11 +7,11 @@ import sys
 from pathlib import Path
 
 # Basis-Infrastruktur importieren
-from agent_universal_skript.class_coreInfrastructure import coreInfrastructure
+from agent_universal_skript.class_core_infrastructure import class_core_infrastructure
 from agent_universal_skript.class_ollama_manager import class_ollama_manager
 
 
-class class_sql_reader(coreInfrastructure):
+class class_sql_reader(class_core_infrastructure):
     """
     Universeller SQL-Reader und Ausführungsmotor für den Knowledge Agent Routing Tree.
     Alle konfigurierbaren Parameter sind als Klassenattribute definiert,

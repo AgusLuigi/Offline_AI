@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parent))
 from agent_universal_skript.auto_bootstrap_and_register_agent_tools import auto_bootstrap_and_register_agent_tools
 auto_bootstrap_and_register_agent_tools()
 
-class class_agent_sub_verifier(coreInfrastructure):
+class class_agent_sub_verifier(class_core_infrastructure):
     """
     Closed-Loop Code Execution & Security Sandbox Verifier.
     Nutzt ausschließlich die zentrale CoreInfrastructure (Vererbung), 
