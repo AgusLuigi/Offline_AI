@@ -801,13 +801,14 @@ def run_sync():
                 class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_SESSION, class_agent_logger.LOG_EVENT_INSTALL_FAIL, 
                                       module="RoundTrip", detail=str(e))
         else:
-            print("\n[ABBRUCH] Aufgrund von Anti-Shrinkage-Verstößen (Code-Verlust) wurde kein automatisches Überschreiben durchgeführt.")
+            print("\n[ABBRUCH] Aufgrund von Guard-Verstößen oder Code-Verlust wurde kein automatisches Überschreiben durchgeführt.")
             class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_FILTER, class_agent_logger.LOG_EVENT_BANNED, 
-                                  module="RoundTrip", detail="Anti-Shrinkage-Verstöße verhindert Speicherung")
+                                  module="RoundTrip", detail="Guard-Verstöße verhinderten Speicherung")
     else:
         print("\n[ABBRUCH] Vom Nutzer durch Bestätigungsabfrage abgebrochen.")
         class_agent_logger.write_log(pc_id, class_agent_logger.LOG_PHASE_SESSION, class_agent_logger.LOG_EVENT_STEP_ACTION, 
                               module="RoundTrip", detail="Vom Nutzer abgebrochen")
+                              
     steps_performed.append(f"Investigativer Audit abgeschlossen: {total_cells_checked} Zellen geprüft ({reverse_engineered_count} dokumentiert)")
     print("\n" + "="*10)
     print("ABSCHLUSSBERICHT & AUDIT-PROTOKOLL")
