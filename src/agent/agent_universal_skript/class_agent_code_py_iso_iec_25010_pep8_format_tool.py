@@ -149,5 +149,5 @@ class class_agent_code_py_iso_iec_25010_pep8_format_tool:
             return False, raw_code_text, f"FORMAT_EXCEPTION: {str(e)}"
 
 
-# Automatische Registrierung im globalen Namespace für den Auto-Bootstrap
+# Globale Registrierung
 globals()['class_agent_code_py_iso_iec_25010_pep8_format_tool'] = class_agent_code_py_iso_iec_25010_pep8_format_tool

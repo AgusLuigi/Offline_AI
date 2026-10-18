@@ -1,3 +1,4 @@
+from __future__ import annotations
 import ast
 import hashlib
 import json
@@ -9,8 +10,19 @@ class class_agent_code_semantic_guard:
     AGENT_Code_Semantic_Guard:
     Ein deterministischer Hybrid-Trichter für Code-Validierung und Refactoring-Schutz.
     Kombiniert AST-Integrität, Fast-Path-Delta, Scope-Mapping, SHA-256-Prüfsummen,
-    essenzielle Token-Validierung, Schlüsselwort-Erhaltung und gezielte Self-Correction.
+    essenzielle Token-Validierung, Schlüsselwort-Erhaltung, UI-HTML-Identifier-Guard (Bug #23),
+    Bootstrap-/Fallback-Schutz (Bugs #10/#12) und gezielte Self-Correction.
     """
+    
+    # Kritische Runtime- und Fallback-Methoden, die niemals gelöscht werden dürfen (Bugs #10 & #12)
+    CRITICAL_WHITELIST_PATTERNS = {
+        "stochastic_self_heal", 
+        "OllamaServiceManager", 
+        "start_service", 
+        "hardware_fallback",
+        "INLINE_REPAIR_FAIL"
+    }
+
     def __init__(self, model_name: str, ollama_endpoint_fn: callable):
         self.model_name = model_name
         self.call_ollama_fn = ollama_endpoint_fn
@@ -57,27 +69,41 @@ class class_agent_code_semantic_guard:
                 elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                     tokens.add(node.id)
                 elif isinstance(node, ast.Constant) and isinstance(node.value, str):
-                    # Wichtige Strings / URLs / Konfigurationsschlüssel erfassen, sofern sie lang genug sind
                     if len(node.value) > 4 and ("/" in node.value or "_" in node.value or "-" in node.value):
                         tokens.add(node.value)
         except SyntaxError:
             pass
         return tokens
 
+    def _validate_ui_html_and_identifiers(self, original_code: str, new_code: str) -> Tuple[bool, str]:
+        """
+        [KEYWORD GUARD - Bug #23]
+        Schützt UI-HTML-Strings, CSS-Layout-Identifier und Inline-Templates vor aggressiver Mutation durch das LLM.
+        """
+        # Extraktion von HTML/CSS-ähnlichenmustern oder Layout-Ids aus Strings im Originalcode
+        html_patterns = re.findall(r'<(?:div|span|button|input|table|tr|td|form|label)[^>]*>', original_code, re.IGNORECASE)
+        for pattern in html_patterns:
+            if pattern not in new_code:
+                return False, f"[KEYWORD GUARD] Essenzielles UI-HTML-Element wurde verändert oder gelöscht: {pattern} (BANNED)"
+
+        # Prüfung auf kritische Whitelist-Fallback-Logik (Bugs #10 & #12)
+        for pattern in self.CRITICAL_WHITELIST_PATTERNS:
+            if pattern in original_code and pattern not in new_code:
+                return False, f"[WHITELIST GUARD] Kritische Runtime-/Fallback-Routine '{pattern}' wurde entfernt (Bugs #10/#12)."
+
+        return True, "UI-HTML und Identifier-Prüfung erfolgreich bestanden."
+
     def _validate_critical_keywords(self, original_code: str, new_code: str) -> Tuple[bool, str]:
         """
         [Vorher-Nachher Schlüsselwort-Prüfung]
-        Stellt sicher, dass wichtige Schlüsselbegriffe, Funktionsnamen und Konfigurations-Strings
-        vom Agenten nicht verändert oder gelöscht wurden.
+        Stellt sicher, dass wichtige Schlüsselbegriffe und Funktionsnamen erhalten bleiben.
         """
         orig_tokens = self._extract_critical_tokens(original_code)
         missing_tokens = []
         for token in orig_tokens:
-            # Prüfen ob das Token als String oder Bezeichner im neuen Code existiert
             if token not in new_code:
                 missing_tokens.append(token)
         
-        # Wenn zu viele essenzielle Identifier/Schlüsselwörter fehlen, greift der Schutz
         if len(missing_tokens) > 2:
             return False, f"[KEYWORD GUARD] Folgende essenzielle Schlüsselwörter/Identifier wurden verändert oder entfernt: {missing_tokens[:5]}"
         
@@ -91,11 +117,9 @@ class class_agent_code_semantic_guard:
         orig_lines = [l for l in original_code.splitlines() if l.strip() and not l.strip().startswith("#")]
         new_lines = [l for l in new_code.splitlines() if l.strip() and not l.strip().startswith("#")]
         
-        # Strenge Prüfung auf drastischen Code-Schwund (> 50% Reduktion aktiver Zeilen)
         if len(orig_lines) > 0 and len(new_lines) < len(orig_lines) * 0.5:
             return False, f"[DEF 6] Zu starker Code-Schwund: {len(new_lines)} aktive Zeilen (Original: {len(orig_lines)})"
 
-        # Prüfung auf essenzielle globale Anker / Konfigurationstabellen (z.B. Import-Strukturen)
         essential_tokens = ["DEFAULT_CORE_IMPORT", "DEFAULT_ZONE_FROM", "AUTO_IMPORT_LAZY_LOAD"]
         for token in essential_tokens:
             if token in original_code and token not in new_code:
@@ -104,13 +128,10 @@ class class_agent_code_semantic_guard:
         return True, "Integritätsprüfung erfolgreich bestanden."
 
     def _structural_scope_mapper(self, original_code: str, new_code: str, missing_funcs: Set[str]) -> bool:
-        """
-        Prüft gezielt, ob scheinbar 'fehlende' Funktionen in einen anderen 
-        Scope (z. B. eine innere def oder Klasse) verschoben wurden, statt gelöscht zu sein.
-        """
+        """Prüft gezielt, ob scheinbar 'fehlende' Funktionen in einen anderen Scope verschoben wurden."""
         prompt = f"""
 Du bist ein präziser AST-Scope-Mapper. Folgende Pflicht-Funktionen fehlen im Haupt-Scope des neuen Codes: {list(missing_funcs)}
-Prüfe im folgenden Code-Vergleich, ob diese Funktionen lediglich verschoben wurden (z.B. als innere Funktion in eine andere def gewandert sind) oder ob sie noch existieren.
+Prüfe im folgenden Code-Vergleich, ob diese Funktionen lediglich verschoben wurden oder ob sie noch existieren.
 
 [ORIGINAL CODE]:
 {original_code}
@@ -182,7 +203,7 @@ FEHLER / URSACHE: {error_message}
 [DEIN LETZTER FEHLERHAFTER CODE]:
 {faulty_code}
 
-Korrigiere den Code so, dass alle Pflicht-Anker, Schlüsselwörter und Identifier exakt erhalten bleiben und keine Syntaxfehler existieren.
+Korrigiere den Code so, dass alle Pflicht-Anker, UI-Identifier, Fallback-Routinen und Schlüsselwörter exakt erhalten bleiben und keine Syntaxfehler existieren.
 Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
 """
         success, resp = self.call_ollama_fn("/api/generate", {
@@ -200,14 +221,16 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
     def evaluate_and_repair(self, original_code: str, initial_new_code: str) -> Tuple[bool, str, str]:
         """
         Führt den hocheffizienten Trichter durch:
-        Fast-Path -> Syntax-Guard -> AST-Signatur -> Schlüsselwort-Prüfung -> Scope-Mapper -> Code-Integrität -> Diff-Audit.
+        Fast-Path -> Syntax-Guard -> UI/HTML-Guard -> Schlüsselwort-Prüfung -> AST-Signatur -> Scope-Mapper -> Integrität -> Diff-Audit.
         """
         current_code = initial_new_code
 
         # OPTIMIERUNG: FAST-PATH (Null Overhead bei identischem Code) 
         if original_code.strip() == current_code.strip():
             return True, current_code, "FAST_PATH: Code ist zu 100% identisch. Übersprungen."
+
         orig_sig = self._extract_all_signatures(original_code)
+
         for attempt in range(3):  # [DEF 3] Max 3 Versuche im Self-Correction-Loop
             
             # STUFE 5: Deterministischer Syntax-Guard 
@@ -216,6 +239,14 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
                 if attempt == 2:
                     return False, original_code, f"[DEF 5] Syntax-Guard fehlgeschlagen: {syntax_err}"
                 current_code = self._request_self_correction(original_code, current_code, syntax_err)
+                continue
+
+            # STUFE 4: UI-HTML- & Identifier-Guard (Bug #23 / Bugs #10 & #12)
+            ui_ok, ui_err = self._validate_ui_html_and_identifiers(original_code, current_code)
+            if not ui_ok:
+                if attempt == 2:
+                    return False, original_code, ui_err
+                current_code = self._request_self_correction(original_code, current_code, ui_err)
                 continue
 
             # STUFE 1.5: Vorher-Nachher Schlüsselwort- & Identifier-Prüfung 
@@ -249,14 +280,16 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
                 continue
 
             # STUFE 2: Semantischer Diff-Audit (Nur bei echten Änderungen) 
-            preserved, reason = self._semantic_dict_audit = self._semantic_diff_audit(original_code, current_code) if hasattr(self, '_semantic_diff_audit') else (True, "OK")
+            preserved, reason = self._semantic_diff_audit(original_code, current_code)
             if not preserved:
                 err_msg = f"[DEF 2] Semantischer Diff-Audit fehlgeschlagen: {reason}"
                 if attempt == 2:
                     return False, original_code, err_msg
                 current_code = self._request_self_correction(original_code, current_code, err_msg)
                 continue
-            return True, current_code, "TRICHTER_PASSED: Alle Schutzebenen, Schlüsselwort- und Delta-Prüfungen erfolgreich durchlaufen."
+
+            return True, current_code, "TRICHTER_PASSED: Alle Schutzebenen, UI-, Fallback- und Schlüsselwortprüfungen erfolgreich durchlaufen."
+
         return False, original_code, "Loop erschöpft nach 3 Versuchen."
 
 # Globale Registrierung im Namespace
