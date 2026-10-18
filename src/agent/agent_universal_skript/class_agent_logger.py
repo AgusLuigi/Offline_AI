@@ -55,7 +55,7 @@ class class_agent_logger:
     }
 
     # Konfiguration & Dateinamen
-    LOG_FILE_NAME: str = "LOG_agent_ipynb_execution.log"
+    LOG_FILE_NAME: str = "LOG_agent_execution.log"
     LOGGER_NAME: str = "agent_ipynb"
     DIR_SRC: str = "src"
     DIR_LOGS: str = "logs"
