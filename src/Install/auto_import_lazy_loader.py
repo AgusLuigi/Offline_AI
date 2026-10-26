@@ -5,7 +5,7 @@ Offline-AI Platform Pipeline Component
 
 Strikte 3-Teilung des Skripts:
 1. Kopfbereich : Globale Konfiguration & die zwei zentralen Haupt-Bibliotheks-Datenstrukturen
-                 (DEFAULT_CORE_IMPORT und DEFAULT_ZONE_FROM) als Single Source of Truth
+                 (CORE_IMPORT und ZONE_FROM) als Single Source of Truth
 2. Hauptbereich: Klassen & Funktionsdefinitionen (class & def)
 3. Fussbereich : Ausfuehrung / Triggering
 """
@@ -45,7 +45,7 @@ DIR_NOTEBOOKS=  "notebooks"
 SET_FOLDERS= {"DIR_SRC","DIR_LOGS","DIR_CONFIG","DIR_DATA","DIR_MODELS","DIR_NOTEBOOKS"}
 
 ACTIVE_MODEL_CONFIG_FILE: str         = "active_model_config.json"
-DEFAULT_PC_ID_PREFIX: str             = "PC"
+PC_ID_PREFIX: str             = "PC"
 FALLBACK_PC_ID: str                   = "PC_SYSTEM"
 LOGGER_NAME: str                      = "AutoImporter"
 MAX_ROOT_SEARCH_DEPTH: int            = 7
@@ -158,9 +158,9 @@ STATUS_EVENT_MAP: Dict[str, str]      = {
 # Konsolidierte Single Source of Truth fuer saemtliche Standard-, Third-Party-,
 # Ecosystem- und Bootstrap-Pakete.
 
-# HAUPTTABELLE 1: DEFAULT_CORE_IMPORT (fuer Direkt-Importe: 'import <name> [as <alias>]')
+# HAUPTTABELLE 1: CORE_IMPORT (fuer Direkt-Importe: 'import <name> [as <alias>]')
 # Extended Tuple: (import_name, alias, pip_name, version_constraint, patterns, is_bootstrap)
-DEFAULT_CORE_IMPORT: List[Tuple[str, Optional[str], str, Optional[str], Optional[List[str]], bool]] = [
+CORE_IMPORT: List[Tuple[str, Optional[str], str, Optional[str], Optional[List[str]], bool]] = [
     # Standard-Bibliotheken (pip_name = "")
     ("ctypes",                None,      "",                      None, None, False),
     ("datetime",              None,      "",                      None, None, False),
@@ -230,9 +230,9 @@ DEFAULT_CORE_IMPORT: List[Tuple[str, Optional[str], str, Optional[str], Optional
     ("pandasai",              None,      "pandasai",              None, None, False),
 ]
 
-# HAUPTTABELLE 2: DEFAULT_ZONE_FROM (fuer 'from <module> import <target> [as <alias>]')
+# HAUPTTABELLE 2: ZONE_FROM (fuer 'from <module> import <target> [as <alias>]')
 # Extended Tuple: (module, import_target, alias, pip_name, version, patterns, is_bootstrap)
-DEFAULT_ZONE_FROM: List[Tuple[str, str, Optional[str], str, Optional[str], Optional[List[str]], bool]] = [
+ZONE_FROM: List[Tuple[str, str, Optional[str], str, Optional[str], Optional[List[str]], bool]] = [
     # Standard-Bibliotheken (pip_name = "")
     ("pathlib",               "Path",                 None, "",                  None, None, False),
     ("importlib.metadata",     "version",              None, "",                  None, None, True),
@@ -259,7 +259,7 @@ class AUTO_IMPORT_LAZY_LOAD:
     """
     Encapsulates the full stochastic lazy-load & self-healing dependency-management pipeline.
     Liest saemtliche Modul- und Paketinformationen ausschliesslich aus den beiden
-    zentralen Haupttabellen DEFAULT_CORE_IMPORT und DEFAULT_ZONE_FROM aus.
+    zentralen Haupttabellen CORE_IMPORT und ZONE_FROM aus.
     """
 
     _interceptor_installed: bool = False
@@ -572,13 +572,13 @@ class AUTO_IMPORT_LAZY_LOAD:
             if e["phase"] == LOG_PHASE_HARDWARE and e["event"] in (LOG_EVENT_HW_NEW, LOG_EVENT_HW_KNOWN):
                 if m := re.search(r"hash:([0-9a-fA-F]+)", e["detail"]):
                     known.setdefault(m.group(1), e["pc_id"])
-                if m2 := re.match(rf"{DEFAULT_PC_ID_PREFIX}(\d+)$", e["pc_id"]):
+                if m2 := re.match(rf"{PC_ID_PREFIX}(\d+)$", e["pc_id"]):
                     max_n = max(max_n, int(m2.group(1)))
         if hw_hash in known:
             pc_id = known[hw_hash]
             cls.write_log(pc_id, LOG_PHASE_HARDWARE, LOG_EVENT_HW_KNOWN, detail=f"hash:{hw_hash}")
             return pc_id
-        pc_id = f"{DEFAULT_PC_ID_PREFIX}{max_n + 1}"
+        pc_id = f"{PC_ID_PREFIX}{max_n + 1}"
         flags_str      = ";".join(sorted(hw_info["CPU_FLAGS"])) or "-"
         gpus_formatted = (";".join(f"{g['name']} ({g['vram_gb']}GB)" for g in hw_info["GPU_DETAILS"])
                           if hw_info["GPU_DETAILS"] else "None")
@@ -656,10 +656,10 @@ class AUTO_IMPORT_LAZY_LOAD:
         if hasattr(sys, "stdlib_module_names") and mod_name in sys.stdlib_module_names:
             return True
         top = cls._top_level_name(mod_name)
-        for entry in DEFAULT_CORE_IMPORT:
+        for entry in CORE_IMPORT:
             if cls._top_level_name(entry[0]) == top and not (len(entry) > 2 and entry[2]):
                 return True
-        for entry in DEFAULT_ZONE_FROM:
+        for entry in ZONE_FROM:
             if cls._top_level_name(entry[0]) == top and not (len(entry) > 3 and entry[3]):
                 return True
         return False
@@ -676,19 +676,19 @@ class AUTO_IMPORT_LAZY_LOAD:
     def resolve_canonical_pip_name(cls, mod_name: str) -> List[str]:
         """
         Stochastically derives candidate pip package names for a requested module.
-        Liest Primaer-Mappings dynamisch aus DEFAULT_CORE_IMPORT und DEFAULT_ZONE_FROM aus,
+        Liest Primaer-Mappings dynamisch aus CORE_IMPORT und ZONE_FROM aus,
         gefolgt von generischen heuristischen Ableitungen fuer unbekannte Module.
         """
         base = cls._top_level_name(mod_name)
         candidates: List[str] = []
-        # 1. Dynamisches Auslesen aus DEFAULT_CORE_IMPORT
-        for entry in DEFAULT_CORE_IMPORT:
+        # 1. Dynamisches Auslesen aus CORE_IMPORT
+        for entry in CORE_IMPORT:
             if cls._top_level_name(entry[0]).lower() == base.lower():
                 pip_name = entry[2] if len(entry) > 2 and entry[2] else ""
                 if pip_name and pip_name not in candidates:
                     candidates.append(pip_name)
-        # 2. Dynamisches Auslesen aus DEFAULT_ZONE_FROM
-        for entry in DEFAULT_ZONE_FROM:
+        # 2. Dynamisches Auslesen aus ZONE_FROM
+        for entry in ZONE_FROM:
             if cls._top_level_name(entry[0]).lower() == base.lower():
                 pip_name = entry[3] if len(entry) > 3 and entry[3] else ""
                 if pip_name and pip_name not in candidates:
@@ -931,13 +931,13 @@ class AUTO_IMPORT_LAZY_LOAD:
     @classmethod
     def _bootstrap_externals(cls) -> None:
         """
-        Ensures foundational dependencies are present by scanning DEFAULT_CORE_IMPORT
-        and DEFAULT_ZONE_FROM for entries marked with is_bootstrap=True, and resolves
+        Ensures foundational dependencies are present by scanning CORE_IMPORT
+        and ZONE_FROM for entries marked with is_bootstrap=True, and resolves
         required symbols into globals().
         """
         g = globals()
-        # 1. Bootstrap-Module aus DEFAULT_CORE_IMPORT auflösen
-        for entry in DEFAULT_CORE_IMPORT:
+        # 1. Bootstrap-Module aus CORE_IMPORT auflösen
+        for entry in CORE_IMPORT:
             is_boot = entry[5] if len(entry) > 5 else False
             if not is_boot:
                 continue
@@ -956,8 +956,8 @@ class AUTO_IMPORT_LAZY_LOAD:
             except Exception as exc:
                 logging.error(f"[{LOGGER_NAME}] Cannot resolve {mod_name!r} -> {alias!r}: {exc}")
 
-        # 2. Bootstrap-Targets aus DEFAULT_ZONE_FROM auflösen
-        for entry in DEFAULT_ZONE_FROM:
+        # 2. Bootstrap-Targets aus ZONE_FROM auflösen
+        for entry in ZONE_FROM:
             is_boot = entry[6] if len(entry) > 6 else False
             if not is_boot:
                 continue
@@ -990,8 +990,8 @@ class AUTO_IMPORT_LAZY_LOAD:
         the stochastic & self-healing import engine.
         """
         g = globals()
-        import_list = import_list if import_list is not None else DEFAULT_CORE_IMPORT
-        from_list   = from_list   if from_list   is not None else DEFAULT_ZONE_FROM
+        import_list = import_list if import_list is not None else CORE_IMPORT
+        from_list   = from_list   if from_list   is not None else ZONE_FROM
         pc_id       = pc_id or g.get("PC_ID") or cls.get_or_register_pc_id()
         status_table = status_table if status_table is not None else g.get("STATUS_TABLE") or cls.build_status_table(pc_id)
         download_mgr = download_mgr or g.get("download_manager") or cls.DOWNLOAD_MANAGER()
@@ -1177,7 +1177,7 @@ class AUTO_IMPORT_LAZY_LOAD:
             if "llama" in base.lower():
                 logging.info(f"[DOWN_PIP] Bereite Bootstrapping fuer {base} vor...")
                 llama_bootstrap_pkgs = [
-                    entry[2] for entry in DEFAULT_CORE_IMPORT
+                    entry[2] for entry in CORE_IMPORT
                     if len(entry) > 2 and entry[2] in ("typing-extensions", "numpy", "diskcache", "pydantic")
                 ]
                 bootstrap_cmd = [
@@ -1582,8 +1582,8 @@ class AUTO_IMPORT_LAZY_LOAD:
         Step 1 – Setup logging, directories, and target paths.
         Step 2 – Hardware profiling and PC_ID registration.
         Step 3 – Install Stochastic & Self-Healing Import Interceptor on Python runtime.
-        Step 4 – Bootstrap foundational externals (psutil, tqdm, packaging) aus DEFAULT_CORE_IMPORT & DEFAULT_ZONE_FROM.
-        Step 5 – Dynamic baseline library pipeline aus DEFAULT_CORE_IMPORT & DEFAULT_ZONE_FROM.
+        Step 4 – Bootstrap foundational externals (psutil, tqdm, packaging) aus CORE_IMPORT & ZONE_FROM.
+        Step 5 – Dynamic baseline library pipeline aus CORE_IMPORT & ZONE_FROM.
         Step 6 – Ollama & Hermes lazy-load guard (service + model on demand).
         Step 7 – Readiness summary banner.
         """
@@ -1632,7 +1632,7 @@ class AUTO_IMPORT_LAZY_LOAD:
         # damit keine ungefragten Vorab-Installationen beim Start mehr stattfinden!
         _log = g.get("logger", logging.getLogger(LOGGER_NAME))
         #_log.info(f"[{LOGGER_NAME}] Step 5: Executing dynamic library pipeline...")
-        #cls.process_library_pipeline(import_list=DEFAULT_CORE_IMPORT, from_list=DEFAULT_ZONE_FROM,pc_id=pc_id, status_table=st,download_mgr=dm, cpu_flags=hw_info["CPU_FLAGS"],)
+        #cls.process_library_pipeline(import_list=CORE_IMPORT, from_list=ZONE_FROM,pc_id=pc_id, status_table=st,download_mgr=dm, cpu_flags=hw_info["CPU_FLAGS"],)
         #_log.info(f"[{LOGGER_NAME}] Library pipeline complete.")
 
         # Step 6 – Activate Ollama / Hermes guard

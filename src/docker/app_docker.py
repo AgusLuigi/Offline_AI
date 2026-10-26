@@ -20,7 +20,7 @@ try:
     _containers_cfg = get_containers_config(_global_cfg)
     _res_cfg = get_resource_limits_config(_global_cfg)
     CONFIG = {
-        "DEFAULT_IMAGE": _containers_cfg.get("default_image", "python:3.11-slim"),
+        "IMAGE": _containers_cfg.get("default_image", "python:3.11-slim"),
         "CONTAINER_WORK_DIR": "/docker",
         "RESOURCES": {
             "MIN_CPUS": int(_res_cfg.get("cpu_cores", 1)),
@@ -29,7 +29,7 @@ try:
     }
 except Exception:
     CONFIG = {
-        "DEFAULT_IMAGE": "python:3.11-slim",
+        "IMAGE": "python:3.11-slim",
         "CONTAINER_WORK_DIR": "/docker",
         "RESOURCES": {
             "MIN_CPUS": 1,
@@ -191,7 +191,7 @@ def get_available_python_images():
 # --- TAB 2: PRO-GRADE CONTAINER CREATOR ---
 input_create_name = widgets.Text(value='mai_ai', description='Name:', placeholder='container_name')
 input_create_image = widgets.Combobox(
-    value=CONFIG["DEFAULT_IMAGE"],
+    value=CONFIG["IMAGE"],
     options=get_available_python_images(),
     placeholder='Choose or type image (e.g. python:3.11-slim)',
     description='Docker Image:',

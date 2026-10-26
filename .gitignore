@@ -33,3 +33,9 @@ data/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 tests/__pycache__/
 *.pyc
 data/models/Qwen3.8-27B-UD-Q8_K_XL.gguf
+output.txt
+data/models/Qwen2.5-32B-Instruct-Q8_0.gguf
+data/models/Qwen3-Coder-Next-UD-Q4_K_XL.gguf
+data/models/Modelfile_Qwen3-Coder-Next-UD-Q4_K_XL
+data/models/DeepSeek-R1-0528-Qwen3-8B-BF16.gguf
+data/models/Qwen3.5-122B-A10B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf

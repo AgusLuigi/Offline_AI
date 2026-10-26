@@ -13,8 +13,8 @@ sys.path.insert(0, str(project_root))
 
 from src.Install.auto_import_lazy_loader import (
     AUTO_IMPORT_LAZY_LOAD,
-    DEFAULT_CORE_IMPORT,
-    DEFAULT_ZONE_FROM,
+    CORE_IMPORT,
+    ZONE_FROM,
 )
 
 
@@ -31,14 +31,14 @@ class TestAutoImportLazyLoader(unittest.TestCase):
         import src.Install.auto_import_lazy_loader as loader_mod
 
         # 1. Exactly the two primary structures
-        self.assertIsInstance(DEFAULT_CORE_IMPORT, list)
-        self.assertIsInstance(DEFAULT_ZONE_FROM, list)
+        self.assertIsInstance(CORE_IMPORT, list)
+        self.assertIsInstance(ZONE_FROM, list)
 
-        # 2. Schema check for DEFAULT_CORE_IMPORT:
+        # 2. Schema check for CORE_IMPORT:
         # (import_name, alias, pip_name, version_constraint, patterns, is_bootstrap)
-        self.assertGreater(len(DEFAULT_CORE_IMPORT), 20)
-        for row in DEFAULT_CORE_IMPORT:
-            self.assertGreaterEqual(len(row), 6, f"Invalid tuple length in DEFAULT_CORE_IMPORT: {row}")
+        self.assertGreater(len(CORE_IMPORT), 20)
+        for row in CORE_IMPORT:
+            self.assertGreaterEqual(len(row), 6, f"Invalid tuple length in CORE_IMPORT: {row}")
             self.assertIsInstance(row[0], str)  # import_name
             self.assertTrue(row[1] is None or isinstance(row[1], str))  # alias
             self.assertIsInstance(row[2], str)  # pip_name
@@ -46,11 +46,11 @@ class TestAutoImportLazyLoader(unittest.TestCase):
             self.assertTrue(row[4] is None or isinstance(row[4], (list, str)))  # patterns
             self.assertIsInstance(row[5], bool) # is_bootstrap
 
-        # 3. Schema check for DEFAULT_ZONE_FROM:
+        # 3. Schema check for ZONE_FROM:
         # (module, import_target, alias, pip_name, version, patterns, is_bootstrap)
-        self.assertGreater(len(DEFAULT_ZONE_FROM), 5)
-        for row in DEFAULT_ZONE_FROM:
-            self.assertGreaterEqual(len(row), 7, f"Invalid tuple length in DEFAULT_ZONE_FROM: {row}")
+        self.assertGreater(len(ZONE_FROM), 5)
+        for row in ZONE_FROM:
+            self.assertGreaterEqual(len(row), 7, f"Invalid tuple length in ZONE_FROM: {row}")
             self.assertIsInstance(row[0], str)  # module
             self.assertIsInstance(row[1], str)  # import_target
             self.assertTrue(row[2] is None or isinstance(row[2], str))  # alias
@@ -65,7 +65,7 @@ class TestAutoImportLazyLoader(unittest.TestCase):
             "STDLIB_MODULE_NAMES",
             "_BOOTSTRAP_DEPS",
             "LLAMA_BOOTSTRAP_PACKAGES",
-            "DEFAULT_CORE_FROM",
+            "CORE_FROM",
             "LIBRARY_IMPORT",
             "LIBRARY_FROM",
         ]

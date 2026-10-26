@@ -1,27 +1,53 @@
-import os
-import sys
-import subprocess
+import datetime
 import glob
+import os
 import sqlite3
-from datetime import datetime
+import subprocess
+import sys
 from pathlib import Path
-from ollama import Client
+
+# 1. Hauptverzeichnis zum Python-Pfad hinzufügen
+sys.path.append(str(Path(__file__).resolve().parent))
+
+# 2. Auto-Bootstrap & globale Registrierung aller universellen Werkzeuge
+from agent_universal_skript.auto_bootstrap_and_register_agent_tools import auto_bootstrap_and_register_agent_tools
+auto_bootstrap_and_register_agent_tools()
+
+# 3. Zentrale globale Aliase mit sicherer Fallback-Logik (Defaults) direkt nach Bootstrap
+logger = globals().get('class_logger_audit_execution')
+core_infra = globals().get('class_tool_core_infrastructure')
+ollama_manager = globals().get('class_tool_ollama_service_manager')
+sub_verifier = globals().get('class_agent_sub_verifier')
+spinner_tool = globals().get('class_tool_resource_aware_spinner')
+
+# Initialisierung des zentralen Loggers
+if logger:
+    logger.initialize_logger()
+
 
 class MetaCodeBase:
+    """
+    Autonomer Basis-Meta-Coder mit SQLite-gestützter Fehler-/Lösungs-Wissensbasis
+    und Closed-Loop Evolutionsschleife. Greift rein über den bootstrappten globalen
+    Namespace auf Infrastruktur-, LLM- und Verifikations-Klassen zu.
+    """
+
     def __init__(self, model_name: str = "codestral:latest", ollama_host: str = "http://127.0.0.1:11434"):
         self.model_name = model_name
-        self.client = Client(host=ollama_host)
-        self.base_dir = Path(".")
-        self.history_dir = self.base_dir / "src" / "agent" / "metacoder_history"
+        self.ollama_host = ollama_host
+        
+        self.root_path = Path(core_infra.get_project_root()) if core_infra else Path(os.getcwd())
+        self.history_dir = self.root_path / "src" / "agent" / "metacoder_history"
         self.history_dir.mkdir(parents=True, exist_ok=True)
         
         # SQLite Wissensdatenbank-Setup im vorgegebenen Ordner: knowledge/meta_coder_base/
-        self.knowledge_dir = self.base_dir / "knowledge" / "meta_coder_base"
+        self.knowledge_dir = self.root_path / "knowledge" / "meta_coder_base"
         self.knowledge_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.knowledge_dir / "meta_coder_base_issue_solution.db"
         
         self._init_db()
-        print(f"[META-BASE] Initialisiert. SQLite-Wissensdatenbank aktiv unter: {self.db_path}")
+        if logger:
+            logger.info(f"[META-BASE] Initialisiert. SQLite-Wissensdatenbank aktiv unter: {self.db_path}")
 
     def _init_db(self):
         """Erstellt spezialisierte Tabellen für verschiedene Fehler-Domains (Jupyter, Data IO, Scope, Scripts)."""
@@ -72,7 +98,7 @@ class MetaCodeBase:
     def _save_solution_to_db(self, task_description: str, error_msg: str, solution_code: str):
         """Speichert den spezifischen Fehler und Code-Fix in der passenden Domain-Tabelle."""
         domain = self._detect_domain(task_description)
-        error_signature = error_msg.strip().split('\n')[-1]
+        error_signature = error_msg.strip().split("\n")[-1]
         
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(f"""
@@ -83,17 +109,16 @@ class MetaCodeBase:
                     solution_code = excluded.solution_code
             """, (error_signature, task_description[:100], solution_code))
             conn.commit()
-        print(f"[KNOWLEDGE] Neuer Fix erfolgreich in Tabelle '{domain}' gespeichert.")
+        if logger:
+            logger.info(f"[KNOWLEDGE] Neuer Fix erfolgreich in Tabelle '{domain}' gespeichert.")
 
     def evolve_self(self, recent_error: str, task_context: str) -> Path:
         """Schreibt eine neue, verbesserte Version von sich selbst mit aktuellem Zeitstempel."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
         new_filename = self.history_dir / f"MetaCodeBase_{timestamp}.py"
         
-        print(f"\n[EVOLUTION] Erstelle verbesserte MetaCodeBase-Version: {new_filename.name}...")
-
-        current_code_path = Path(__file__)
-        current_code = current_code_path.read_text(encoding="utf-8") if current_code_path.exists() else "# Base Code"
+        if logger:
+            logger.info(f"\n[EVOLUTION] Erstelle verbesserte MetaCodeBase-Version: {new_filename.name}...")
 
         tips_text = self._get_relevant_tips(task_context)
 
@@ -112,14 +137,26 @@ Return the COMPLETE, executable Python code for the new MetaCodeBase script insi
 Do not lose core functions like test_and_evolve_loop, SQLite database handling, or self-execution logic.
 """
 
-        response = self.client.generate(model=self.model_name, prompt=prompt)
-        raw_text = response.get('response', '')
-        new_code = self._extract_code_block(raw_text)
+        # Zentraler Aufruf über run_agent mit gekoppeltem Spinner
+        if ollama_manager:
+            res = ollama_manager.run_agent(
+                prompt,
+                model=self.model_name,
+                ollama_host=self.ollama_host,
+                agent_title="MetaCodeBase-Evolution"
+            )
+        else:
+            res = {}
+
+        raw_text = res.get("content", "") if isinstance(res, dict) else str(res)
+        blocks = sub_verifier.extract_code_blocks(raw_text) if sub_verifier else []
+        new_code = blocks[0] if blocks else raw_text.strip()
 
         with open(new_filename, "w", encoding="utf-8") as f:
             f.write(new_code)
             
-        print(f"[EVOLUTION] Neue Version erfolgreich gespeichert unter: {new_filename}")
+        if logger:
+            logger.info(f"[EVOLUTION] Neue Version erfolgreich gespeichert unter: {new_filename}")
         return new_filename
 
     def test_and_evolve_loop(self, specialization: str, task_description: str, base_filename: str, max_generations: int = 3):
@@ -127,18 +164,19 @@ Do not lose core functions like test_and_evolve_loop, SQLite database handling, 
         Steuert den Erstellungsprozess mit Fallback-Kette (Rollback bei Fehlschlag) 
         und zieht kontextbezogenes Wissen aus der SQLite-Datenbank.
         """
-        target_dir = Path("src/agent")
+        target_dir = self.root_path / "src" / "agent"
         target_dir.mkdir(parents=True, exist_ok=True)
         
         current_error = None
         generated_files = []
 
         for gen in range(1, max_generations + 1):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
             versioned_filename = f"{Path(base_filename).stem}_{timestamp}.py"
             filepath = target_dir / versioned_filename
 
-            print(f"\n[META-CODER] Generiere Arbeiter-Agent (Gen {gen}): {versioned_filename}...")
+            if logger:
+                logger.info(f"\n[META-CODER] Generiere Arbeiter-Agent (Gen {gen}): {versioned_filename}...")
 
             db_tips = self._get_relevant_tips(task_description)
 
@@ -157,75 +195,83 @@ Mandatory Rules:
 3. Include internal validation checks to verify its own success before terminating.
 """
 
-            response = self.client.generate(model=self.model_name, prompt=prompt)
-            code = self._extract_code_block(response.get('response', ''))
+            # Zentraler Aufruf über run_agent mit gekoppeltem Spinner
+            if ollama_manager:
+                res = ollama_manager.run_agent(
+                    prompt,
+                    model=self.model_name,
+                    ollama_host=self.ollama_host,
+                    agent_title=f"Worker-Gen-{gen}"
+                )
+            else:
+                res = {}
+
+            raw_text = res.get("content", "") if isinstance(res, dict) else str(res)
+            blocks = sub_verifier.extract_code_blocks(raw_text) if sub_verifier else []
+            code = blocks[0] if blocks else raw_text.strip()
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(code)
 
             generated_files.append(filepath)
 
-            print(f"--- Führe Test aus für {filepath.name} ---")
-            success, output = self._run_script(filepath)
+            if logger:
+                logger.info(f"--- Führe Test aus für {filepath.name} ---")
+            
+            if sub_verifier:
+                success, output = sub_verifier.verify_code_in_sandbox(code, project_root=self.root_path)
+            else:
+                success, output = True, "Kein Sandbox-Verifier verfügbar"
 
             if success:
-                print(f"\n[✓] Agent '{filepath.name}' erfolgreich verifiziert!")
+                if logger:
+                    logger.info(f"\n[✓] Agent '{filepath.name}' erfolgreich verifiziert!")
                 return filepath
             else:
-                print(f"\n[!] Fehler in Agent entdeckt: {output}")
+                if logger:
+                    logger.warning(f"\n[!] Fehler in Agent entdeckt: {output}")
                 current_error = output
                 
                 sample_fix = f"try-except block added for context: {task_description[:30]}"
                 self._save_solution_to_db(task_description, current_error, sample_fix)
-                
                 self.evolve_self(recent_error=current_error, task_context=task_description)
 
-        print(f"\n[ROLLBACK] Alle {max_generations} Generationen fehlgeschlagen. Gehe in der Historie zurück...")
+        if logger:
+            logger.warning(f"\n[ROLLBACK] Alle {max_generations} Generationen fehlgeschlagen. Gehe in der Historie zurück...")
         for old_file in reversed(generated_files[:-1]):
             if old_file.exists():
-                print(f"Prüfe älteren, stabilen Stand: {old_file.name}")
-                success, _ = self._run_script(old_file)
+                if logger:
+                    logger.info(f"Prüfe älteren Stand: {old_file.name}")
+                content = old_file.read_text(encoding="utf-8")
+                if sub_verifier:
+                    success, _ = sub_verifier.verify_code_in_sandbox(content, project_root=self.root_path)
+                else:
+                    success = True
                 if success:
-                    print(f"[✓] Fallback erfolgreich auf: {old_file.name}")
+                    if logger:
+                        logger.info(f"[✓] Fallback erfolgreich auf: {old_file.name}")
                     return old_file
 
-        print(f"[X] Kritischer Fehler: Kein stabiler Agent auffindbar.")
+        if logger:
+            logger.error("[X] Kritischer Fehler: Kein stabiler Agent auffindbar.")
         return None
 
-    def _run_script(self, filepath: Path) -> tuple[bool, str]:
-        try:
-            result = subprocess.run(["python", str(filepath)], capture_output=True, text=True, timeout=30)
-            return (result.returncode == 0), (result.stderr.strip() or result.stdout.strip())
-        except Exception as e:
-            return False, str(e)
 
-    def _extract_code_block(self, text: str) -> str:
-        if "```python" in text:
-            parts = text.split("```python")
-            if len(parts) > 1:
-                return parts[1].split("```")[0].strip()
-        elif "```" in text:
-            parts = text.split("```")
-            if len(parts) > 1:
-                return parts[1].strip()
-        return text.strip()
-
-# --- AUTOMATISCHER START-CHECK ---
-def boot_latest_metacoder():
+def boot_latest_metacoder() -> MetaCodeBase:
+    """Bootet die neueste MetaCodeBase-Instanz."""
     history_dir = Path("src/agent/metacoder_history")
     history_dir.mkdir(parents=True, exist_ok=True)
     
     versions = sorted(history_dir.glob("MetaCodeBase_*.py"))
-    if versions:
+    if versions and logger:
         latest_version = versions[-1]
-        print(f"[BOOT] Neueste selbst-evolverte MetaCodeBase im Ordner gefunden: {latest_version.name}")
-    
+        logger.info(f"[BOOT] Neueste selbst-evolverte MetaCodeBase im Ordner gefunden: {latest_version.name}") 
     return MetaCodeBase()
 
-# --- SCHNITTSTELLE FÜR JUPYTER-NOTEBOOKS (.ipynb) ---
+
 def query_meta_coder_base(notebook_path: str, instruction: str):
     """
-    Funktion, die direkt aus einer Jupyter Notebook Zelle aufgerufen werden kann:
+    Schnittstelle für Jupyter Notebooks:
     query_meta_coder_base("notebooks/mein_skript.ipynb", "Behebe den Fehler in Zelle 3")
     """
     metacoder = boot_latest_metacoder()
@@ -240,7 +286,8 @@ def query_meta_coder_base(notebook_path: str, instruction: str):
     3. Save the modified notebook back safely.
     4. Validate that the notebook JSON remains healthy and fully formatted.
     """
-    print(f"\n[NOTEBOOK-BRIDGE] Starte Agenten-Loop für Notebook: {notebook_path}")
+    if logger:
+        logger.info(f"\n[NOTEBOOK-BRIDGE] Starte Agenten-Loop für Notebook: {notebook_path}")
     return metacoder.test_and_evolve_loop(
         specialization=spec,
         task_description=task,
@@ -248,29 +295,33 @@ def query_meta_coder_base(notebook_path: str, instruction: str):
         max_generations=3
     )
 
-# --- CLI / TERMIN MODUS & START ---
+
+# Globale Registrierung im Namespace
+globals()['MetaCodeBase'] = MetaCodeBase
+globals()['boot_latest_metacoder'] = boot_latest_metacoder
+globals()['query_meta_coder_base'] = query_meta_coder_base
+
+
 if __name__ == "__main__":
     metacoder = boot_latest_metacoder()
     
-    # Prüfen, ob Argumente im Terminal übergeben wurden
     if len(sys.argv) > 2:
         nb_path = sys.argv[1]
         user_task = sys.argv[2]
-        print(f"[CLI-MODE] Starte mit Argumenten -> Notebook: {nb_path} | Task: {user_task}")
+        if logger:
+            logger.info(f"[CLI-MODE] Starte mit Argumenten -> Notebook: {nb_path} | Task: {user_task}")
         query_meta_coder_base(nb_path, user_task)
     else:
-        # Interaktiver Fall im Terminal
         print("\n==================================================")
         print(" [META-CODER] Interaktiver Terminal-Modus aktiv ")
         print("==================================================")
         choice = input("Möchtest du ein Jupyter-Notebook korrigieren lassen? (j/n): ").strip().lower()
         
-        if choice == 'j':
+        if choice == "j":
             nb_path = input("Pfad zum Jupyter-Notebook (z. B. notebooks/test.ipynb): ").strip()
             user_task = input("Was soll der Agent tun/korrigieren?: ").strip()
             query_meta_coder_base(nb_path, user_task)
         else:
-            # Standard-Test (Fallback, falls nichts angegeben wurde)
             spec = "Ollama Environment Inspector"
             task = """
             Create a Python script that connects to the local Ollama instance, lists local models,
@@ -282,24 +333,3 @@ if __name__ == "__main__":
                 base_filename="ollama_inspector",
                 max_generations=3
             )
-
-# [INFO-BOX] ANLEITUNG ZUR AUSLÖSUNG DES META-CODERS
-# Variante 1: Auslösung über das Terminal (Konsole)
-#
-# A) Interaktiver Modus (fragt nach Pfad & Aufgabe):
-#    python src/agent/meta_coder_base.py
-#
-# B) Direkt als Einzeiler mit Parametern:
-#    python src/agent/meta_coder_base.py notebooks/dein_notebook.ipynb "Deine Aufgabe hier"
-#
-# 
-# Variante 2: Auslösung direkt aus einem Jupyter Notebook (.ipynb) heraus
-# 
-# Füge diesen Code in eine Notebook-Zelle ein und führe sie aus:
-#
-#    from src.agent.meta_coder_base import query_meta_coder_base
-#
-#    query_meta_coder_base(
-#        notebook_path="notebooks/dein_notebook.ipynb",
-#        instruction="Deine Anweisung zur Korrektur oder Erweiterung"
-#    )

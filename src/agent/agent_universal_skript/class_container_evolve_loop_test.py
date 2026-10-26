@@ -1,11 +1,28 @@
 import json
 import time
+import datetime
 import traceback
+import sys
+import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+# 1. Hauptverzeichnis zum Python-Pfad hinzufügen
+sys.path.append(str(Path(__file__).resolve().parent))
 
-class EvolveLoopTest:
+# 2. Auto-Bootstrap & globale Registrierung
+from agent_universal_skript.auto_bootstrap_and_register_agent_tools import auto_bootstrap_and_register_agent_tools
+auto_bootstrap_and_register_agent_tools()
+
+# 3. Zentrale globale Aliase mit sicherer Fallback-Logik (Defaults) direkt nach Bootstrap
+logger = globals().get('class_logger_audit_execution')
+
+# GLOBALE STANDARD-KONFIGURATION
+EVOLUTION_RETRY_DELAY_SEC = 1
+MAX_GENERATIONS = 3
+
+
+class class_container_evolve_loop_test:
     """
     Klasse zur Steuerung des autonomen Test- und Evolutions-Zyklus (Closed-Loop-Architektur).
     
@@ -23,7 +40,7 @@ class EvolveLoopTest:
     """
 
     # Konfigurierbare Schwellenwerte
-    EVOLUTION_RETRY_DELAY_SEC = 1
+    EVOLUTION_RETRY_DELAY_SEC = EVOLUTION_RETRY_DELAY_SEC
 
     def __init__(self, registry_db_path: Optional[str] = None):
         self.registry_db_path = registry_db_path
@@ -46,7 +63,6 @@ class EvolveLoopTest:
     ) -> Dict[str, Any]:
         """
         Führt den vollständigen Test- und Evolutions-Zyklus aus.
-        
         Parameter:
             specialization (str): Fachbereich oder Agenten-Kontext.
             task_description (str): Beschreibung der aktuellen Aufgabe.
@@ -56,26 +72,47 @@ class EvolveLoopTest:
             
         Rückgabe:
             Dict[str, Any]: Statusbericht inklusive Generations-Counter und Erfolgswichtung.
+        
+        Erweitert um die reale Validierung der Log-Datenströme auf Herz und Nieren.
         """
         print(f"[METABASE] Starte Test- und Evolutions-Schleife für: {specialization} | Task: {task_description}")
-        
         current_generation = 0
         success = False
         last_error = None
         result_data = None
-
+        from agent_universal_skript.class_logger_audit_execution import class_logger_audit_execution
+        log_file_path = class_logger_audit_execution.get_target_log_path()
         while current_generation < max_generations and not success:
             current_generation += 1
             print(f"[METABASE] Versuchs-Generation {current_generation} von {max_generations} läuft...")
 
             try:
                 if execution_func:
-                    result_data = self._verify_in_sandbox({"task": task_description}, execution_func)
+                    result_data = self._verify_in_sandbox(
+                        {"task": task_description, "generation": current_generation}, 
+                        execution_func
+                    )
+                    if isinstance(result_data, dict) and result_data.get("status") == "FAILED":
+                        raise RuntimeError(result_data.get("error", "Kompilierungs- oder Systemfehler im Subprozess."))
                 else:
                     result_data = f"Simuliertes Ergebnis für {base_filename} in Generation {current_generation}"
-                
-                success = True
-                print(f"[METABASE] Generation {current_generation} erfolgreich verifiziert.")
+                if log_file_path.exists():
+                    log_content = log_file_path.read_text(encoding="utf-8", errors="replace")
+                    if "ALL_CONNECTIONS_VERIFIED_100_PERCENT" in log_content:
+                        print(f"🌟 [PROVABLE SUCCESS] Generation {current_generation} hat alle Systemschnittstellen erfolgreich verifiziert.")
+                        success = True
+                    else:
+                        # Extrahiere die letzten registrierten Flugschreiber-Schritte im Fehlerfall für präzises Re-Patching
+                        steps = re.findall(r"DETAIL=STEP_(\d+ -> .*)", log_content)
+                        last_step = steps[-1] if steps else "Initialisierungs-Kollaps vor Schritt-Einstieg"
+                        raise ValueError(f"Schnittstellen-Validierung unvollständig. Letzter registrierter Schritt: {last_step}")
+                else:
+                    # Wenn kein execution_func übergeben wurde, Fallback erlauben
+                    if not execution_func:
+                        success = True
+                        print(f"[METABASE] Generation {current_generation} erfolgreich verifiziert.")
+                    else:
+                        raise FileNotFoundError("Keine Logdatei vom ausführenden Testlauf generiert.")
 
             except Exception as e:
                 last_error = str(e)
@@ -111,7 +148,6 @@ class EvolveLoopTest:
         if not path.exists():
             print(f"[METABASE] Warnung: Notebook unter {notebook_path} nicht gefunden.")
             return code_snippets
-
         try:
             with open(path, "r", encoding="utf-8") as f:
                 nb_data = json.load(f)
@@ -123,7 +159,6 @@ class EvolveLoopTest:
             print(f"[METABASE] {len(code_snippets)} Code-Zellen erfolgreich aus Notebook extrahiert: {path.name}")
         except Exception as e:
             print(f"[METABASE] Fehler beim Lesen des Notebooks: {e}")
-            
         return code_snippets
 
     def persist_new_capability(self, capability_name: str, code_snippet: str, description: str):
@@ -141,28 +176,28 @@ class EvolveLoopTest:
             )
 
     def query_meta_coder_sql(self, notebook_path: str, instruction: str) -> Dict[str, Any]:
-            """
-            Schnittstelle: Analysiert ein Jupyter Notebook, lernt daraus und 
-            startet den Evolutions-Agenten für SQL- oder Code-Anweisungen.
-        -   """
-            # 1. Aus dem Jupyter Notebook lernen (Code extrahieren)
-            learned_code_patterns = self.extract_code_from_notebook(notebook_path)
-            
-            # 2. Spezifikation und Task-Kontext aufbauen
-            spec = f"Hierarchical Routing Tree SQL Agent for {Path(notebook_path).name}"
-            task = f"""
-            Target Notebook Path: {notebook_path}
-            User Instruction/Routing Goal: {instruction}
-            Learned Context Snippets Count: {len(learned_code_patterns)}
-            """
-            
-            # 3. Evolutions-Schleife triggern
-            return self.test_and_evolve_loop(
-                specialization=spec,
-                task_description=task,
-                base_filename=f"sql_routing_agent_{Path(notebook_path).stem}",
-                max_generations=3
-            )
+        """
+        Schnittstelle: Analysiert ein Jupyter Notebook, lernt daraus und 
+        startet den Evolutions-Agenten für SQL- oder Code-Anweisungen.
+        """
+        # 1. Aus dem Jupyter Notebook lernen (Code extrahieren)
+        learned_code_patterns = self.extract_code_from_notebook(notebook_path)
+        
+        # 2. Spezifikation und Task-Kontext aufbauen
+        spec = f"Hierarchical Routing Tree SQL Agent for {Path(notebook_path).name}"
+        task = f"""
+        Target Notebook Path: {notebook_path}
+        User Instruction/Routing Goal: {instruction}
+        Learned Context Snippets Count: {len(learned_code_patterns)}
+        """
+        
+        # 3. Evolutions-Schleife triggern
+        return self.test_and_evolve_loop(
+            specialization=spec,
+            task_description=task,
+            base_filename=f"sql_routing_agent_{Path(notebook_path).stem}",
+            max_generations=3
+        )
 
     def record_feedback(self, query_node_id: str, is_positive: bool, comment: str = "") -> dict:
         """Verarbeitet Benutzer-Feedback und aktualisiert die Gewichte in der Datenbank."""
@@ -186,11 +221,11 @@ if __name__ == "__main__":
     def sample_task_runner(payload):
         return f"Erfolgreich ausgeführt mit Payload: {payload['task']}"
 
-    loop = EvolveLoopTest()
+    loop = class_container_evolve_loop_test()
     report = loop.test_and_evolve_loop(
         specialization="Data Science & Automation",
         task_description="Anomalieerkennung in Energieströmen",
-        base_filename="anomaly_model_v1",
+        base_filename="anomaly_model",
         max_generations=3,
         execution_func=sample_task_runner
     )

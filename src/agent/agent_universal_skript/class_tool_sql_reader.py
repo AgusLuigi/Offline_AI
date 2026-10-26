@@ -6,47 +6,59 @@ import sqlite3
 import sys
 from pathlib import Path
 
-# Basis-Infrastruktur importieren
-from agent_universal_skript.class_core_infrastructure import class_core_infrastructure
-from agent_universal_skript.class_ollama_manager import class_ollama_manager
+# Zentrale globale Aliase
+logger = globals().get('class_logger_audit_execution')
+core_infra = globals().get('class_tool_core_infrastructure')
+ollama_manager = globals().get('class_tool_ollama_service_manager')
+sub_verifier = globals().get('class_agent_sub_verifier')
+spinner_tool = globals().get('class_tool_resource_aware_spinner')
 
+# Fallback-Klasse falls core_infra nicht verfügbar ist
+class_fallback_core = None
+if core_infra is None:
+    class_fallback_core = type('FallbackCore', (), {
+        'PROJECT_POINT': 'src',
+        'get_project_root': staticmethod(lambda start_path=None: Path(__file__).resolve().parent.parent.parent),
+        'get_file_path': staticmethod(lambda filename: Path(__file__).resolve().parent.parent / filename),
+    })
 
-class class_sql_reader(class_core_infrastructure):
+class class_tool_sql_reader(core_infra if core_infra and core_infra != class_fallback_core else class_fallback_core if class_fallback_core else object):
     """
-    Universeller SQL-Reader und Ausführungsmotor für den Knowledge Agent Routing Tree.
-    Alle konfigurierbaren Parameter sind als Klassenattribute definiert,
-    damit abgeleitete Agenten und Pipelines sie bei Bedarf überschreiben können.
-    Ist in der Lage, Phasen aus 'meta_agent_start' sequenziell abzurufen,
-    nach DB-Vorgabe zeilenweise auszuführen und Rückmeldungen an den Benutzer zu liefern.
+    Universeller SQL-Reader. Alle Einstellungen inklusive Schwellenwerte 
+    sind direkt in der Klasse sichtbar und über das globale Runtime-Dict live-gesichert.
     """
+    # Globalen Runtime-RAM im Namespace sicherstellen
+    if "_GLOBAL_RUNTIME_CONFIG" not in globals():
+        globals()["_GLOBAL_RUNTIME_CONFIG"] = {}
+    _cfg = globals()["_GLOBAL_RUNTIME_CONFIG"]
 
-    # Datenbank & Projekt-Standards
-    PROJECT_POINT = "src"
-    DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
-    AGENT_NAME = "MetaCoder-Agent"
-    MODEL_LLM = "codestral"
-    OLLAMA_HOST = "http://127.0.0.1:11434"
+    # GLOBALE KONFIGURATION: FUNKTIONAL GRUPPIERT & ALPHABETISCH-NUMERISCH SORTIERT
+    # --- A. CORE & RUNTIME SETTINGS ---
+    AGENT_NAME = _cfg.setdefault("AGENT_NAME", "MetaCoder-Agent")
+    DB_FILENAME = _cfg.setdefault("DB_FILENAME", "Knowledge_Agent_Routing_tree.db")
+    MODEL_LLM = _cfg.setdefault("MODEL_LLM", "codestral")
+    OLLAMA_HOST = _cfg.setdefault("OLLAMA_HOST", "http://127.0.0.1:11434")
+    PROJECT_POINT = _cfg.setdefault("PROJECT_POINT", "src")
+    SPINNER_INTERVAL = _cfg.setdefault("SPINNER_INTERVAL", 1.0)
 
-    # Schwellenwerte & Limits
-    MAX_EVOLUTION_GENERATIONS = 3
-    MAX_USER_QUERY_ID_RANGE = (3, 999)
-    EVOLUTION_RETRY_DELAY_SEC = 1
-    TASK_DESCRIPTION_MAX_LEN = 200
-    CODE_SNIPPET_PREVIEW_LEN = 150
-    QUERY_TITLE_MAX_LEN = 35
-    MAX_SANDBOX_OUTPUT_LENGTH = 4000
-    DEFAULT_SANDBOX_TIMEOUT = 15
-    PROMPT_MAX_LEN = 500
-    TFIDF_SIMILARITY_THRESHOLD = 0.15
-    FEEDBACK_WEIGHT_INCREMENT = 0.2
-    MAX_BLUEPRINT_STEPS = 5
-    MAX_DOMAIN_NODES = 3
-    MAX_MANIFEST_ENTRIES = 5
-    CPU_WARNING_THRESHOLD = 90.0
-    MIN_RAM_MB = 2000
-    SPINNER_INTERVAL = 1.0
-
-    REQUIRED_KERNEL_MODULES = ["psutil", "sqlite3"]
+    # --- B. THRESHOLDS & LIMITS (Alphabetisch-numerisch sortiert) ---
+    CODE_SNIPPET_PREVIEW_LEN = _cfg.setdefault("CODE_SNIPPET_PREVIEW_LEN", 150)
+    CPU_WARNING_THRESHOLD = _cfg.setdefault("CPU_WARNING_THRESHOLD", 90.0)
+    EVOLUTION_RETRY_DELAY_SEC = _cfg.setdefault("EVOLUTION_RETRY_DELAY_SEC", 1)
+    FEEDBACK_WEIGHT_INCREMENT = _cfg.setdefault("FEEDBACK_WEIGHT_INCREMENT", 0.2)
+    MAX_BLUEPRINT_STEPS = _cfg.setdefault("MAX_BLUEPRINT_STEPS", 5)
+    MAX_DOMAIN_NODES = _cfg.setdefault("MAX_DOMAIN_NODES", 3)
+    MAX_EVOLUTION_GENERATIONS = _cfg.setdefault("MAX_EVOLUTION_GENERATIONS", 3)
+    MAX_MANIFEST_ENTRIES = _cfg.setdefault("MAX_MANIFEST_ENTRIES", 5)
+    MAX_SANDBOX_OUTPUT_LENGTH = _cfg.setdefault("MAX_SANDBOX_OUTPUT_LENGTH", 4000)
+    MAX_USER_QUERY_ID_RANGE = _cfg.setdefault("MAX_USER_QUERY_ID_RANGE", (3, 999))
+    MIN_RAM_MB = _cfg.setdefault("MIN_RAM_MB", 2000)
+    PROMPT_MAX_LEN = _cfg.setdefault("PROMPT_MAX_LEN", 500)
+    QUERY_TITLE_MAX_LEN = _cfg.setdefault("QUERY_TITLE_MAX_LEN", 35)
+    REQUIRED_KERNEL_MODULES = _cfg.setdefault("REQUIRED_KERNEL_MODULES", ["psutil", "sqlite3"])
+    SANDBOX_TIMEOUT = _cfg.setdefault("SANDBOX_TIMEOUT", 15)
+    TASK_DESCRIPTION_MAX_LEN = _cfg.setdefault("TASK_DESCRIPTION_MAX_LEN", 200)
+    TFIDF_SIMILARITY_THRESHOLD = _cfg.setdefault("TFIDF_SIMILARITY_THRESHOLD", 0.15)
 
     # --- Erlaubte Tabellen für SQL-Operationen ---
     ALLOWED_TABLES = {
@@ -63,10 +75,13 @@ class class_sql_reader(class_core_infrastructure):
         "agent_system_manifest",
         "index_chat_user_query",
         "kernel_tool",
-        "hardware_enviroment"
+        "hardware_enviroment",
+        "library_src_code",
+        "library_src_bugs_cleaning",
+        "meta_agent_code_project_log_healing_registry"
     }
 
-    DEFAULT_DOMAIN = "library_registry"
+    DOMAIN = "library_registry"
 
     DOMAIN_KEYWORDS = {
         "meta_admin_repair_registry": [
@@ -89,16 +104,26 @@ class class_sql_reader(class_core_infrastructure):
         ]
     }
 
-    def __init__(self, db_filename: str = None):
+    def __init__(self, db_filename: str = None, model_name: str = None,
+                 ollama_host: str = None, agent_name: str = None,
+                 spinner_interval: float = None):
         super().__init__()
+        if db_filename: globals()["_GLOBAL_RUNTIME_CONFIG"]["DB_FILENAME"] = db_filename
+        if model_name: globals()["_GLOBAL_RUNTIME_CONFIG"]["MODEL_LLM"] = model_name
+        if ollama_host: globals()["_GLOBAL_RUNTIME_CONFIG"]["OLLAMA_HOST"] = ollama_host
+        if agent_name: globals()["_GLOBAL_RUNTIME_CONFIG"]["AGENT_NAME"] = agent_name
+        if spinner_interval is not None: globals()["_GLOBAL_RUNTIME_CONFIG"]["SPINNER_INTERVAL"] = spinner_interval
+
         self.root_path = Path(self.get_project_root())
         target_db = db_filename or self.DB_FILENAME
         try:
             self.db_filename = str(self.get_file_path(target_db))
         except FileNotFoundError:
             self.db_filename = str(self.root_path / target_db)
+
         self.bootstrap_dna = []
         self.manifest_directives = {}
+        # ALLOWED_TABLES = Klassenattribut bereits definiert, muss nicht aktualisiert werden
 
     def get_db_connection(self, filename: str = None) -> sqlite3.Connection:
         """Stellt eine sichere Verbindung zur Knowledge-Datenbank her."""
@@ -110,6 +135,7 @@ class class_sql_reader(class_core_infrastructure):
         conn = sqlite3.connect(str(db_path))
         conn.row_factory = sqlite3.Row
         return conn
+
 
     def _ensure_core_tables(self):
         """Garantiert die physische Existenz aller Kern-Tabellen vor Pipeline-Start."""
@@ -138,6 +164,7 @@ class class_sql_reader(class_core_infrastructure):
             except sqlite3.Error as e:
                 print(f"[GEGENKONTROLLE FEHLER] Konnte Tabellenstrukturen nicht härten: {e}")
 
+
     def verify_environment(self) -> bool:
         """Prüft die Existenz der globalen Datenbank und initialisiert Tabellenstrukturen."""
         db_path = Path(self.db_filename)
@@ -148,7 +175,7 @@ class class_sql_reader(class_core_infrastructure):
         print("[METAKODER] Umgebung erfolgreich verifiziert. Alle erweiterten Tools verbunden.")
         return True
 
-    
+
     # DATABASE-DRIVEN DNA BOOTSTRAP (Phasen 000, 001, 999)
     def bootstrap_from_database(self) -> list:
         """
@@ -161,8 +188,6 @@ class class_sql_reader(class_core_infrastructure):
         try:
             with self.get_db_connection() as conn:
                 cursor = conn.cursor()
-
-                # 1. Inbound-Prüfung über meta_admin_bootstrap_registry Node 001
                 cursor.execute("""
                     SELECT target_table, target_node_id, topic_title 
                     FROM meta_admin_bootstrap_registry 
@@ -186,7 +211,6 @@ class class_sql_reader(class_core_infrastructure):
                 """)
                 phases = cursor.fetchall()
                 self.bootstrap_dna = phases
-
                 for row in phases:
                     node_id = row[0]
                     title = row[1]
@@ -322,12 +346,12 @@ class class_sql_reader(class_core_infrastructure):
         active_host = ollama_host or getattr(self, "ollama_host", None) or self.OLLAMA_HOST
 
         # Prüfen und ggf. automatischen Start von Ollama durchführen
-        ollama_ready = class_ollama_manager.ensure_ollama_running(active_host)
+        ollama_ready = ollama_manager.ensure_ollama_running(active_host) if ollama_manager else False
 
         answer = ""
         codes = []
 
-        if ollama_ready:
+        if ollama_ready and ollama_manager:
             system_prompt = f"""
 You are an autonomous AI Agent with an active SQLite Long-Term Memory (Knowledge Agent Routing Tree).
 Current Detected Domain: {domain}
@@ -344,21 +368,17 @@ Acknowledge and make use of the SQLite database context if relevant.
                 {"role": "user", "content": effective_query}
             ]
 
-            # Spinner während des LLM-Aufrufs aktivieren, falls Starter übergeben wurde
-            stop_event = None
-            if spinner_thread_starter:
-                stop_event, spinner_thread = spinner_thread_starter(f"{self.AGENT_NAME}-Chat")
-
             try:
-                chat_res = class_ollama_manager.chat(messages=messages, model=active_model, ollama_host=active_host)
+                chat_res = ollama_manager.run_agent(
+                    messages,
+                    model=active_model,
+                    ollama_host=active_host,
+                    agent_title=f"{self.AGENT_NAME}-Chat"
+                )
                 if chat_res.get("status") == "SUCCESS":
                     answer = chat_res.get("content", "").strip()
             except Exception:
                 answer = ""
-            finally:
-                if stop_event:
-                    stop_event.set()
-                    spinner_thread.join()
 
         # Fallback, falls Ollama nicht verfügbar ist oder keine Antwort lieferte
         if not answer.strip():
@@ -372,22 +392,20 @@ Acknowledge and make use of the SQLite database context if relevant.
             )
 
         # Code-Verifikation gemäß Phase 004
-        try:
-            from agent_universal_skript.class_subAgentVerifier import SubAgentVerifier
-            codes = SubAgentVerifier.extract_code_blocks(answer)
-            if codes:
-                code_to_verify = codes[0] if isinstance(codes, list) else codes
-                v_ok, v_msg = SubAgentVerifier.verify_code_in_sandbox(
-                    code_to_verify, timeout_sec=self.DEFAULT_SANDBOX_TIMEOUT
-                )
-                if not v_ok:
-                    print(f"[VERIFIER WARNUNG] Code-Verifikation meldete: {v_msg}")
-        except Exception:
-            pass
+        if sub_verifier:
+            try:
+                codes = sub_verifier.extract_code_blocks(answer)
+                if codes:
+                    code_to_verify = codes[0] if isinstance(codes, list) else codes
+                    v_ok, v_msg = sub_verifier.verify_code_in_sandbox(
+                        code_to_verify, timeout_sec=self.SANDBOX_TIMEOUT
+                    )
+                    if not v_ok:
+                        print(f"[VERIFIER WARNUNG] Code-Verifikation meldete: {v_msg}")
+            except Exception:
+                pass
 
-        # -------------------------------------------------------------
         # Phase [005]: STRICT SCHEMATIC PROTOCOL SEAL & TIMESTAMP BINDING
-        # -------------------------------------------------------------
         phase_005 = phases_dict.get("005", {})
         try:
             self.log_save_query_run_to_db_timestamp(
@@ -401,9 +419,7 @@ Acknowledge and make use of the SQLite database context if relevant.
         except Exception as e:
             print(f"[GEGENKONTROLLE HINWEIS] Protokollierung in Phase 005 übersprungen: {e}")
 
-        # -------------------------------------------------------------
         # Phase [999]: AGENT READY GATEWAY & ANTWORT-VERSIEGELUNG
-        # -------------------------------------------------------------
         if query_node_id:
             snippet_str = str(codes[0]) if codes else ""
             self.seal_query_cache(query_node_id, answer, snippet=snippet_str)
@@ -416,14 +432,6 @@ Acknowledge and make use of the SQLite database context if relevant.
             "answer": answer,
             "snippet": codes[0] if codes else ""
         }
-
-    
-    # USER-QUERY-CACHE & FEEDBACK
-    
-
-    def check_or_cache_user_query(self, raw_query: str) -> dict:
-        """Autonome User-Query-Prüfung & Sequenzieller Cache."""
-        return self.get_cached_or_create_query(raw_query)
 
     def seal_query_cache(self, node_id: str, answer: str, snippet: str = ""):
         """Versiegelt eine erfolgreich beantwortete Anfrage in 'user_query' als fertigen Cache-Eintrag."""
@@ -439,10 +447,6 @@ Acknowledge and make use of the SQLite database context if relevant.
             """, (answer, snippet, node_id))
             conn.commit()
         print(f"--> [SQL-CACHE SEAL] Antwort in 'user_query' Node '{node_id}' dauerhaft versiegelt.")
-
-    def store_query_result(self, node_id: str, answer: str, snippet: str = ""):
-        """Alias für seal_query_cache zur Wahrung der Abwärtskompatibilität."""
-        return self.seal_query_cache(node_id=node_id, answer=answer, snippet=snippet)
 
     def record_feedback(self, query_node_id: str, is_positive: bool, comment: str = "") -> dict:
         """Verarbeitet Benutzer-Feedback für einen Query-Knoten."""
@@ -477,10 +481,7 @@ Acknowledge and make use of the SQLite database context if relevant.
             )
         print(f"\n[PERSISTENZ-ERFOLG] Fähigkeit '{capability_name}' wurde dauerhaft in SQLite ('library_registry') verewigt!")
 
-    
     # KOGNITIVE ERFASSUNG, TOKEN-SCHÄRFUNG & AUDIT-PROTOKOLLIERUNG
-    
-
     def index_chat_user_query(self, raw_query: str) -> dict:
         """Erfassung, Bereinigung, Token-Schärfung und Indizierung von Benutzeranfragen."""
         if not raw_query or not isinstance(raw_query, str):
@@ -793,17 +794,13 @@ Acknowledge and make use of the SQLite database context if relevant.
         except Exception as e:
             print(f"[KRITISCHER ABBRUCH IN log_save_query_run_to_db_timestamp]: {e}")
 
-    def save_table_issue_data_run_protocol(self, *args, **kwargs):
-        """Alias für log_save_query_run_to_db_timestamp."""
-        return self.log_save_query_run_to_db_timestamp(*args, **kwargs)
-
     # KONTEXT-TIPS & DOMAIN-ROUTING
     def _detect_domain(self, task_description: str) -> str:
         """
         Erkennt die relevante Zieltabelle/Domain anhand Heuristik und konfigurierbaren Keywords.
         """
         if not task_description or not isinstance(task_description, str) or not task_description.strip():
-            return self.DEFAULT_DOMAIN
+            return self.DOMAIN
 
         desc_lower = task_description.lower()
         for domain, keywords in self.DOMAIN_KEYWORDS.items():
@@ -832,7 +829,7 @@ Acknowledge and make use of the SQLite database context if relevant.
             except Exception:
                 pass
 
-        return self.DEFAULT_DOMAIN
+        return self.DOMAIN
 
     def _get_relevant_tips(self, task_description: str) -> str:
         """Lädt kontextbezogene Richtlinien, Blueprint-Schritte und Knoten aus der Datenbank."""
@@ -930,7 +927,9 @@ Acknowledge and make use of the SQLite database context if relevant.
                              agent_instruction: str = "", example_code_snippet: str = "", 
                              validation_rule: str = "", target_table: str = "", 
                              target_node_id: str = "000", **kwargs):
-        """Fügt einen neuen Knoten dynamisch anhand des Live-Schemas in die Tabelle ein."""
+        """
+        Fügt einen neuen Knoten dynamisch anhand des Live-Schemas in die Tabelle ein.
+        """
         if not conn or not table_name or not node_id:
             raise ValueError("Ungültige Parameter für _insert_routing_node")
 
@@ -939,7 +938,7 @@ Acknowledge and make use of the SQLite database context if relevant.
         actual_columns = {row[1] for row in cursor.fetchall()}
 
         if not actual_columns:
-            raise ValueError(f"Tabelle '{table_name}' existiert nicht.")
+            raise ValueError(f"Tabelle '{table_name}' existiert nicht o. hat keine Spalten.")
 
         now = datetime.datetime.now()
         payload = {
@@ -970,7 +969,9 @@ Acknowledge and make use of the SQLite database context if relevant.
         print(f"[SQL-SUCCESS] Knoten '{node_id}' erfolgreich in Tabelle '{table_name}' verankert.")
 
     def deactivate_and_reroute(self, table_name: str, node_id: str, failure_reason: str) -> dict:
-        """Deaktiviert fehlerhafte Knoten und leitet auf Alternativpfade um."""
+        """
+        Deaktiviert fehlerhafte Knoten und leitet auf Alternativpfade um.
+        """
         if not node_id:
             return {"deactivated_node": "UNKNOWN", "table_name": table_name, "reason": failure_reason, "alternative_available": False}
 
@@ -1041,12 +1042,16 @@ Task:
 Rewrite and improve this Python class so that it proactively checks for and prevents the above error. 
 Return the COMPLETE, executable Python code inside markdown code blocks (```python ... ```).
 """
-        res = class_ollama_manager.generate(prompt=prompt, model=self.MODEL_LLM, ollama_host=self.OLLAMA_HOST)
+        res = ollama_manager.run_agent(
+            prompt,
+            model=self.MODEL_LLM,
+            ollama_host=self.OLLAMA_HOST,
+            agent_title="SQLReader-Evolution"
+        ) if ollama_manager else {}
         if res.get("status") == "SUCCESS":
             raw_text = res.get("content", "")
             try:
-                from agent_universal_skript.class_subAgentVerifier import SubAgentVerifier
-                blocks = SubAgentVerifier.extract_code_blocks(raw_text)
+                blocks = sub_verifier.extract_code_blocks(raw_text) if sub_verifier else []
                 code_text = blocks[0] if blocks else raw_text.strip()
             except Exception:
                 code_text = raw_text.strip()
@@ -1063,6 +1068,168 @@ Return the COMPLETE, executable Python code inside markdown code blocks (```pyth
         """
         self._ensure_core_tables()
         return self.execute_query_with_db_phases(raw_query=task_description)
+    ALLOWED_TABLES = ALLOWED_TABLES.union({
+        "library_src_code",
+        "library_src_bugs_cleaning",
+        "meta_agent_code_project_log_healing_registry"
+    })
 
-# Globale Registrierung im Namespace
-globals()["class_sql_reader"] = class_sql_reader
+    def _ensure_src_library_tables(self):
+        """Erstellt die hartcodierten Fix-Tabellen und SRC-Library-Strukturen zentral."""
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS meta_agent_code_project_log_healing_registry (
+                    node_id TEXT PRIMARY KEY,
+                    target_library_table TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    description TEXT,
+                    is_active INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS library_src_code (
+                    node_id TEXT PRIMARY KEY,
+                    file_path TEXT NOT NULL,
+                    module_name TEXT,
+                    code_snippet TEXT NOT NULL,
+                    function_signature TEXT,
+                    quality_score REAL DEFAULT 1.0,
+                    year INTEGER, month INTEGER, day INTEGER, 
+                    hour INTEGER, minute INTEGER, second INTEGER,
+                    timestamp_str TEXT NOT NULL,
+                    is_active INTEGER DEFAULT 1
+                );
+            """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS library_src_bugs_cleaning (
+                    node_id TEXT PRIMARY KEY,
+                    related_code_node_id TEXT,
+                    detected_bug_description TEXT NOT NULL,
+                    failed_code_snippet TEXT,
+                    applied_fix TEXT NOT NULL,
+                    prohibited_pattern_self_ban TEXT NOT NULL,
+                    year INTEGER, month INTEGER, day INTEGER, 
+                    hour INTEGER, minute INTEGER, second INTEGER,
+                    timestamp_str TEXT NOT NULL,
+                    FOREIGN KEY (related_code_node_id) REFERENCES library_src_code(node_id)
+                );
+            """)
+            
+            cursor.execute("""
+                INSERT OR IGNORE INTO meta_agent_code_project_log_healing_registry 
+                (node_id, target_library_table, category, description)
+                VALUES 
+                ('ROUTE_SRC_CODE', 'library_src_code', 'CLEAN_SRC', 'Speicherort für funktionierenden SRC Code'),
+                ('ROUTE_SRC_BUGS', 'library_src_bugs_cleaning', 'BUG_FIX_BANS', 'Speicherort für Fehlerprotokolle und selbstauferlegte Verhaltensverbote');
+            """)
+            conn.commit()
+
+    def _get_standard_timestamp_dict(self) -> dict:
+        """Erzeugt ein standardisiertes Zeitstempel-Dictionary für konsistente DB-Einträge."""
+        now = datetime.datetime.now()
+        return {
+            "year": now.year, "month": now.month, "day": now.day,
+            "hour": now.hour, "minute": now.minute, "second": now.second,
+            "timestamp_str": now.strftime("%Y%m%d_%H%M%S")
+        }
+
+    def _generic_library_insert(self, table_name: str, prefix: str, payload_data: dict) -> str:
+        """
+        Zentrale, gemeinsame Kern-Def für alle wiederkehrenden Schreiboperationen.
+        Eliminiert Redundanzen durch standardisiertes Mapping, Zeitstempel und DB-Commit.
+        """
+        self._ensure_src_library_tables()
+        ts = self._get_standard_timestamp_dict()
+        node_id = f"{prefix}_{ts['timestamp_str']}_{random.randint(100, 999)}"
+
+        full_payload = {"node_id": node_id, **ts, **payload_data}
+
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            cols = ", ".join(full_payload.keys())
+            placeholders = ", ".join(["?"] * len(full_payload))
+            
+            cursor.execute(f"""
+                INSERT INTO {table_name} ({cols}) VALUES ({placeholders})
+            """, list(full_payload.values()))
+            conn.commit()
+            
+        return node_id
+
+    # Konsolidierte Fach-Methoden (Nutzen die gemeinsame Kern-Def)
+    def write_clean_src_code(self, file_path: str, code_snippet: str, module_name: str = "", quality_score: float = 1.0) -> str:
+        """Schreibt sauberen SRC-Code über die gemeinsame Kern-Def."""
+        return self._generic_library_insert(
+            table_name="library_src_code",
+            prefix="SRC",
+            payload_data={
+                "file_path": file_path,
+                "module_name": module_name,
+                "code_snippet": code_snippet,
+                "quality_score": quality_score,
+                "is_active": 1
+            }
+        )
+
+    def log_src_bug_and_self_ban(self, bug_description: str, failed_code: str, applied_fix: str, self_ban_rule: str, related_src_node_id: str = None) -> str:
+        """Protokolliert Bugs und Selbstverbote über die gemeinsame Kern-Def."""
+        node_id = self._generic_library_insert(
+            table_name="library_src_bugs_cleaning",
+            prefix="BUG",
+            payload_data={
+                "related_code_node_id": related_src_node_id,
+                "detected_bug_description": bug_description,
+                "failed_code_snippet": failed_code,
+                "applied_fix": applied_fix,
+                "prohibited_pattern_self_ban": self_ban_rule
+            }
+        )
+        print(f"[SELF-HEALING BAN ENFORCED] Neues Verbot registriert: {self_ban_rule}")
+        return node_id
+
+    def stochastic_sample_read(self, table_name: str, sample_size: int = 5, category_filter: str = None) -> list:
+        """Stochastischer Lesezugriff auf eine bestimmte Tabelle."""
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            if category_filter and "category" in [col[1] for col in cursor.execute(f"PRAGMA table_info({table_name})")]:
+                cursor.execute(f"SELECT * FROM {table_name} WHERE category = ? ORDER BY RANDOM() LIMIT ?", (category_filter, sample_size))
+            else:
+                cursor.execute(f"SELECT * FROM {table_name} ORDER BY RANDOM() LIMIT ?", (sample_size,))
+            
+            rows = cursor.fetchall()
+            cols = [d[0] for d in cursor.description] if cursor.description else []
+            return [dict(zip(cols, row)) for row in rows]
+
+    def get_active_self_bans(self) -> list:
+        """Liest alle aktiven Verbote aus der Bug-Cleaning-Tabelle aus."""
+        self._ensure_src_library_tables()
+        with self.get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT prohibited_pattern_self_ban, detected_bug_description, applied_fix FROM library_src_bugs_cleaning ORDER BY node_id DESC")
+            return cursor.fetchall()
+
+    def check_or_cache_user_query(self, raw_query: str) -> dict:
+        """Direktweiterleitung auf get_cached_or_create_query."""
+        return self.get_cached_or_create_query(raw_query)
+
+    def store_query_result(self, node_id: str, answer: str, snippet: str = ""):
+        """Direktweiterleitung auf seal_query_cache zur Wahrung der Kompatibilität."""
+        return self.seal_query_cache(node_id=node_id, answer=answer, snippet=snippet)
+
+    def save_table_issue_data_run_protocol(self, *args, **kwargs):
+        """Direktweiterleitung auf log_save_query_run_to_db_timestamp."""
+        return self.log_save_query_run_to_db_timestamp(*args, **kwargs)
+
+    def _save_solution_to_db(self, task_description: str, error_msg: str, solution_code: str):
+        """Direktweiterleitung auf log_save_query_run_to_db_timestamp."""
+        return self.log_save_query_run_to_db_timestamp(
+            task_description=task_description,
+            error_msg=error_msg,
+            solution_code=solution_code,
+            step_type="checkpoint"
+        )

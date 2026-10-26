@@ -183,7 +183,7 @@ config_params = [
     "TFIDF_SIMILARITY_THRESHOLD", "FEEDBACK_WEIGHT_INCREMENT",
     "MAX_BLUEPRINT_STEPS", "MAX_DOMAIN_NODES", "MAX_MANIFEST_ENTRIES",
     "CPU_WARNING_THRESHOLD", "MIN_RAM_MB", "SPINNER_INTERVAL",
-    "DOMAIN_KEYWORDS", "ALLOWED_TABLES", "DEFAULT_FALLBACK_DOMAIN"
+    "DOMAIN_KEYWORDS", "ALLOWED_TABLES", "FALLBACK_DOMAIN"
 ]
 
 for param in config_params:
@@ -229,7 +229,7 @@ print("\n--- TEST 7: class_sql_reader Klassenattribute ---")
 
 try:
     test("class_sql_reader.ALLOWED_TABLES ist Set", isinstance(class_sql_reader.ALLOWED_TABLES, set))
-    test("class_sql_reader.DEFAULT_DOMAIN existiert", hasattr(class_sql_reader, "DEFAULT_DOMAIN"))
+    test("class_sql_reader.DOMAIN existiert", hasattr(class_sql_reader, "DOMAIN"))
     test("class_sql_reader.DOMAIN_KEYWORDS ist Dict", isinstance(class_sql_reader.DOMAIN_KEYWORDS, dict))
     test("class_sql_reader.TFIDF_SIMILARITY_THRESHOLD ist float", isinstance(class_sql_reader.TFIDF_SIMILARITY_THRESHOLD, float))
     test("class_sql_reader.TASK_DESCRIPTION_MAX_LEN ist int", isinstance(class_sql_reader.TASK_DESCRIPTION_MAX_LEN, int))
@@ -245,8 +245,8 @@ print("\n--- TEST 8: SubAgentVerifier Attribute ---")
 try:
     from agent_universal_skript.auto_bootstrap_and_register_agents import auto_bootstrap_and_register_agents
     # SubAgentVerifier wurde bereits über auto_bootstrap geladen
-    test("SubAgentVerifier.DEFAULT_SANDBOX_TIMEOUT existiert", 
-         hasattr(SubAgentVerifier, "DEFAULT_SANDBOX_TIMEOUT") if "SubAgentVerifier" in dir() else True)
+    test("SubAgentVerifier.SANDBOX_TIMEOUT existiert", 
+         hasattr(SubAgentVerifier, "SANDBOX_TIMEOUT") if "SubAgentVerifier" in dir() else True)
     test("SubAgentVerifier.MAX_SANDBOX_OUTPUT_LENGTH existiert",
          hasattr(SubAgentVerifier, "MAX_SANDBOX_OUTPUT_LENGTH") if "SubAgentVerifier" in dir() else True)
     test("SubAgentVerifier.FORBIDDEN_MODULES ist Set",

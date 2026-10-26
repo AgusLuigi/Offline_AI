@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger("DockerConfig")
 
-DEFAULT_FALLBACK_CONFIG: Dict[str, Any] = {
+FALLBACK_CONFIG: Dict[str, Any] = {
     "meta": {
         "project": "Mai_AI",
         "version": "2.0.0",
@@ -141,7 +141,7 @@ def load_docker_global_config(config_path: Optional[str] = None) -> Dict[str, An
 
     if not os.path.exists(target_path):
         logger.warning(f"Konfigurationsdatei nicht gefunden unter {target_path}. Nutze Fallback-Konfiguration.")
-        return DEFAULT_FALLBACK_CONFIG.copy()
+        return FALLBACK_CONFIG.copy()
 
     try:
         with open(target_path, "r", encoding="utf-8") as f:
@@ -150,7 +150,7 @@ def load_docker_global_config(config_path: Optional[str] = None) -> Dict[str, An
         return data
     except Exception as e:
         logger.error(f"Fehler beim Lesen der Konfigurationsdatei {target_path}: {e}")
-        return DEFAULT_FALLBACK_CONFIG.copy()
+        return FALLBACK_CONFIG.copy()
 
 
 def save_docker_global_config(config_data: Dict[str, Any], config_path: Optional[str] = None) -> bool:
@@ -179,46 +179,46 @@ def save_docker_global_config(config_data: Dict[str, Any], config_path: Optional
 def get_network_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die Netzwerk- und Ingress-Parameter."""
     cfg = config or load_docker_global_config()
-    return cfg.get("network", DEFAULT_FALLBACK_CONFIG["network"])
+    return cfg.get("network", FALLBACK_CONFIG["network"])
 
 
 def get_storage_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die Volume- und Storage-Quota-Parameter."""
     cfg = config or load_docker_global_config()
-    return cfg.get("storage", DEFAULT_FALLBACK_CONFIG["storage"])
+    return cfg.get("storage", FALLBACK_CONFIG["storage"])
 
 
 def get_containers_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die Standard-Container- und Image-Namen."""
     cfg = config or load_docker_global_config()
-    return cfg.get("containers", DEFAULT_FALLBACK_CONFIG["containers"])
+    return cfg.get("containers", FALLBACK_CONFIG["containers"])
 
 
 def get_security_hardening_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die Kernel- und Hardening-Sicherheitsoptionen (Read-Only, Cap-Drop, etc.)."""
     cfg = config or load_docker_global_config()
-    return cfg.get("security_hardening", DEFAULT_FALLBACK_CONFIG["security_hardening"])
+    return cfg.get("security_hardening", FALLBACK_CONFIG["security_hardening"])
 
 
 def get_resource_limits_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die CPU-, RAM- und Swap-Limits."""
     cfg = config or load_docker_global_config()
-    return cfg.get("resource_limits", DEFAULT_FALLBACK_CONFIG["resource_limits"])
+    return cfg.get("resource_limits", FALLBACK_CONFIG["resource_limits"])
 
 
 def get_lifecycle_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die Timeout-, Retry- und Auto-Shutdown-Parameter."""
     cfg = config or load_docker_global_config()
-    return cfg.get("lifecycle", DEFAULT_FALLBACK_CONFIG["lifecycle"])
+    return cfg.get("lifecycle", FALLBACK_CONFIG["lifecycle"])
 
 
 def get_env_variables_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die zu prüfenden Umgebungsvariablen."""
     cfg = config or load_docker_global_config()
-    return cfg.get("environment_variables", DEFAULT_FALLBACK_CONFIG["environment_variables"])
+    return cfg.get("environment_variables", FALLBACK_CONFIG["environment_variables"])
 
 
 def get_sqlite_inbox_config(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Liefert die SQLite-Inbox-Konfiguration."""
     cfg = config or load_docker_global_config()
-    return cfg.get("sqlite_inbox", DEFAULT_FALLBACK_CONFIG["sqlite_inbox"])
+    return cfg.get("sqlite_inbox", FALLBACK_CONFIG["sqlite_inbox"])
