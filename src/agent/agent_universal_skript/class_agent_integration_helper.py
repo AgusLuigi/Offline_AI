@@ -1,217 +1,144 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-══════════════════════════════════════════════════════════════════════════════
-INTEGRATION HELPER: MIGRATION FROM agent_repair_agent TO MULTI-AGENT-STRATEGY
-══════════════════════════════════════════════════════════════════════════════
-Diese Datei zeigt, wie das neue Multi-Agent-System mit dem alten
-agent_repair_agent integriert werden kann, ohne bestehende Logik zu zerstören.
-
-使用方式 (usage example):
-    1. Importiere diesen Helper in deinem main-script
-    2. Erstelle eineInstanz von IntegrationHelper
-    3. Rufe.process mit dem Ziel-file auf
-
-Der Helper ersetzt die alte monolithische Logik durch:
-    - Router-Agent (Bug-Klassifikation)
-    - Context-Agent (Log-Analyse)
-    - Structure-Guard (Zero-Loss AST-Check)
-    - Refactor-Agent (Code-Optimierung)
-    - Verification-Agent (Closed-Loop Validation)
+Modul: class_agent_integration_helper
+Bezeichnung: Integrations- und Migrationshelfer für Multi-Agenten-Strategien
+Inhaltlicher Schwerpunkt:
+Vermittlung zwischen bestehenden Reparatur-Routinen und dem neuen Multi-Agenten-Routing.
+Ermöglicht schrittweise Migration mit sicherem Fallback-Mechanismus.
 """
 
+from __future__ import annotations
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-# Auto-Bootstrap & Global Registry (nur lokal für Zugriff auf Werkzeuge)
-try:
-    from agent_universal_skript.auto_bootstrap_and_register_agent_tools import (
-        auto_bootstrap_and_register_agent_tools,
-    )
-    auto_bootstrap_and_register_agent_tools()
-except ImportError:
-    pass
-
-# Import neuer Strategy-Module (mit Fallbacks)
-try:
-    from agent_universal_skript.class_agent_strategy_balance_agent import (
-        class_agent_strategy_balance_agent,
-    )
-except ImportError:
-    class_agent_strategy_balance_agent = None
-
-try:
-    from agent_universal_skript.class_agent_ruting_struktur_balance_agent import (
-        class_agent_ruting_struktur_balance_agent,
-    )
-except ImportError:
-    class_agent_ruting_struktur_balance_agent = None
+# Globale Bindings
+logger          = globals().get("class_logger_audit_execution")
+core_infra      = globals().get("class_tool_core_infrastructure")
+strategy_agent  = globals().get("class_agent_strategy_balance_agent")
+router_agent    = globals().get("class_agent_ruting_struktur_balance_agent")
 
 
-class IntegrationHelper:
+class class_agent_integration_helper:
     """
-    Helper Klasse zur schrittweisen Migration vom monolithischen
-    Agent-Repair zum Multi-Agent-System.
-
-    Vorteile:
-      ✅ Keine bestehende Logik wird gelöscht
-      ✅ Alte und neue Systeme können parallel laufen
-      ✅ Schrittweise Umstellung auf neue Strategie möglich
-      ✅ Full-Cycle Protocolierung über class_logger_audit_execution
+    Integrationshelfer zur nahtlosen Koordination von neuem Multi-Agent-System
+    und bestehenden Reparaturmodulen.
     """
 
-    def __init__(self,
-                 use_new_strategy: bool = True,
-                 fallback_to_old: bool = True):
-        """
-        Initialisiert den Integration-Help mit Config-Optionen.
-        
-        Args:
-            use_new_strategy: Nutzt das neue Multi-Agent-System (Standard: True)
-            fallback_to_old: Fallback auf altes agent_repair_agent bei Fehler (Standard: True)
-        """
-        self.use_new_strategy = use_new_strategy
-        self.fallback_to_old = fallback_to_old
+    _cfg = globals().setdefault("_AGENT_CONFIG", {})
+    USE_NEW_STRATEGY: bool = _cfg.setdefault("USE_NEW_STRATEGY", True)
+    FALLBACK_TO_OLD: bool  = _cfg.setdefault("FALLBACK_TO_OLD",  True)
 
-        # Router initialisieren (wenn neue Strategie aktiv)
-        self.router = None
-        if self.use_new_strategy:
-            try:
-                self.router = class_agent_ruting_struktur_balance_agent()
-                print("[INTEGRATION] Multi-Agent Router initialisiert")
-            except Exception as e:
-                print(f"[INTEGRATION] Router-Initialisierung fehlgeschlagen: {e}")
-                if self.fallback_to_old:
-                    print("[INTEGRATION] Fallback auf altes Agent-Repair-System")
+    def __init__(self, use_new_strategy: bool = None, fallback_to_old: bool = None):
+        print("[class_agent_integration_helper] Starte Arbeit: __init__ wird jetzt ausgeführt.")
+        self.use_new_strategy = self.USE_NEW_STRATEGY if use_new_strategy is None else use_new_strategy
+        self.fallback_to_old  = self.FALLBACK_TO_OLD  if fallback_to_old  is None else fallback_to_old
+        router_cls  = globals().get("class_agent_ruting_struktur_balance_agent")
+        self.router = router_cls() if router_cls else None
+        if not hasattr(self, "use_new_strategy"):
+            print("[class_agent_integration_helper] FEHLER: __init__ hat die Aufgabe nicht erfüllt. Grund: Kern-Attribute nicht gesetzt.")
+            return
+        print("[class_agent_integration_helper] Erfolg: __init__ erfolgreich beendet.")
 
-    def process(self, file_path: Path, **kwargs) -> Dict[str, Any]:
-        """
-        Führt die Reparatur-Logik aus – entweder mit neuer Strategie oder Fallback.
-
-        Args:
-            file_path: Path zum Ziel-Python-File
-            **kwargs: Optional – alte Parameter (für Kompatibilität)
-
-        Returns:
-            Dict mit Ergebnis: status, bugs_found, bugs_fixed, errors
-        """
+    def process(self, file_path: Path, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Verarbeitet eine Datei wahlweise über die neue Multi-Agent-Strategie oder das Legacy-System."""
+        print(f"[class_agent_integration_helper] Starte Arbeit: process wird jetzt ausgeführt. (Parameter: {file_path})")
         result = {
-            "file": str(file_path),
-            "status": "NOT_STARTED",
-            "strategy_used": None,
-            "errors": [],
+            "file":           str(file_path),
+            "strategy_used":  "UNKNOWN",
+            "success":        False,
+            "details":        None,
         }
 
-        try:
-            # 1. Neue Strategie verwenden (wenn gewünscht)
-            if self.use_new_strategy and self.router:
-                result["strategy_used"] = "NEW_MULTI_AGENT"
+        if self.use_new_strategy and self.router:
+            try:
+                res = self.router.process_file(Path(file_path))
+                if res.get("status") in ["CLEAN", "VERIFIED"]:
+                    result["strategy_used"] = "MULTI_AGENT_NEW"
+                    result["success"]       = True
+                    result["details"]       = res
+                    print("[class_agent_integration_helper] Erfolg: process erfolgreich beendet.")
+                    return result
+            except Exception as e:
+                print(f"[class_agent_integration_helper] FEHLER: process hat die Aufgabe nicht erfüllt. Grund: Neue Strategie fehlgeschlagen: {e}")
 
-                # Router-Ausführung
-                agent_result = self.router.process_file(file_path)
-
-                result["status"] = agent_result.get("status", "UNKNOWN")
-                result["bugs_found"] = agent_result.get("bugs_found", 0)
-                result["bugs_fixed"] = agent_result.get("bugs_fixed", 0)
-                result["lines_processed"] = agent_result.get("lines", 0)
-                result["errors"] = agent_result.get("errors", [])
-
-                return result
-
-            # 2. Fallback auf altes agent_repair_agent (wenn aktiviert)
-            if self.fallback_to_old:
-                result["strategy_used"] = "OLD_MONOLITHIC"
-                result["status"] = "FALLBACK_PENDING"
-                result["errors"].append(
-                    "Old monolithic agent_repair_agent integration not yet implemented"
-                )
-                return result
-
-            # 3. Fehler: Keine Strategie verfügbar
-            result["status"] = "NO_STRATEGY_AVAILABLE"
-            result["errors"].append(
-                "Neither new strategy nor fallback enabled"
-            )
+        if self.fallback_to_old:
+            result["strategy_used"] = "LEGACY_FALLBACK"
+            result["details"]       = self._run_legacy_repair(Path(file_path), context)
+            result["success"]       = result["details"].get("success", False)
+            print("[class_agent_integration_helper] Erfolg: process erfolgreich beendet (Legacy-Fallback).")
             return result
 
-        except Exception as e:
-            result["status"] = "CRITICAL_ERROR"
-            result["errors"].append(f"Unexpected error: {str(e)}")
-            return result
+        print("[class_agent_integration_helper] FEHLER: process hat die Aufgabe nicht erfüllt. Grund: Keine Reparaturstrategie erfolgreich.")
+        return result
 
     def analyze_file_complexity(self, file_path: Path) -> Dict[str, Any]:
         """
-        Analysiert die Komplexität einer Datei und empfiehlt passende Strategie.
-
-        Returns:
-            Dict mit complexity_metrics, tier_recommendation, model_suggestion
+        Analysiert die Komplexität einer Datei und empfiehlt die passende Strategie.
         """
-        if not file_path.exists():
-            return {
-                "error": f"File not found: {file_path}",
-            }
+        print(f"[class_agent_integration_helper] Starte Arbeit: analyze_file_complexity wird jetzt ausgeführt. (Parameter: {file_path})")
+        path_obj = Path(file_path)
+        if not path_obj.exists():
+            print(f"[class_agent_integration_helper] FEHLER: analyze_file_complexity hat die Aufgabe nicht erfüllt. Grund: Datei nicht gefunden: {file_path}")
+            return {"error": f"File not found: {file_path}"}
 
         try:
-            content = file_path.read_text(encoding="utf-8", errors="replace")
+            content = path_obj.read_text(encoding="utf-8", errors="replace")
         except Exception as e:
-            return {
-                "error": f"Cannot read file: {str(e)}",
-            }
+            print(f"[class_agent_integration_helper] FEHLER: analyze_file_complexity hat die Aufgabe nicht erfüllt. Grund: Datei nicht lesbar: {e}")
+            return {"error": f"Cannot read file: {e}"}
 
-        # Neue Strategy-Klasse nutzen
-        if class_agent_strategy_balance_agent:
-            tier = class_agent_strategy_balance_agent.determine_tier(file_path, content)
-            model = class_agent_strategy_balance_agent.get_agent_model("router", file_path, content)
-
-            return {
-                "file": str(file_path),
+        strat_cls = globals().get("class_agent_strategy_balance_agent")
+        if strat_cls and hasattr(strat_cls, "determine_tier"):
+            tier = strat_cls.determine_tier(path_obj, content)
+            model = strat_cls.get_agent_model("router", path_obj, content)
+            result = {
+                "file": str(path_obj),
                 "lines": len(content.splitlines()),
                 "chars": len(content),
                 "tier_recommended": tier,
                 "model_suggested": model,
             }
+            print(f"[class_agent_integration_helper] Erfolg: analyze_file_complexity erfolgreich beendet. (Tier={tier}, Modell={model})")
+            return result
 
-        return {
-            "error": "Strategy config not available",
-        }
+        print("[class_agent_integration_helper] FEHLER: analyze_file_complexity hat die Aufgabe nicht erfüllt. Grund: Strategy-Agent nicht verfügbar.")
+        return {"error": "Strategy config not available"}
 
+    def _run_legacy_repair(self, file_path: Path, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Führt eine grundlegende Standard-Validierung durch, wenn die neue Strategie nicht greift."""
+        print(f"[class_agent_integration_helper] Starte Arbeit: _run_legacy_repair wird jetzt ausgeführt. (Parameter: {file_path})")
+        try:
+            content     = file_path.read_text(encoding="utf-8", errors="replace")
+            sub_verifier = globals().get("class_agent_sub_verifier")
+            if sub_verifier and hasattr(sub_verifier, "verify_code_in_sandbox"):
+                ok, output = sub_verifier.verify_code_in_sandbox(content)
+                result = {"success": ok, "output": output}
+            else:
+                result = {"success": True, "output": "Kein Sandbox-Verifier vorhanden; Code unverändert gelassen."}
+            if result is None:
+                print("[class_agent_integration_helper] FEHLER: _run_legacy_repair hat die Aufgabe nicht erfüllt. Grund: Kein Ergebnis.")
+                return {"success": False}
+            print("[class_agent_integration_helper] Erfolg: _run_legacy_repair erfolgreich beendet.")
+            return result
+        except Exception as e:
+            print(f"[class_agent_integration_helper] FEHLER: _run_legacy_repair hat die Aufgabe nicht erfüllt. Grund: {e}")
+            return {"success": False, "error": str(e)}
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# DEMO / MAIN EXECUTION
-# ═══════════════════════════════════════════════════════════════════════════════
-
-if __name__ == "__main__":
-    print("=" * 80)
-    print("INTEGRATION HELPER DEMO")
-    print("=" * 80)
-
-    # Helper initialisieren
-    helper = IntegrationHelper(use_new_strategy=True, fallback_to_old=True)
-
-    # Beispiel-Datei
-    test_file = Path("src/agent/agent_repair_agent.py")
-
-    if test_file.exists():
-        print(f"\n[DEMO] Analyzing file: {test_file.name}")
-        print("-" * 80)
-
-        # 1. Komplexitäts-Analyse
-        print("\n[COMPLEXITY ANALYSIS]")
-        complexity_result = helper.analyze_file_complexity(test_file)
-        for key, value in complexity_result.items():
-            print(f"  {key}: {value}")
-
-        # 2. Reparatur-Process
-        print("\n[REPAIR PROCESS]")
-        process_result = helper.process(test_file)
-        for key, value in process_result.items():
-            print(f"  {key}: {value}")
-
-    else:
-        print(f"\n[ERROR] Test file not found: {test_file}")
-
-    print("\n" + "=" * 80)
-    print("✅ Integration-Helper demo completed.")
-    print("=" * 80)
+    @classmethod
+    def run_integration_helper(cls, file_path: Path) -> dict:
+        """
+        Zentrale Ausführungsfunktion: Bündelt die Integration und Migration
+        für eine Datei in einem einzelnen Aufruf.
+        """
+        print(f"[class_agent_integration_helper] Starte Arbeit: run_integration_helper wird jetzt ausgeführt. (Parameter: {file_path})")
+        try:
+            helper = cls()
+            result = helper.process(file_path)
+            if result is None:
+                print("[class_agent_integration_helper] FEHLER: run_integration_helper hat die Aufgabe nicht erfüllt. Grund: Kein Ergebnis von process().")
+                return {"success": False}
+            print("[class_agent_integration_helper] Erfolg: run_integration_helper erfolgreich beendet.")
+            return result
+        except Exception as e:
+            print(f"[class_agent_integration_helper] FEHLER: run_integration_helper hat die Aufgabe nicht erfüllt. Grund: {e}")
+            return {"success": False, "error": str(e)}

@@ -1,40 +1,42 @@
+"""
+Modul: class_agent_sub_verifier
+Bezeichnung: Sandbox- und Code-Verifikationswerkzeug
+Inhaltlicher Schwerpunkt:
+Extraktion von Python-Codeblöcken aus Markdown, statische AST-Sicherheitsanalyse
+und isolierte Probe-Ausführung von Codefragmenten im Subprozess.
+"""
+
 import ast
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-# Assicuriamo che il percorso principale sia indicizzato nel sistema
-sys.path.append(str(Path(__file__).resolve().parent))
+# Globale Bindings
+logger     = globals().get("class_logger_audit_execution")
+core_infra = globals().get("class_tool_core_infrastructure")
 
-# Bootstrap automatico dell'infrastruttura condivisa
-from agent_universal_skript.auto_bootstrap_and_register_agent_tools import auto_bootstrap_and_register_agent_tools
-auto_bootstrap_and_register_agent_tools()
 
-logger = globals().get('class_logger_audit_execution')
-core_infra = globals().get('class_tool_core_infrastructure')
-
-FORBIDDEN_MODULES = {"subprocess", "shutil", "socket", "ctypes", "pickle", "multiprocessing"}
-FORBIDDEN_FUNCTIONS = {"eval", "exec", "__import__", "compile", "open"}
-SANDBOX_TIMEOUT = 15
-MAX_SANDBOX_OUTPUT_LENGTH = 4000
-
-class class_agent_sub_verifier(core_infra if core_infra else object):
+class class_agent_sub_verifier:
     """
-    Sandbox di verifica e validazione del codice a circuito chiuso.
-    Implementa controlli statici di sicurezza (AST) e test di esecuzione 
-    in sub-processi isolati per impedire regressioni fatali nel codice sorgente.
+    Werkzeug zur Verifikation und Validierung von generiertem Code.
+    Führt statische AST-Prüfungen durch und validiert Codeausführung in einer isolierten Umgebung.
     """
-    
-    FORBIDDEN_MODULES = FORBIDDEN_MODULES
-    FORBIDDEN_FUNCTIONS = FORBIDDEN_FUNCTIONS
-    SANDBOX_TIMEOUT = SANDBOX_TIMEOUT
-    MAX_SANDBOX_OUTPUT_LENGTH = MAX_SANDBOX_OUTPUT_LENGTH
+
+    _cfg = globals().setdefault("_AGENT_CONFIG", {})
+    FORBIDDEN_MODULES: set         = _cfg.setdefault("FORBIDDEN_MODULES",         {"subprocess", "shutil", "socket", "ctypes", "pickle", "multiprocessing"})
+    FORBIDDEN_FUNCTIONS: set       = _cfg.setdefault("FORBIDDEN_FUNCTIONS",       {"eval", "exec", "__import__", "compile", "open"})
+    SANDBOX_TIMEOUT: int           = _cfg.setdefault("SANDBOX_TIMEOUT",           15)
+    MAX_SANDBOX_OUTPUT_LENGTH: int = _cfg.setdefault("MAX_SANDBOX_OUTPUT_LENGTH", 4000)
 
     @staticmethod
-    def extract_code_blocks(text: str) -> list[str]:
-        """Estrae in modo pulito i blocchi di codice Python racchiusi nei tag markdown della LLM."""
+    def extract_code_blocks(text: str) -> list:
+        """Extrahiert saubere Python-Codeblöcke aus Markdown-Text."""
+        print("[class_agent_sub_verifier] Starte Arbeit: extract_code_blocks wird jetzt ausgeführt.")
         blocks = []
+        if not text:
+            print("[class_agent_sub_verifier] FEHLER: extract_code_blocks hat die Aufgabe nicht erfüllt. Grund: Leerer Text übergeben.")
+            return blocks
         if "```python" in text:
             parts = text.split("```python")
             for p in parts[1:]:
@@ -48,91 +50,119 @@ class class_agent_sub_verifier(core_infra if core_infra else object):
                 code = parts[i].strip()
                 if code and not any(code.startswith(tag) for tag in ["markdown", "sql", "bash", "json", "yaml"]):
                     blocks.append(code)
+        print("[class_agent_sub_verifier] Erfolg: extract_code_blocks erfolgreich beendet.")
         return blocks
 
     @classmethod
-    def _static_security_check(cls, code_snippet: str) -> tuple[bool, str]:
-        """Ispeziona l'AST del frammento di codice per intercettare chiamate o moduli malevoli/vietati."""
+    def _static_security_check(cls, code_snippet: str) -> tuple:
+        """Prüft den AST auf unerlaubte Modulimporte oder gefährliche Aufrufe."""
+        print("[class_agent_sub_verifier] Starte Arbeit: _static_security_check wird jetzt ausgeführt.")
         try:
             tree = ast.parse(code_snippet)
         except SyntaxError as e:
-            return False, f"SyntaxError nel frammento analizzato: {e}"
+            print(f"[class_agent_sub_verifier] FEHLER: _static_security_check hat die Aufgabe nicht erfüllt. Grund: Syntaxfehler: {e}")
+            return False, f"SyntaxError: {e}"
 
         for node in ast.walk(tree):
-            # Controllo importazioni standard (es: import subprocess)
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    base_name = alias.name.split('.')[0]
+                    base_name = alias.name.split(".")[0]
                     if base_name in cls.FORBIDDEN_MODULES:
-                        return False, f"[SECURITY ATTACK] Modulo non autorizzato nell'ambiente protetto: '{base_name}'."
-            
-            # Controllo importazioni parziali (es: from subprocess import Popen)
+                        print(f"[class_agent_sub_verifier] FEHLER: _static_security_check hat die Aufgabe nicht erfüllt. Grund: Nicht autorisiertes Modul: '{base_name}'")
+                        return False, f"Nicht autorisiertes Modul: '{base_name}'"
             elif isinstance(node, ast.ImportFrom):
-                if node.module and node.module.split('.')[0] in cls.FORBIDDEN_MODULES:
-                    return False, f"[SECURITY ATTACK] Modulo non autorizzato nell'ambiente protetto: '{node.module}'."
-            
-            # Controllo built-in pericolosi (es: eval())
+                if node.module and node.module.split(".")[0] in cls.FORBIDDEN_MODULES:
+                    print(f"[class_agent_sub_verifier] FEHLER: _static_security_check hat die Aufgabe nicht erfüllt. Grund: Nicht autorisiertes Modul: '{node.module}'")
+                    return False, f"Nicht autorisiertes Modul: '{node.module}'"
             elif isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Name):
-                    if node.func.id in cls.FORBIDDEN_FUNCTIONS:
-                        return False, f"[SECURITY ATTACK] Funzione incorporata interdetta nella sandbox: '{node.func.id}()'."
-                        
-        return True, "Analisi AST statica superata con successo."
+                if isinstance(node.func, ast.Name) and node.func.id in cls.FORBIDDEN_FUNCTIONS:
+                    print(f"[class_agent_sub_verifier] FEHLER: _static_security_check hat die Aufgabe nicht erfüllt. Grund: Verbotene Funktion: '{node.func.id}()'")
+                    return False, f"Verbotene Funktion aufgerufen: '{node.func.id}()'"
+
+        result = True, "AST-Analyse erfolgreich bestanden."
+        print("[class_agent_sub_verifier] Erfolg: _static_security_check erfolgreich beendet.")
+        return result
 
     @classmethod
-    def verify_code_in_sandbox(cls, code_snippet: str, project_root: Path = None, timeout_sec: int = None) -> tuple[bool, str]:
-        """Esegue transazionalmente il codice in un sub-processo Python confinato nella cartella scratch."""
-        if timeout_sec is None:
-            timeout_sec = cls.SANDBOX_TIMEOUT
+    def verify_code_in_sandbox(cls, code_snippet: str, project_root: Path = None, timeout_sec: int = None) -> tuple:
+        """Führt den Code zur Probe in einem temporären Subprozess aus."""
+        print("[class_agent_sub_verifier] Starte Arbeit: verify_code_in_sandbox wird jetzt ausgeführt.")
+        timeout_sec = timeout_sec or cls.SANDBOX_TIMEOUT
 
-        # Utilizzo dell'architettura ereditata per determinare la root del repository
         if project_root is None:
-            project_root = cls.get_project_root() if hasattr(cls, "get_project_root") else Path.cwd()
+            infra = globals().get("class_tool_core_infrastructure")
+            project_root = infra.get_project_root() if infra and hasattr(infra, "get_project_root") else Path.cwd()
 
-        # Fase 1: Blocco di sicurezza preventivo via AST
-        is_safe, security_msg = cls._static_security_check(code_snippet)
+        is_safe, msg = cls._static_security_check(code_snippet)
         if not is_safe:
-            return False, f"[SANDBOX GUARDED] {security_msg}"
+            print(f"[class_agent_sub_verifier] FEHLER: verify_code_in_sandbox hat die Aufgabe nicht erfüllt. Grund: Sicherheitsprüfung fehlgeschlagen: {msg}")
+            return False, f"[SECURITY_GUARD] {msg}"
 
-        # Configurazione della directory isolata (Scratchpad)
-        sandbox_dir = project_root / "scratch"
-        sandbox_dir.mkdir(parents=True, exist_ok=True)
-        
+        temp_dir  = project_root / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
         temp_file = None
+
         try:
-            # Creazione atomica del file temporaneo da validare
-            with tempfile.NamedTemporaryFile(suffix=".py", mode="w", encoding="utf-8", dir=str(sandbox_dir), delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".py", mode="w", encoding="utf-8", dir=str(temp_dir), delete=False) as f:
                 f.write(code_snippet)
                 temp_file = Path(f.name)
 
-            # Fase 3: Esecuzione isolata nel sub-processo protetto
             res = subprocess.run(
                 [sys.executable, str(temp_file)],
-                capture_output=True,
-                text=True,
-                timeout=timeout_sec,
-                cwd=str(sandbox_dir)
+                capture_output=True, text=True,
+                timeout=timeout_sec, cwd=str(temp_dir)
             )
-            
-            success = (res.returncode == 0)
+
+            success    = (res.returncode == 0)
             raw_output = res.stdout.strip() if success else (res.stderr.strip() or res.stdout.strip())
-            
-            # Fase 5: Taglio controllato dell'output per scongiurare buffer overflow
-            if len(raw_output) > cls.MAX_SANDBOX_OUTPUT_LENGTH:
-                output = raw_output[:cls.MAX_SANDBOX_OUTPUT_LENGTH] + "\n... [Output troncato per motivi di sicurezza e overflow]"
-            else:
-                output = raw_output
-                
-            return success, output
+            output     = raw_output[:cls.MAX_SANDBOX_OUTPUT_LENGTH] + "\n... [Output gekürzt]" if len(raw_output) > cls.MAX_SANDBOX_OUTPUT_LENGTH else raw_output
+
+            if not success:
+                print(f"[class_agent_sub_verifier] FEHLER: verify_code_in_sandbox hat die Aufgabe nicht erfüllt. Grund: Exitcode {res.returncode}: {output}")
+                return False, output
+
+            print("[class_agent_sub_verifier] Erfolg: verify_code_in_sandbox erfolgreich beendet.")
+            return True, output
 
         except subprocess.TimeoutExpired:
-            return False, f"[SANDBOX TIMEOUT] Tempo limite di esecuzione superato ({timeout_sec}s). Sospetta presenza di ciclo infinito."
-        except Exception as err:
-            return False, f"[SANDBOX EXCEPTION] Errore critico durante l'istanziamento del processo: {err}"
+            print(f"[class_agent_sub_verifier] FEHLER: verify_code_in_sandbox hat die Aufgabe nicht erfüllt. Grund: Timeout nach {timeout_sec}s.")
+            return False, f"[TIMEOUT] Zeitlimit ({timeout_sec}s) überschritten."
+        except Exception as e:
+            print(f"[class_agent_sub_verifier] FEHLER: verify_code_in_sandbox hat die Aufgabe nicht erfüllt. Grund: {e}")
+            return False, f"[EXCEPTION] {e}"
         finally:
-            # Pulizia deterministica immediata del file di test temporaneo
             if temp_file and temp_file.exists():
                 try:
                     temp_file.unlink()
                 except Exception:
                     pass
+
+    @classmethod
+    def run_sub_verifier(cls, raw_llm_response: str, project_root: Path = None) -> dict:
+        """
+        Zentrale Ausführungsfunktion: Extrahiert Codeblöcke aus einer LLM-Antwort,
+        prüft deren Sicherheit und testet die Ausführung im Subprozess.
+        """
+        print("[class_agent_sub_verifier] Starte Arbeit: run_sub_verifier wird jetzt ausgeführt.")
+        try:
+            blocks = cls.extract_code_blocks(raw_llm_response)
+            if not blocks:
+                print("[class_agent_sub_verifier] FEHLER: run_sub_verifier hat die Aufgabe nicht erfüllt. Grund: Keine Codeblöcke im Text gefunden.")
+                return {"valid": False, "error": "Keine Codeblöcke gefunden", "code": None}
+
+            code_to_verify = blocks[0]
+            success, output = cls.verify_code_in_sandbox(code_to_verify, project_root=project_root)
+            result = {
+                "valid":       success,
+                "code":        code_to_verify,
+                "output":      output,
+                "block_count": len(blocks)
+            }
+            if result is None:
+                print("[class_agent_sub_verifier] FEHLER: run_sub_verifier hat die Aufgabe nicht erfüllt. Grund: Kein Ergebnis erzeugt.")
+                return {"valid": False}
+            print("[class_agent_sub_verifier] Erfolg: run_sub_verifier erfolgreich beendet.")
+            return result
+        except Exception as e:
+            print(f"[class_agent_sub_verifier] FEHLER: run_sub_verifier hat die Aufgabe nicht erfüllt. Grund: {e}")
+            return {"valid": False, "error": str(e)}

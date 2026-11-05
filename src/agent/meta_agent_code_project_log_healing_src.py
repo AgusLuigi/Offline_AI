@@ -177,9 +177,9 @@ def run_sync(ollama_url: str = None, model: str = None, timeout_sec: int = None,
     """
     project_root = core_infra.get_project_root() if core_infra and hasattr(core_infra, "get_project_root") else Path(__file__).resolve().parents[2]
     logs_dir = project_root / "logs"
-    scratch_dir = project_root / "scratch"
+    temp_dir = project_root / "temp"
     tests_dir = project_root / "tests"
-    scratch_dir.mkdir(parents=True, exist_ok=True)
+    temp_dir.mkdir(parents=True, exist_ok=True)
     tests_dir.mkdir(parents=True, exist_ok=True)
     url = ollama_url or "http://localhost:11434"
     target_model = model or "hermes"

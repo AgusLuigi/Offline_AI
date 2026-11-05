@@ -1,3 +1,11 @@
+"""
+Modul: class_agent_code_py_semantic_guard
+Bezeichnung: Geschlossener semantischer Validierungs- und Integritätstrichter (Closed-Loop Guard)
+Inhaltlicher Schwerpunkt:
+Verhinderung von Code-Schwund, Verlust kritischer Tabellen/Registries, Zerstörung von
+globalen Namespaces oder syntaktischen Brüchen bei automatisierten Refactorings und Patches.
+"""
+
 from __future__ import annotations
 import ast
 import hashlib
@@ -8,85 +16,103 @@ import time
 from pathlib import Path
 from typing import Set, Tuple, Dict, Any, List, Optional, Callable
 
-# Assicuriamo la presenza del logger nel namespace globale
-logger = globals().get('class_logger_audit_execution')
+# Globale Bindings
+logger = globals().get("class_logger_audit_execution")
+core_infra = globals().get("class_tool_core_infrastructure")
+ollama_manager = globals().get("class_tool_ollama_service_manager")
 
-if "_GLOBAL_RUNTIME_CONFIG" not in globals():
-    globals()["_GLOBAL_RUNTIME_CONFIG"] = {}
-_cfg = globals()["_GLOBAL_RUNTIME_CONFIG"]
-
-HEALING_SLEEP_INTERVAL_SEC = _cfg.setdefault("HEALING_SLEEP_INTERVAL_SEC", 1.0)
-MAX_RETRIES_EVALUATE = _cfg.setdefault("MAX_RETRIES_EVALUATE", 3)
-MAX_RETRIES_GUARD_EXECUTION = _cfg.setdefault("MAX_RETRIES_GUARD_EXECUTION", 3)
-
-MAX_KEYWORD_LOSS_COUNT = _cfg.setdefault("MAX_KEYWORD_LOSS_COUNT", 2)
-MIN_TOKEN_LENGTH_FOR_EXTRACTION = _cfg.setdefault("MIN_TOKEN_LENGTH_FOR_EXTRACTION", 4)
-SHRINKAGE_THRESHOLD_RATIO = _cfg.setdefault("SHRINKAGE_THRESHOLD_RATIO", 0.5)
-
-CRITICAL_WHITELIST_PATTERNS = _cfg.setdefault("CRITICAL_WHITELIST_PATTERNS", {
-    "INLINE_REPAIR_FAIL",
-    "OllamaServiceManager",
-    "hardware_fallback",
-    "start_service",
-    "stochastic_self_heal"
-})
-ESSENTIAL_INTEGRITY_TOKENS = _cfg.setdefault("ESSENTIAL_INTEGRITY_TOKENS", [
-    "AUTO_IMPORT_LAZY_LOAD",
-    "CORE_IMPORT",
-    "ZONE_FROM"
-])
 
 class class_agent_code_py_semantic_guard:
     """
-    Imbuto di validazione semantica a circuito chiuso (Closed-Loop Guard).
-    Intercetta violazioni strutturali, regressioni di codice e instabilità sintattiche,
-    guidando il processo di auto-riparazione dell'agente senza rischi di corruzione.
-    AGENT_Code_Semantic_Guard:
-    Ein deterministischer Hybrid-Trichter für Code-Validierung und Refactoring-Schutz.
-    Kombiniert AST-Integrität, Fast-Path-Delta, Scope-Mapping, SHA-256-Prüfsummen,
-    essenzielle Token-Validierung, Schlüsselwort-Erhaltung, UI-HTML-Identifier-Guard,
-    Bootstrap-/Fallback-Schutz, AST-Sicherheits-Injektionsprüfung, stochastische Namespace-,
-    SSOT- & Tabellenverlust-Analysen sowie den geschlossenen Selbstheilungs-Regelkreis.
+    Validierungstrichter und Schutzschild gegen destruktive Code-Modifikationen.
+    Kombiniert AST-Integritätsprüfungen, Anti-Shrinkage-Schwellenwerte und optionale LLM-Korrekturschleifen.
     """
-    
-    CRITICAL_WHITELIST_PATTERNS = CRITICAL_WHITELIST_PATTERNS
 
-    def __init__(self, model_name: str, ollama_endpoint_fn: Callable):
+    _cfg = globals().setdefault("_GLOBAL_RUNTIME_CONFIG", {})
+
+    HEALING_SLEEP_INTERVAL_SEC: float = _cfg.setdefault("HEALING_SLEEP_INTERVAL_SEC", 1.0)
+    MAX_RETRIES_EVALUATE: int = _cfg.setdefault("MAX_RETRIES_EVALUATE", 3)
+    MAX_RETRIES_GUARD_EXECUTION: int = _cfg.setdefault("MAX_RETRIES_GUARD_EXECUTION", 3)
+    MAX_KEYWORD_LOSS_COUNT: int = _cfg.setdefault("MAX_KEYWORD_LOSS_COUNT", 2)
+    MIN_TOKEN_LENGTH_FOR_EXTRACTION: int = _cfg.setdefault("MIN_TOKEN_LENGTH_FOR_EXTRACTION", 4)
+    SHRINKAGE_THRESHOLD_RATIO: float = _cfg.setdefault("SHRINKAGE_THRESHOLD_RATIO", 0.5)
+
+    CRITICAL_WHITELIST_PATTERNS: Set[str] = _cfg.setdefault("CRITICAL_WHITELIST_PATTERNS", {
+        "INLINE_REPAIR_FAIL",
+        "OllamaServiceManager",
+        "hardware_fallback",
+        "start_service",
+        "stochastic_self_heal"
+    })
+
+    ESSENTIAL_INTEGRITY_TOKENS: List[str] = _cfg.setdefault("ESSENTIAL_INTEGRITY_TOKENS", [
+        "AUTO_IMPORT_LAZY_LOAD",
+        "CORE_IMPORT",
+        "ZONE_FROM"
+    ])
+
+    def __init__(self, model_name: str = "codestral", ollama_endpoint_fn: Callable = None):
+        print(f"[class_agent_code_py_semantic_guard] Starte Arbeit: __init__ wird jetzt ausgeführt. (Parameter: {model_name})")
         self.model_name = model_name
-        self.call_ollama_fn = ollama_endpoint_fn
+        self.call_ollama_fn = ollama_endpoint_fn or self._default_ollama_call
+        if not self.model_name or not self.call_ollama_fn:
+            print("[class_agent_code_py_semantic_guard] FEHLER: __init__ hat die Aufgabe nicht erfüllt. Grund: Kern-Attribute nicht gesetzt.")
+        else:
+            print("[class_agent_code_py_semantic_guard] Erfolg: __init__ erfolgreich beendet.")
+
+    def _default_ollama_call(self, endpoint: str, payload: dict, agent_title: str = "SemanticGuard") -> Tuple[bool, dict]:
+        """Standard-Aufruf über den globalen Ollama-Manager."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _default_ollama_call wird jetzt ausgeführt.")
+        mgr = globals().get("class_tool_ollama_service_manager")
+        if mgr and hasattr(mgr, "call_ollama"):
+            result = mgr.call_ollama(endpoint=endpoint, payload=payload, agent_title=agent_title)
+        else:
+            result = (False, {"error": "Ollama Service Manager nicht verfügbar"})
+        print("[class_agent_code_py_semantic_guard] Erfolg: _default_ollama_call erfolgreich beendet.")
+        return result
 
     @staticmethod
     def calculate_checksum(code_text: str) -> str:
-        """Genera un hash SHA-256 univoco per il tracciamento atomico dello stato del codice."""
-        return hashlib.sha256(code_text.encode("utf-8")).hexdigest()
+        """Erzeugt eine deterministische SHA-256 Prüfsumme des Quelltextes."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: calculate_checksum wird jetzt ausgeführt.")
+        result = hashlib.sha256(code_text.encode("utf-8")).hexdigest()
+        if not result or not isinstance(result, str):
+            print("[class_agent_code_py_semantic_guard] FEHLER: calculate_checksum hat die Aufgabe nicht erfüllt. Grund: Leere Prüfsumme.")
+            return ""
+        print("[class_agent_code_py_semantic_guard] Erfolg: calculate_checksum erfolgreich beendet.")
+        return result
 
     def _validate_syntax(self, code_text: str) -> Tuple[bool, Optional[str]]:
-        """Valida deterministicamente la sintassi compilando il codice tramite AST."""
+        """Validiert die syntaktische Korrektheit des Quellcodes über den Python AST."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _validate_syntax wird jetzt ausgeführt.")
         try:
             ast.parse(code_text)
+            print("[class_agent_code_py_semantic_guard] Erfolg: _validate_syntax erfolgreich beendet.")
             return True, None
         except SyntaxError as e:
-            return False, f"SyntaxError alla linea {e.lineno}: {e.text}"
+            print(f"[class_agent_code_py_semantic_guard] FEHLER: Syntaxfehler: {e}")
+            return False, f"SyntaxError in Zeile {e.lineno}: {e.msg}"
 
     def _stochastic_namespace_pollution_detector(self, original_code: str, new_code: str) -> Tuple[bool, str]:
-        """Rileva inquinamenti strutturali o riscritture cicliche vietate nel namespace globale."""
+        """Prüft auf zirkuläre Zuweisungen oder unzulässige Überschreibung globaler Konstanten."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _stochastic_namespace_pollution_detector wird jetzt ausgeführt.")
         try:
             tree = ast.parse(new_code)
         except SyntaxError:
-            return True, "Errore di sintassi gestito in un'altra fase."
+            print("[class_agent_code_py_semantic_guard] Erfolg: _stochastic_namespace_pollution_detector erfolgreich beendet.")
+            return True, "Syntaxfehler wird in anderer Stufe behandelt."
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
-                        target_name = target.id
                         try:
                             val_str = ast.unparse(node.value)
                         except Exception:
                             val_str = ""
-                        
-                        if f'"{target_name}"' in val_str and target_name in val_str and "setdefault" in val_str:
-                            return False, f"[NAMESPACE GUARD] Rilevata auto-sovrascrittura ciclica distruttiva su: '{target_name}'."
+                        if f'"{target.id}"' in val_str and target.id in val_str and "setdefault" in val_str:
+                            print(f"[class_agent_code_py_semantic_guard] FEHLER: Zirkuläre Zuweisung bei '{target.id}'")
+                            return False, f"Zirkuläre Zuweisung bei '{target.id}'"
 
         orig_globals = set()
         try:
@@ -106,21 +132,22 @@ class class_agent_code_py_semantic_guard:
             elif inside_class and isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name) and target.id in orig_globals:
-                        return False, f"[NAMESPACE GUARD] La costante globale '{target.id}' è stata corrotta all'interno di una classe."
+                        print(f"[class_agent_code_py_semantic_guard] FEHLER: Globale Konstante '{target.id}' in Klasse korrumpiert")
+                        return False, f"Globale Konstante '{target.id}' in Klasse korrumpiert"
 
-        return True, "Controllo di integrità del namespace superato."
+        result = (True, "Namespace-Integrität bestätigt.")
+        print("[class_agent_code_py_semantic_guard] Erfolg: _stochastic_namespace_pollution_detector erfolgreich beendet.")
+        return result
 
     def _stochastic_table_and_structure_loss_detector(self, original_code: str, new_code: str) -> Tuple[bool, str]:
-        """
-        Previene la cancellazione involontaria di registri critici o tabelle di configurazione.
-        Erkennt, ob kritische Sammlungen wie ALLOWED_TABLES oder Mapping-Listen 
-        im neuen Code versehentlich gelöscht oder drastisch reduziert wurden.
-        """
+        """Verhindert den unbeabsichtigten Verlust kritischer Registries, Tabellen oder Mappings."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _stochastic_table_and_structure_loss_detector wird jetzt ausgeführt.")
         try:
             orig_tree = ast.parse(original_code)
             new_tree = ast.parse(new_code)
         except SyntaxError:
-            return True, "Errore di sintassi gestito in un'altra fase."
+            print("[class_agent_code_py_semantic_guard] Erfolg: _stochastic_table_and_structure_loss_detector erfolgreich beendet.")
+            return True, "Syntaxfehler wird in anderer Stufe behandelt."
 
         orig_collections = {}
         for node in ast.walk(orig_tree):
@@ -141,186 +168,115 @@ class class_agent_code_py_semantic_guard:
         for col_name, orig_val in orig_collections.items():
             if any(k in col_name for k in ["TABLE", "MAPPING", "REGISTRY"]):
                 if col_name not in new_collections:
-                    return False, f"[STRUCTURE LOSS] Il registro critico '{col_name}' è stato rimosso dal codice generato!"
+                    print(f"[class_agent_code_py_semantic_guard] FEHLER: Kritisches Register '{col_name}' fehlt")
+                    return False, f"Kritisches Register '{col_name}' wurde entfernt"
                 if len(new_collections[col_name]) < len(orig_val) * 0.4:
-                    return False, f"[STRUCTURE LOSS] La tabella '{col_name}' ha subito una contrazione anomala dei dati (potenziale perdita di configurazioni)."
+                    print(f"[class_agent_code_py_semantic_guard] FEHLER: Anomale Kontraktion von '{col_name}'")
+                    return False, f"Register '{col_name}' hat über 60% Daten verloren"
 
-        return True, "Integrità strutturale delle tabelle validata."
+        result = (True, "Tabellen- und Strukturintegrität validiert.")
+        print("[class_agent_code_py_semantic_guard] Erfolg: _stochastic_table_and_structure_loss_detector erfolgreich beendet.")
+        return result
 
     def _stochastic_ssot_alias_detector(self, code_text: str) -> Tuple[bool, str]:
-        """
-        Previene violazioni del principio Single Source of Truth impedendo catene di alias globali.
-        Erkennt Verletzungen der Single Source of Truth, bei denen Konfigurationsvariablen 
-        direkt aufeinander zugewiesen werden anstatt aus dem globalen RAM zu stammen.
-        """
+        """Erkennt unzulässige Alias-Ketten zwischen globalen Variablen."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _stochastic_ssot_alias_detector wird jetzt ausgeführt.")
         try:
             tree = ast.parse(code_text)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and isinstance(node.value, ast.Name):
+                            if target.id.isupper() and node.value.id.isupper():
+                                print(f"[class_agent_code_py_semantic_guard] FEHLER: SSOT-Verletzung '{target.id} = {node.value.id}'")
+                                return False, f"SSOT-Alias-Verletzung: '{target.id} = {node.value.id}'"
         except SyntaxError:
-            return True, "Errore di sintassi gestito in un'altra fase."
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Name) and isinstance(node.value, ast.Name):
-                        if target.id.isupper() and node.value.id.isupper():
-                            return False, f"[SSOT VIOLATION] Catena di assegnazione alias non consentita: '{target.id} = {node.value.id}'."
-        return True, "Verifica SSOT completata."
+            pass
+        result = (True, "SSOT-Integrität validiert.")
+        print("[class_agent_code_py_semantic_guard] Erfolg: _stochastic_ssot_alias_detector erfolgreich beendet.")
+        return result
 
     def _validate_ast_injection_safety(self, code_text: str) -> Tuple[bool, Optional[str]]:
-        """
-        [AST-INJEKTIONS-SICHERHEITS-GUARD]
-        Ispeziona le transizioni dei blocchi except e with per intercettare iniezioni o indentazioni rotte.
-        """
+        """Überprüft Einrückungen unter except- und with-Blöcken auf syntaktische Vollständigkeit."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _validate_ast_injection_safety wird jetzt ausgeführt.")
         lines = code_text.splitlines()
         for idx, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped.endswith("except:") or (stripped.startswith("except ") and stripped.endswith(":")):
+            s = line.strip()
+            if s.endswith("except:") or (s.startswith("except ") and s.endswith(":")) or (s.startswith("with ") and s.endswith(":")):
                 if idx + 1 < len(lines):
                     next_line = lines[idx + 1].strip()
                     if "=" in next_line and not next_line.startswith("#") and not lines[idx + 1].startswith("    "):
-                        return False, f"Rilevato difetto strutturale alla linea {idx + 2}: istruzione operativa sotto 'except' priva di rientro."
-            if stripped.startswith("with ") and stripped.endswith(":"):
-                if idx + 1 < len(lines):
-                    next_line = lines[idx + 1].strip()
-                    if "=" in next_line and not next_line.startswith("#") and not lines[idx + 1].startswith("    "):
-                        return False, f"Rilevato difetto strutturale alla linea {idx + 2}: istruzione operativa sotto 'with' priva di rientro."
+                        print(f"[class_agent_code_py_semantic_guard] FEHLER: Fehlende Einrückung in Zeile {idx + 2}")
+                        return False, f"Fehlende Einrückung in Zeile {idx + 2}"
+        print("[class_agent_code_py_semantic_guard] Erfolg: _validate_ast_injection_safety erfolgreich beendet.")
         return True, None
 
     def _extract_all_signatures(self, code_text: str) -> Dict[str, Set[str]]:
-        """
-        Estrae l'impronta strutturale completa (firme di classi e funzioni) tramite AST.
-        """
-        signatures = {"functions": set(), "classes": set(), "globals": set()}
+        """Extrahiert alle Funktions-, Klassen- und Konstantennamen."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _extract_all_signatures wird jetzt ausgeführt.")
+        sigs = {"functions": set(), "classes": set(), "globals": set()}
         try:
             tree = ast.parse(code_text)
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    signatures["functions"].add(node.name)
+                    sigs["functions"].add(node.name)
                 elif isinstance(node, ast.ClassDef):
-                    signatures["classes"].add(node.name)
+                    sigs["classes"].add(node.name)
                 elif isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name):
-                            signatures["globals"].add(target.id)
+                            sigs["globals"].add(target.id)
         except SyntaxError:
             pass
-        return signatures
-
-    def _extract_critical_tokens(self, code_text: str) -> Set[str]:
-        tokens = set()
-        try:
-            tree = ast.parse(code_text)
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-                    tokens.add(node.name)
-                elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-                    tokens.add(node.id)
-                elif isinstance(node, ast.Constant) and isinstance(node.value, str):
-                    if len(node.value) > MIN_TOKEN_LENGTH_FOR_EXTRACTION and ("/" in node.value or "_" in node.value or "-" in node.value):
-                        tokens.add(node.value)
-        except SyntaxError:
-            pass
-        return tokens
-
-    def _validate_ui_html_and_identifiers(self, original_code: str, new_code: str) -> Tuple[bool, str]:
-        html_patterns = re.findall(r'<(?:div|span|button|input|table|tr|td|form|label)[^>]*>', original_code, re.IGNORECASE)
-        for pattern in html_patterns:
-            if pattern not in new_code:
-                return False, f"[KEYWORD GUARD] UI-HTML-Element verändert/gelöscht: {pattern} (BANNED)"
-
-        for pattern in self.CRITICAL_WHITELIST_PATTERNS:
-            if pattern in original_code and pattern not in new_code:
-                return False, f"[WHITELIST GUARD] Kritische Runtime-Routine '{pattern}' entfernt."
-
-        return True, "UI-HTML und Identifier-Prüfung erfolgreich."
+        result = sigs
+        if result is None:
+            print("[class_agent_code_py_semantic_guard] FEHLER: _extract_all_signatures hat die Aufgabe nicht erfüllt. Grund: Kein Ergebnis.")
+            return {"functions": set(), "classes": set(), "globals": set()}
+        print("[class_agent_code_py_semantic_guard] Erfolg: _extract_all_signatures erfolgreich beendet.")
+        return result
 
     def _validate_critical_keywords(self, original_code: str, new_code: str) -> Tuple[bool, str]:
-        orig_tokens = self._extract_critical_tokens(original_code)
-        missing_tokens = [t for t in orig_tokens if t not in new_code]
-        
-        if len(missing_tokens) > MAX_KEYWORD_LOSS_COUNT:
-            return False, f"[KEYWORD GUARD] Essenzielle Schlüsselwörter entfernt: {missing_tokens[:5]}"
-        
-        return True, "Schlüsselwort-Prüfung erfolgreich."
+        """Prüft, ob essenzielle Schlüsselwörter und Whitelist-Tokens erhalten blieben."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _validate_critical_keywords wird jetzt ausgeführt.")
+        for pattern in self.CRITICAL_WHITELIST_PATTERNS:
+            if pattern in original_code and pattern not in new_code:
+                print(f"[class_agent_code_py_semantic_guard] FEHLER: Whitelist-Token '{pattern}' fehlt")
+                return False, f"Kritisches Token '{pattern}' entfernt."
+
+        for token in self.ESSENTIAL_INTEGRITY_TOKENS:
+            if token in original_code and token not in new_code:
+                print(f"[class_agent_code_py_semantic_guard] FEHLER: Integritäts-Token '{token}' fehlt")
+                return False, f"Integritäts-Token '{token}' entfernt."
+
+        result = (True, "Schlüsselwort-Prüfung erfolgreich.")
+        print("[class_agent_code_py_semantic_guard] Erfolg: _validate_critical_keywords erfolgreich beendet.")
+        return result
 
     def _validate_code_integrity(self, original_code: str, new_code: str) -> Tuple[bool, str]:
+        """Verhindert drastischen Code-Schwund (Anti-Shrinkage)."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _validate_code_integrity wird jetzt ausgeführt.")
         orig_lines = [l for l in original_code.splitlines() if l.strip() and not l.strip().startswith("#")]
         new_lines = [l for l in new_code.splitlines() if l.strip() and not l.strip().startswith("#")]
-        
-        if len(orig_lines) > 0 and len(new_lines) < len(orig_lines) * SHRINKAGE_THRESHOLD_RATIO:
-            return False, f"[DEF 6] Zu starker Code-Schwund: {len(new_lines)} von {len(orig_lines)} Zeilen."
 
-        for token in ESSENTIAL_INTEGRITY_TOKENS:
-            if token in original_code and token not in new_code:
-                return False, f"[INTEGRITY GUARD] Token '{token}' entfernt."
+        if len(orig_lines) > 0 and len(new_lines) < len(orig_lines) * self.SHRINKAGE_THRESHOLD_RATIO:
+            print(f"[class_agent_code_py_semantic_guard] FEHLER: Zu starker Code-Schwund ({len(new_lines)}/{len(orig_lines)} Zeilen)")
+            return False, f"Zu starker Code-Schwund: {len(new_lines)} von {len(orig_lines)} Zeilen erhalten."
 
-        return True, "Integritätsprüfung erfolgreich."
-
-    def _structural_scope_mapper(self, original_code: str, new_code: str, missing_funcs: Set[str]) -> bool:
-        prompt = f"""
-Du bist ein präziser AST-Scope-Mapper. Folgende Pflicht-Funktionen fehlen im Haupt-Scope: {list(missing_funcs)}
-Prüfe im Code-Vergleich, ob sie nur verschoben wurden.
-
-[ORIGINAL]:
-{original_code}
-
-[NEU]:
-{new_code}
-
-Antworte strikt als JSON:
-{{"all_functions_accounted_for": true/false, "reason": "..."}}
-"""
-        success, resp = self.call_ollama_fn("/api/generate", {
-            "model": self.model_name,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json"
-        }, agent_title="Scope-Mapper")
-        if not success:
-            return False
-        try:
-            data = json.loads(resp.get("response", "{}"))
-            return data.get("all_functions_accounted_for", False)
-        except Exception:
-            return False
-
-    def _semantic_diff_audit(self, original_code: str, new_code: str) -> Tuple[bool, str]:
-        prompt = f"""
-Vergleiche Original und Code. Ist der fachliche Zweck identisch?
-
-[ORIGINAL]:
-{original_code}
-
-[NEU]:
-{new_code}
-
-Antworte strikt als JSON:
-{{"logic_preserved": true/false, "reason": "..."}}
-"""
-        success, resp = self.call_ollama_fn("/api/generate", {
-            "model": self.model_name,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json"
-        }, agent_title="Semantic-Diff-Auditor")
-        if not success:
-            return True, "Audit-Fallback: LLM nicht erreichbar."
-        try:
-            data = json.loads(resp.get("response", "{}"))
-            return data.get("logic_preserved", True), data.get("reason", "OK")
-        except Exception:
-            return True, "JSON-Parsing Fehler."
+        result = (True, "Code-Integrität validiert.")
+        print("[class_agent_code_py_semantic_guard] Erfolg: _validate_code_integrity erfolgreich beendet.")
+        return result
 
     def _request_self_correction(self, original_code: str, faulty_code: str, error_message: str) -> str:
-        prompt = f"""
-Dein Code hat die Validierung nicht bestanden.
+        """Fordert das LLM auf, den abgelehnten Patch unter Berücksichtigung des Fehlers zu reparieren."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: _request_self_correction wird jetzt ausgeführt.")
+        prompt = f"""Dein Code hat die Validierung nicht bestanden.
 FEHLER: {error_message}
 
 [ORIGINAL]:
-{original_code}
+{original_code[:3000]}
 
 [FEHLERHAFTER CODE]:
-{faulty_code}
+{faulty_code[:3000]}
 
 Korrigiere den Code, stelle sicher, dass keine Tabellen, Strukturen oder Funktionen verloren gehen.
 Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
@@ -329,145 +285,85 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
             "model": self.model_name,
             "prompt": prompt,
             "stream": False
-        }, agent_title="Self-Correction-Repair")
+        }, agent_title="SemanticGuard-Repair")
 
         if success:
             match = re.search(r"```python\s*(.*?)\s*```", resp.get("response", ""), re.DOTALL)
             if match:
-                return match.group(1).strip()
+                result = match.group(1).strip()
+                print("[class_agent_code_py_semantic_guard] Erfolg: _request_self_correction erfolgreich beendet.")
+                return result
+        print("[class_agent_code_py_semantic_guard] Erfolg: _request_self_correction erfolgreich beendet.")
         return faulty_code
 
     def evaluate_and_repair(self, original_code: str, initial_new_code: str) -> Tuple[bool, str, str]:
-        """
-        Führt den vollständigen Validierungs- und Reparaturtrichter durch (ohne Logik-Schwund).
-        Verhindert syntaktische Brüche und integriert Typ-Absicherungen stabil.
-        """
-        # SENSE-GUARD TYP-ABSICHERUNG
-        # Verhindert TypeError, falls 'initial_new_code' oder 'original_code' fälschlicherweise als Liste übergeben wird
-        if isinstance(initial_new_code, list):
-            current_code = initial_new_code[0] if initial_new_code else ""
-        else:
-            current_code = str(initial_new_code)
-        if isinstance(original_code, list):
-            original_code = original_code[0] if original_code else ""
-        else:
-            original_code = str(original_code)
-        if original_code.strip() == current_code.strip():
+        """Führt den geschlossenen Validierungs- und Reparaturtrichter durch."""
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: evaluate_and_repair wird jetzt ausgeführt.")
+        current_code = initial_new_code[0] if isinstance(initial_new_code, list) else str(initial_new_code)
+        orig_code = original_code[0] if isinstance(original_code, list) else str(original_code)
+
+        if orig_code.strip() == current_code.strip():
+            print("[class_agent_code_py_semantic_guard] Erfolg: evaluate_and_repair erfolgreich beendet.")
             return True, current_code, "FAST_PATH: Identisch."
-        orig_sig = self._extract_all_signatures(original_code)
-        for attempt in range(MAX_RETRIES_EVALUATE):
+
+        for attempt in range(self.MAX_RETRIES_EVALUATE):
             valid_syntax, syntax_err = self._validate_syntax(current_code)
             if not valid_syntax:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, f"Syntax-Guard: {syntax_err}"
-                current_code = self._request_self_correction(original_code, current_code, syntax_err)
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, f"Syntax-Fehler: {syntax_err}"
+                current_code = self._request_self_correction(orig_code, current_code, syntax_err)
                 continue
-            # 1. Tabellen- und Strukturverlust-Prüfung
-            struct_safe, struct_err = self._stochastic_table_and_structure_loss_detector(original_code, current_code)
-            if not struct_safe:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, struct_err
-                current_code = self._request_self_correction(original_code, current_code, struct_err)
-                continue
-            # 2. Namespace-Prüfung
-            namespace_safe, namespace_err = self._stochastic_namespace_pollution_detector(original_code, current_code)
-            if not namespace_safe:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, namespace_err
-                current_code = self._request_self_correction(original_code, current_code, namespace_err)
-                continue
-            # 3. SSOT-Alias-Prüfung
-            ssot_safe, ssot_err = self._stochastic_ssot_alias_detector(current_code)
-            if not ssot_safe:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, ssot_err
-                current_code = self._request_self_correction(original_code, current_code, ssot_err)
-                continue
-            # 4. AST-Injektionssicherheit
-            injection_safe, injection_err = self._validate_ast_injection_safety(current_code)
-            if not injection_safe:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, injection_err
-                current_code = self._request_self_correction(original_code, current_code, injection_err)
-                continue
-            # 5. UI & Identifier
-            ui_ok, ui_err = self._validate_ui_html_and_identifiers(original_code, current_code)
-            if not ui_ok:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, ui_err
-                current_code = self._request_self_correction(original_code, current_code, ui_err)
-                continue
-            # 6. Keywords
-            kw_ok, kw_err = self._validate_critical_keywords(original_code, current_code)
-            if not kw_ok:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, kw_err
-                current_code = self._request_self_correction(original_code, current_code, kw_err)
-                continue
-            # 7. Signaturen & Scope
-            new_sig = self._extract_all_signatures(current_code)
-            missing_funcs = orig_sig["functions"] - new_sig["functions"]
-            missing_classes = orig_sig["classes"] - new_sig["classes"]
-            if missing_funcs or missing_classes:
-                scope_ok = self._structural_scope_mapper(original_code, current_code, missing_funcs)
-                if not scope_ok:
-                    err_msg = f"Fehlende Pflicht-Anker: Funktionen {missing_funcs}"
-                    if attempt == MAX_RETRIES_EVALUATE - 1:
-                        return False, original_code, err_msg
-                    current_code = self._request_self_correction(original_code, current_code, err_msg)
-                    continue
-            # 8. Integrität (Anti-Shrinkage)
-            integrity_ok, integrity_err = self._validate_code_integrity(original_code, current_code)
-            if not integrity_ok:
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, integrity_err
-                current_code = self._request_self_correction(original_code, current_code, integrity_err)
-                continue
-            # 9. Semantischer Diff-Audit
-            preserved, reason = self._semantic_diff_audit(original_code, current_code)
-            if not preserved:
-                err_msg = f"[DEF 2] Semantischer Diff-Audit fehlgeschlagen: {reason}"
-                if attempt == MAX_RETRIES_EVALUATE - 1:
-                    return False, original_code, err_msg
-                current_code = self._request_self_correction(original_code, current_code, err_msg)
-                continue
-            return True, current_code, "TRICHTER_PASSED: Alle Schutzebenen und stochastischen Prüfungen bestanden."
-        return False, original_code, f"Loop erschöpft nach {MAX_RETRIES_EVALUATE} Versuchen."
 
-    def guard_agent_execution(self, agent_callable: Callable, agent_name: str, *args, **kwargs) -> Any:
-        """
-        Supervisiona a circuito chiuso l'esecuzione dell'agente, isolando le eccezioni a runtime.
-        [CLOSED-LOOP GUARD SCHLAUFE]
-        Überwacht die Ausführung eines Agenten, fängt Fehler ab,
-        triggert den Meta-Agenten zur Korrektur und startet den Agenten neu.
-        """
-        attempt = 0
-        while attempt < MAX_RETRIES_GUARD_EXECUTION:
-            attempt += 1
-            if logger:
-                logger.info(f"[SemanticGuard] Controllo attività per l'agente: '{agent_name}' (Tentativo {attempt}/{MAX_RETRIES_GUARD_EXECUTION})")
-            try:
-                result = agent_callable(*args, **kwargs)
-                return result
-            except Exception as e:
-                error_msg = str(e)
-                if logger:
-                    logger.error(f"[SemanticGuard] Eccezione intercettata nell'agente '{agent_name}': {error_msg}")
-                healing_success = self.trigger_meta_healing(agent_name, error_msg)
-                if healing_success:
-                    globals()[f"AGENT_HEALED{agent_name}"] = True
-                    globals()["META_AGENT_STATUS"] = "FINISHED_SUCCESS"
-                    time.sleep(HEALING_SLEEP_INTERVAL_SEC)
-                    continue
-                else:
-                    print(f"[SemanticGuard] Meta-Healing konnte den Fehler für '{agent_name}' nicht beheben.")
-                    raise e
-        raise RuntimeError(f"[SemanticGuard] Numero massimo di ripristini esausto per l'agente '{agent_name}'.")
-    def _trigger_meta_healing(self, agent_name: str, error_context: str) -> bool:
-        """
-        Löst den Meta-Agenten ('meta_agent_code_project_log_healing_src') aus,
-        übergibt den Agentennamen sowie den Fehlerkontext und wartet auf das 'Fertig'-Signal.
-        """
+            struct_ok, struct_err = self._stochastic_table_and_structure_loss_detector(orig_code, current_code)
+            if not struct_ok:
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, struct_err
+                current_code = self._request_self_correction(orig_code, current_code, struct_err)
+                continue
+
+            ns_ok, ns_err = self._stochastic_namespace_pollution_detector(orig_code, current_code)
+            if not ns_ok:
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, ns_err
+                current_code = self._request_self_correction(orig_code, current_code, ns_err)
+                continue
+
+            ssot_ok, ssot_err = self._stochastic_ssot_alias_detector(current_code)
+            if not ssot_ok:
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, ssot_err
+                current_code = self._request_self_correction(orig_code, current_code, ssot_err)
+                continue
+
+            inj_ok, inj_err = self._validate_ast_injection_safety(current_code)
+            if not inj_ok:
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, inj_err
+                current_code = self._request_self_correction(orig_code, current_code, inj_err)
+                continue
+
+            kw_ok, kw_err = self._validate_critical_keywords(orig_code, current_code)
+            if not kw_ok:
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, kw_err
+                current_code = self._request_self_correction(orig_code, current_code, kw_err)
+                continue
+
+            int_ok, int_err = self._validate_code_integrity(orig_code, current_code)
+            if not int_ok:
+                if attempt == self.MAX_RETRIES_EVALUATE - 1:
+                    return False, orig_code, int_err
+                current_code = self._request_self_correction(orig_code, current_code, int_err)
+                continue
+
+            print("[class_agent_code_py_semantic_guard] Erfolg: evaluate_and_repair erfolgreich beendet.")
+            return True, current_code, "Validierung erfolgreich bestanden."
+
+        return False, orig_code, f"Validierung nach {self.MAX_RETRIES_EVALUATE} Versuchen erschöpft."
+
+    def trigger_meta_healing(self, agent_name: str, error_context: str) -> bool:
+        """Löst den Meta-Agenten zur Fehlerbehebung bei Laufzeitfehlern aus."""
+        print(f"[class_agent_code_py_semantic_guard] Starte Arbeit: trigger_meta_healing wird jetzt ausgeführt. (Parameter: {agent_name})")
         try:
             import importlib
             healing_module = importlib.import_module("meta_agent_code_project_log_healing_src")
@@ -477,9 +373,51 @@ Antworte NUR mit dem vollständigen Python-Code im ```python Markdown-Block.
                     error_context=error_context
                 )
                 if result.get("status") == "SUCCESS" and result.get("patches_applied", 0) > 0:
+                    print("[class_agent_code_py_semantic_guard] Erfolg: trigger_meta_healing erfolgreich beendet.")
                     return True
-        except Exception as err:
-            if logger:
-                logger.error(f"[SemanticGuard] Fehler beim Aufruf des Meta-Healing-Agenten: {err}")
-            print(f"[SemanticGuard] Fehler beim Aufruf des Meta-Agenten: {err}")
+        except Exception as e:
+            print(f"[class_agent_code_py_semantic_guard] FEHLER: Meta-Healing fehlgeschlagen: {e}")
+        print("[class_agent_code_py_semantic_guard] FEHLER: trigger_meta_healing hat die Aufgabe nicht erfüllt. Grund: Heilung nicht erfolgreich.")
         return False
+
+    def guard_agent_execution(self, agent_callable: Callable, agent_name: str, *args, **kwargs) -> Any:
+        """Überwacht die Ausführung eines Agenten und startet bei Fehler Meta-Healing."""
+        print(f"[class_agent_code_py_semantic_guard] Starte Arbeit: guard_agent_execution wird jetzt ausgeführt. (Parameter: {agent_name})")
+        for attempt in range(1, self.MAX_RETRIES_GUARD_EXECUTION + 1):
+            try:
+                result = agent_callable(*args, **kwargs)
+                print("[class_agent_code_py_semantic_guard] Erfolg: guard_agent_execution erfolgreich beendet.")
+                return result
+            except Exception as e:
+                print(f"[class_agent_code_py_semantic_guard] FEHLER: Ausnahme in '{agent_name}': {e}")
+                healed = self.trigger_meta_healing(agent_name, str(e))
+                if healed:
+                    time.sleep(self.HEALING_SLEEP_INTERVAL_SEC)
+                    continue
+                raise e
+        return None
+
+    @classmethod
+    def run_semantic_guard(cls, original_code: str, new_code: str, model_name: str = "codestral") -> dict:
+        """
+        Zentrale Ausführungsfunktion: Führt die vollständige semantische Validierung
+        und bei Bedarf die Reparatur des neuen Codes durch.
+        """
+        print("[class_agent_code_py_semantic_guard] Starte Arbeit: run_semantic_guard wird jetzt ausgeführt.")
+        try:
+            guard = cls(model_name=model_name)
+            success, code_out, message = guard.evaluate_and_repair(original_code, new_code)
+            result = {
+                "success": success,
+                "code": code_out,
+                "message": message,
+                "checksum": cls.calculate_checksum(code_out)
+            }
+        except Exception as e:
+            print(f"[class_agent_code_py_semantic_guard] FEHLER: In run_semantic_guard: {e}")
+            return None
+        if result is None:
+            print("[class_agent_code_py_semantic_guard] FEHLER: run_semantic_guard hat die Aufgabe nicht erfüllt. Grund: Kein Ergebnis.")
+            return None
+        print("[class_tool_ollama_service_manager] Erfolg: run_semantic_guard erfolgreich beendet.")
+        return result

@@ -4,7 +4,14 @@ Testet alle Konventionen, Sonderzeichen, Groß-/Kleinschreibung, GGUF-Dateinamen
 Namespaces und Tags, um HTTP 400 Fehler vollständig auszuschließen.
 """
 
+import sys
 import unittest
+from pathlib import Path
+
+_project_root = Path(__file__).resolve().parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
 from src.Install.ollama_model_utils import (
     is_valid_ollama_model_name,
     sanitize_ollama_model_name,

@@ -20,6 +20,7 @@ spinner_tool = globals().get('class_tool_resource_aware_spinner')
 sql_reader = globals().get('class_tool_sql_reader')
 sub_verifier = globals().get('class_agent_sub_verifier')
 evolve_loop = globals().get('class_container_evolve_loop_test')
+tool_evolution_manager = globals().get('class_self_tool_evolution_manager')
 
 # Initialisierung des zentralen Loggers
 if logger:
@@ -44,6 +45,7 @@ globals()['MetaCodeBase'] = MetaCodeBase
 globals()['MetaCoderSQLPipeline'] = MetaCoderSQLPipeline
 globals()['boot_latest_metacoder'] = boot_latest_metacoder
 globals()['query_meta_coder_sql'] = query_meta_coder_sql
+globals()['class_self_tool_evolution_manager'] = globals().get('class_self_tool_evolution_manager') or tool_evolution_manager
 
 
 if __name__ == "__main__":
@@ -96,10 +98,20 @@ if __name__ == "__main__":
 
                 if indexed_context.get("cache_hit"):
                     cached_data = indexed_context.get("cached_check", {})
-                    print(f"\n{AGENT_NAME} [Domain: SQL-Cache | DB aktiv | Node {last_query_node_id}]:")
-                    print(cached_data.get("response"))
-                    print("-" * 70)
-                    continue
+                    cached_resp = cached_data.get("response")
+                    cached_node = cached_data.get("node_id")
+
+                    # Prüfung auf Weiterentwicklung: Wurde in library_registry neues Wissen verankert?
+                    has_evolved = pipeline.check_library_evolution_since_node(cached_node) if hasattr(pipeline, "check_library_evolution_since_node") else False
+
+                    if not has_evolved and cached_resp and cached_resp.strip() and cached_resp != "PROCESSING":
+                        print(f"\n{AGENT_NAME} [Domain: SQL-Cache | DB aktiv | Node {last_query_node_id}]:")
+                        print(cached_resp)
+                        print("-" * 70)
+                        continue
+                    elif has_evolved:
+                        if logger:
+                            logger.info(f"[EVOLUTION] Neues Wissen in 'library_registry' nach Node {cached_node} erkannt - Antwort wird aktualisiert.")
             except Exception as e:
                 if logger:
                     logger.warning(f"[GEGENKONTROLLE FEHLER] index_chat_user_query fehlgeschlagen: {e}")
@@ -107,22 +119,37 @@ if __name__ == "__main__":
                 log_table = None
                 effective_input = user_input
 
-            # Stufe 2: LLM-Inferenz oder Pipeline mit automatischer Spinner-Koppelung (run_agent)
+            # Stufe 2: Aufgaben-Klassifizierung (Job im Projektverzeichnis vs. Frage-Antwort / Code)
+            action_terms = ["erstelle", "schreibe datei", "repariere", "korrigiere", "fuehre aus", "führe aus", "analysiere projekt", "fixe", "implementiere"]
+            is_job = any(term in user_input.lower() for term in action_terms) and not any(user_input.lower().startswith(q) for q in ["was", "wie", "welche", "warum", "kannst du erklaeren", "kannst du erklären", "zeige"])
+
+            if is_job:
+                if logger:
+                    logger.info(f"[PROJEKT-JOB] Fuehre Aufgabe im Projektverzeichnis aus: {effective_input[:80]}")
+                job_result = pipeline.run_pipeline(effective_input)
+                res_msg = job_result.get("message") or job_result.get("result") or job_result.get("error")
+                print(f"\n{AGENT_NAME} [Status: {job_result.get('status')} | Projekt-Ausfuehrung]:\n{res_msg}\n" + "-" * 70)
+                if last_query_node_id and res_msg:
+                    pipeline.seal_query_cache(last_query_node_id, str(res_msg))
+                continue
+
+            # Stufe 3: LLM-Inferenz oder Pipeline mit automatischer Spinner-Koppelung (run_agent)
             if pipeline.client:
                 domain = pipeline._detect_domain(effective_input)
                 db_tips = pipeline._get_relevant_tips(effective_input)
                 user_blueprint = pipeline.initialize_blueprint_system(effective_input)
 
-                system_prompt = f"""
-You are an autonomous AI Agent with an active SQLite Long-Term Memory (Knowledge Agent Routing Tree).
-Current Detected Domain: {domain}
-Blueprint Status: {user_blueprint['status']}
+                system_prompt = f"""Du bist der Offline-AI Agent für Python-Entwicklung und Software-Architektur.
+Aktuelle Domäne: {domain}
 
-Retrieved Knowledge & Past Patterns from SQLite DB:
+Wissensfundament & Richtlinien aus der SQLite-Bibliothek (library_registry):
 {db_tips}
 
-Your Task: Answer the user's request in German, keeping any code or technical keywords strictly in English. 
-Acknowledge and make use of the SQLite database context if relevant.
+Regeln für deine Antwort:
+1. Keine Begrüßungsfloskeln, kein Smalltalk und keine Meta-Selbsterklärungen (z. B. nicht sagen 'Ich bin ein Agent...'). Antworte direkt, präzise und sachbezogen.
+2. Wenn nach Code gefragt wird, liefere den vollständigen, sauberen Code als Markdown-Block (```python ... ```).
+3. Beziehe relevante Funktionen oder Konzepte aus der SQLite-Bibliothek ein, um die Frage technisch fundiert zu beantworten.
+4. Alle Code-Elemente (Klassen, Funktionen, Variablen, Parameter, Dateinamen) strikt in englischer Sprache benennen; Erklärungen, Antworten und Dokumentationen dynamisch in der Sprache der aktuellen Benutzereingabe (Spiegelung der Nutzersprache) verfassen.
 """
                 chat_messages = [
                     {"role": "system", "content": system_prompt},
@@ -135,23 +162,41 @@ Acknowledge and make use of the SQLite database context if relevant.
                     agent_title=f"{AGENT_NAME}-Chat",
                     model=pipeline.model_name,
                     ollama_host=pipeline.ollama_host
-                ) if ollama_manager else {"content": ""}
+                ) if ollama_manager else {"status": "FAILED", "content": ""}
 
-                answer = chat_res.get("content", "")
+                answer = chat_res.get("content", "") if isinstance(chat_res, dict) else ""
 
-                # Cache versiegeln
-                if last_query_node_id:
+                # Autonomer Fallback auf SQLite Knowledge Tree wenn LLM leer oder Modell fehlt
+                if not answer or not answer.strip() or (isinstance(chat_res, dict) and chat_res.get("status") == "FAILED"):
+                    err_msg = chat_res.get("error", "LLM lieferte keine Antwort") if isinstance(chat_res, dict) else "Kein Inferenz-Ergebnis"
+                    answer = pipeline.generate_knowledge_fallback_response(
+                        effective_input,
+                        domain=domain,
+                        db_tips=db_tips,
+                        error_info=err_msg
+                    )
+
+                # Cache nur mit gehaltvoller Antwort versiegeln
+                if last_query_node_id and answer and answer.strip():
                     pipeline.seal_query_cache(last_query_node_id, answer)
                 
-                # Auto-Persistence
-                if "verewige" in user_input.lower() or "speichere in sql" in user_input.lower():
-                    pipeline.persist_new_capability(
-                        capability_name="Autonomous_Capability",
-                        code_snippet=answer[:PROMPT_MAX_LEN],
+                # Auto-Persistence & 4-Stufen Self-Tool-Evolution
+                if any(trigger in user_input.lower() for trigger in ["verewige", "speichere in sql", "erstelle fähigkeit", "erstelle fehigkeit", "erstelle tool", "neue fähigkeit", "neue fehigkeit", "lerne"]):
+                    extracted_code = ""
+                    if sub_verifier and hasattr(sub_verifier, "extract_code_blocks"):
+                        blocks = sub_verifier.extract_code_blocks(answer) or sub_verifier.extract_code_blocks(user_input)
+                        if blocks:
+                            extracted_code = blocks[0] if isinstance(blocks, list) else blocks
+                    if not extracted_code:
+                        extracted_code = answer
+
+                    tool_title = f"Capability_{datetime.datetime.now().strftime('%H%M%S')}"
+                    evo_res = pipeline.evolve_and_register_tool(
+                        tool_name=tool_title,
+                        code_snippet=extracted_code,
                         description=user_input
                     )
-                    if logger:
-                        logger.info("\n[SYSTEM-INFO] Die Fähigkeit wurde physisch in die SQLite-Tabelle 'library_registry' geschrieben!")
+                    print(f"--> [TOOL-EVOLUTION] Status: {evo_res.get('status')} | Im RAM aktiviert: {evo_res.get('injected_functions')}")
 
                 elif "sql" in user_input.lower() or "fehler" in user_input.lower() or "code" in user_input.lower():
                     pipeline.log_save_query_run_to_db_timestamp(

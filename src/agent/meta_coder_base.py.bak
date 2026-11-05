@@ -12,7 +12,7 @@ class MetaCodeBase:
         self.model_name = model_name
         self.client = Client(host=ollama_host)
         self.base_dir = Path(".")
-        self.history_dir = self.base_dir / "src" / "agent" / "metacoder_history"
+        self.history_dir = self.base_dir / "temp" / "meta_coder_history"
         self.history_dir.mkdir(parents=True, exist_ok=True)
         
         # SQLite Wissensdatenbank-Setup im vorgegebenen Ordner: knowledge/meta_coder_base/
@@ -212,7 +212,7 @@ Mandatory Rules:
 
 # --- AUTOMATISCHER START-CHECK ---
 def boot_latest_metacoder():
-    history_dir = Path("src/agent/metacoder_history")
+    history_dir = Path("temp/meta_coder_history")
     history_dir.mkdir(parents=True, exist_ok=True)
     
     versions = sorted(history_dir.glob("MetaCodeBase_*.py"))

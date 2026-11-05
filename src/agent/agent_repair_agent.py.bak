@@ -1508,19 +1508,19 @@ class SubprocessValidator:
     def validate_content_in_tempfile(content: str, project_root: Path,
                                      timeout: int = None) -> Tuple[bool, str]:
         """
-        Schreibt content in eine temporäre Datei im scratch/-Ordner und führt
+        Schreibt content in eine temporäre Datei im temp/-Ordner und führt
         einen Syntax-Check via Subprocess durch.
         """
         import tempfile
         if timeout is None:
             timeout = SANDBOX_TIMEOUT_SEC
-        scratch_dir = project_root / "scratch"
-        scratch_dir.mkdir(parents=True, exist_ok=True)
+        temp_dir = project_root / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
         tmp_path = None
         try:
             with tempfile.NamedTemporaryFile(
                 suffix=".py", mode="w", encoding="utf-8",
-                dir=str(scratch_dir), delete=False
+                dir=str(temp_dir), delete=False
             ) as f:
                 f.write(content)
                 tmp_path = Path(f.name)

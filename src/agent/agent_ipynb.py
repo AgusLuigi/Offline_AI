@@ -59,7 +59,7 @@ def run_sync(ollama_url: str = None, model: str = None, timeout_sec: int = None,
     auf die globalen Standardwerte (Defaults) am Skriptanfang zurück.
     """
     effective_ollama_url = ollama_url or OLLAMA_URL
-    effective_default_model = model or MODEL
+    effective_model = model or MODEL
     effective_timeout = timeout_sec if timeout_sec is not None else TIMEOUT_OLLAMA_SEC
     effective_spinner_interval = spinner_interval if spinner_interval is not None else SPINNER_INTERVAL
 
@@ -100,7 +100,7 @@ def run_sync(ollama_url: str = None, model: str = None, timeout_sec: int = None,
 
     project_map = notebook_engine.generate_project_map(root) if notebook_engine else ""
     hw = notebook_engine.get_hardware_information() if notebook_engine else {"GPU_TOTAL_VRAM": 0, "CORE": 4, "PLATFORM": platform.system(), "GPU_DETAILS": [], "CPU_FLAGS": []}
-    hw_hash = notebook_engine.compute_hw_hash(hw) if notebook_engine else "default_hw_hash"
+    hw_hash = notebook_engine.compute_hw_hash(hw) if notebook_engine else "hw_hash"
     steps_performed.append(f"Hardware-Analyse aktiv ({hw.get('GPU_TOTAL_VRAM', 0)} GB VRAM, Hash: {hw_hash})")
     
     if logger:
@@ -116,9 +116,9 @@ def run_sync(ollama_url: str = None, model: str = None, timeout_sec: int = None,
 
     # 3. Aktives LLM über den zentralen Ollama Service Manager auflösen
     model_name = ollama_manager.get_active_model(
-        fallback_default=effective_default_model,
+        fallback_default=effective_model,
         ollama_host=effective_ollama_url
-    ) if ollama_manager else effective_default_model
+    ) if ollama_manager else effective_model
 
     steps_performed.append(f"LLM aktiviert: '{model_name}'")
     log_action(
@@ -394,14 +394,14 @@ def run_sync(ollama_url: str = None, model: str = None, timeout_sec: int = None,
     for i, step in enumerate(steps_performed[1:], 2):
         print(f"  {i}. {step}")
     print("\n[2] METRIKEN & QUALITÄTSKONTROLLE:")
-    print(f" • Ziel-Notebook:              {target_ipynb.name}")
-    print(f" • Aktives LLM:                {model_name}")
-    print(f" • Analysierte Code-Zellen:    {total_cells_checked}")
-    print(f" • Dokumentations-Ergänzungen: {reverse_engineered_count} (Investigativ erstellt)")
-    print(f" • Bloated Outputs:            {bloated_outputs_count} (Zellen mit hoher Output-Last)")
-    print(f" • Security Warnungen:         {security_warnings_count} (Secrets / unsichere Patterns)")
-    print(f" • Anti-Shrinkage-Verstöße:    {anti_shrinkage_violations} (Code-Verlust-Schutz)")
-    print(f" • Aufgetretene Fehler:        {len(errors_encountered)}")
+    print(f" * Ziel-Notebook:              {target_ipynb.name}")
+    print(f" * Aktives LLM:                {model_name}")
+    print(f" * Analysierte Code-Zellen:    {total_cells_checked}")
+    print(f" * Dokumentations-Ergänzungen: {reverse_engineered_count} (Investigativ erstellt)")
+    print(f" * Bloated Outputs:            {bloated_outputs_count} (Zellen mit hoher Output-Last)")
+    print(f" * Security Warnungen:         {security_warnings_count} (Secrets / unsichere Patterns)")
+    print(f" * Anti-Shrinkage-Verstöße:    {anti_shrinkage_violations} (Code-Verlust-Schutz)")
+    print(f" * Aufgetretene Fehler:        {len(errors_encountered)}")
     if errors_encountered:
         print("\n[3] KRITISCHE PROBLEME:")
         for err in errors_encountered:

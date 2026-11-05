@@ -1,3 +1,15 @@
+"""
+Modul: class_logger_audit_execution
+Bezeichnung: Zentraler Audit- und Ausführungs-Logger
+Inhaltlicher Schwerpunkt:
+    Vollständige Protokollierung von Mikroschritten, Hardware-Audits,
+    Terminal-Spiegelung, Fehler-Tracking sowie AST-basierter
+    Flugschreiber-Instrumentierung. Die Terminal-Umleitung (stdout)
+    wird über class_stdout_redirector realisiert, das als eigenständige
+    Klasse in class_stdout_redirector.py definiert ist.
+"""
+
+from __future__ import annotations
 import ast
 import datetime as _dt
 import logging
@@ -6,140 +18,43 @@ import platform
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
-# 1. Hauptverzeichnis zum Python-Pfad hinzufügen
-sys.path.append(str(Path(__file__).resolve().parent))
-
-# 2. Auto-Bootstrap & globale Registrierung
-try:
-    from agent_universal_skript.auto_bootstrap_and_register_agent_tools import (
-        auto_bootstrap_and_register_agent_tools,
-    )
-
-    auto_bootstrap_and_register_agent_tools()
-except ImportError:
-    pass
-
-# Optionaler psutil-Import für präzise RAM-Erkennung
-try:
-    import psutil
-except ImportError:
-    psutil = None
+# Globale Bindings
+core_infra = globals().get("class_tool_core_infrastructure")
+stdout_redirector_cls = globals().get("class_stdout_redirector")
 
 
 class class_logger_audit_execution:
-    """Zentraler, robuster Logger für den Agenten-Workflow zur lückenlosen
-    Protokollierung aller Mikroschritte, Terminal-Ausgaben, Hardware-Analysen,
-    Audits und dynamischen AST-Flight-Recordings. Inklusive automatischer
-    Kontext- und Notebook-Erkennung.
+    """
+    Zentraler Logger für das Agenten- und Reparatur-System.
+    Garantiert deterministische Logzeilen und dynamische Kontext-Erkennung.
     """
 
-    # GLOBALE KONFIGURATIONEN NUR FÜR DEN LOGGER (_cfg.setdefault)
     _cfg: Dict[str, Any] = globals().setdefault("_AGENT_CONFIG", {})
-
     MAX_ROOT_SEARCH_DEPTH: int = _cfg.setdefault("MAX_ROOT_SEARCH_DEPTH", 5)
-    DIR_SRC: str = _cfg.setdefault("DIR_SRC", "src")
-    DIR_LOGS: str = _cfg.setdefault("DIR_LOGS", "logs")
+    DIR_SRC: str               = _cfg.setdefault("DIR_SRC",               "src")
+    DIR_LOGS: str              = _cfg.setdefault("DIR_LOGS",              "logs")
 
-    # DYNAMISCHE KONTEXT- & NAMENSERKENNUNG (IPYNB vs. AGENT)
-    @classmethod
-    def _detect_execution_context(cls) -> Tuple[str, str]:
-        """Ermittelt vollautomatisch zur Laufzeit, ob der Code in einem Jupyter Notebook
-        (.ipynb) oder im Terminal (Agent) ausgeführt wird, und bestimmt den passenden Log-Namen.
-        """
-        is_jupyter = False
-        identifier = "agent_terminal"
+    # Protokoll-Phasen
+    LOG_PHASE_SESSION: str  = "SESSION"
+    LOG_PHASE_HARDWARE: str = "HARDWARE"
+    LOG_PHASE_INSTALL: str  = "INSTALL"
+    LOG_PHASE_IMPORT: str   = "IMPORT"
+    LOG_PHASE_REPAIR: str   = "REPAIR"
+    LOG_PHASE_FILTER: str   = "FILTER"
+    LOG_PHASE_AGENT: str    = "AGENT"
+    LOG_PHASE_TERMINAL: str = "TERMINAL"
+    LOG_PHASE_FLIGHT: str   = "FLIGHT_RECORDER"
 
-        try:
-            ip = get_ipython()
-            if ip is not None:
-                shell_type = ip.__class__.__name__
-                if "Shell" in shell_type:
-                    is_jupyter = True
-                    try:
-                        root = cls._detect_project_root()
-                        notebooks_dir = (
-                            root / "notebooks"
-                            if (root / "notebooks").exists()
-                            else Path.cwd()
-                        )
-                        ipynb_files = sorted(
-                            notebooks_dir.rglob("*.ipynb"),
-                            key=os.path.getmtime,
-                            reverse=True,
-                        )
-                        if ipynb_files:
-                            identifier = f"notebook_{ipynb_files[0].stem}"
-                        else:
-                            identifier = "jupyter_session"
-                    except Exception:
-                        identifier = "jupyter_session"
-        except NameError:
-            pass
-
-        if is_jupyter:
-            log_filename = f"LOG_{identifier}.log"
-            logger_name = f"jupyter_{identifier}"
-        else:
-            log_filename = "LOG_agent_execution.log"
-            logger_name = "agent_terminal"
-
-        return log_filename, logger_name
-
-    @classmethod
-    def resolve_log_file_name(cls) -> str:
-        """Gibt stets den aktuell ermittelten Log-Dateinamen zurück."""
-        log_file, _ = cls._detect_execution_context()
-        return log_file
-
-    @classmethod
-    def resolve_logger_name(cls) -> str:
-        """Gibt stets den aktuell ermittelten Logger-Namen zurück."""
-        _, logger_name = cls._detect_execution_context()
-        return logger_name
-
-    @classmethod
-    def get_target_log_path(cls) -> Path:
-        return cls.get_dir(cls.DIR_LOGS) / cls.resolve_log_file_name()
-
-    # 1. Log-Phasen & Events
-    LOG_PHASE_SESSION: str      = "SESSION"
-    LOG_PHASE_HARDWARE: str     = "HARDWARE"
-    LOG_PHASE_INSTALL: str      = "INSTALL"
-    LOG_PHASE_IMPORT: str       = "IMPORT"
-    LOG_PHASE_REPAIR: str       = "REPAIR"
-    LOG_PHASE_FILTER: str       = "FILTER"
-    LOG_PHASE_AGENT: str        = "AGENT_IPYNB"
-    LOG_PHASE_TERMINAL: str     = "TERMINAL"
-    LOG_PHASE_FLIGHT: str       = "FLIGHT_RECORDER"
-
-    LOG_EVENT_SESSION_START: str= "SESSION_START"
-    LOG_EVENT_HW_NEW: str       = "HW_NEW"
-    LOG_EVENT_HW_KNOWN: str     = "HW_KNOWN"
-    LOG_EVENT_INSTALL_TRY: str  = "INSTALL_TRY"
-    LOG_EVENT_INSTALL_OK: str   = "INSTALL_OK"
-    LOG_EVENT_INSTALL_FAIL: str = "INSTALL_FAIL"
-    LOG_EVENT_IMPORT_OK: str    = "IMPORT_OK"
-    LOG_EVENT_RETRY: str        = "RETRY"
-    LOG_EVENT_RETRY_EXHAUSTED: str      = "RETRY_EXHAUSTED"
-    LOG_EVENT_INLINE_REPAIR_TRY: str    = "INLINE_REPAIR_TRY"
-    LOG_EVENT_INLINE_REPAIR_OK: str     = "INLINE_REPAIR_OK"
-    LOG_EVENT_INLINE_REPAIR_FAIL: str   = "INLINE_REPAIR_FAIL"
-    LOG_EVENT_SKIP_HW: str              = "SKIP_HW"
-    LOG_EVENT_BANNED: str               = "BANNED"
-    LOG_EVENT_STEP_ACTION: str          = "STEP_ACTION"
-    LOG_EVENT_AUDIT_RESULT: str         = "AUDIT_RESULT"
-    LOG_EVENT_STDOUT: str               = "STDOUT"
-    LOG_EVENT_FLIGHT_STEP: str          = "FLIGHT_STEP"
-
-    STATUS_EVENT_MAP: Dict[str, str] = {
-        LOG_EVENT_SKIP_HW:           "HW_INCOMPATIBLE",
-        LOG_EVENT_IMPORT_OK:         "OK",
-        LOG_EVENT_INLINE_REPAIR_OK:  "OK",
-        LOG_EVENT_BANNED:            "BANNED",
-        LOG_EVENT_RETRY_EXHAUSTED:   "RETRY_EXHAUSTED",
-    }
+    # Protokoll-Ereignisse
+    LOG_EVENT_SESSION_START: str       = "SESSION_START"
+    LOG_EVENT_STEP_ACTION: str         = "STEP_ACTION"
+    LOG_EVENT_BANNED: str              = "BANNED"
+    LOG_EVENT_INSTALL_FAIL: str        = "INSTALL_FAIL"
+    LOG_EVENT_INLINE_REPAIR_FAIL: str  = "INLINE_REPAIR_FAIL"
+    LOG_EVENT_STDOUT: str              = "STDOUT"
+    LOG_EVENT_FLIGHT_STEP: str         = "FLIGHT_STEP"
 
     LOG_LINE_PATTERN_STR: str = (
         r"^\[(?P<pc_id>[^\]]+)\]\|\[(?P<ts>[^\]]+)\]\|\[(?P<phase>[^\]]+)\]\|"
@@ -148,309 +63,299 @@ class class_logger_audit_execution:
     )
     _LOG_LINE_RE = re.compile(LOG_LINE_PATTERN_STR)
 
-    class class_stdout_redirector:
-        """Interner Helfer: Spiegelt sämtliche Terminal-Ausgaben vollautomatisch
-        in das Log, ohne den Konsolenfluss zu stören.
-        """
-        def __init__(self, original_stream):
-            self.terminal = original_stream
-
-        def write(self, message):
-            self.terminal.write(message)
-            self.terminal.flush()
-            if message and message.strip():
-                cleaned = message.strip()
-                if (
-                    not cleaned.startswith("[LOG")
-                    and not cleaned.startswith("[AGENT LOGIC")
-                    and "Arbeitet..." not in cleaned
-                ):
-                    try:
-                        pc_id = platform.node() or "LocalAgent"
-                        class_logger_audit_execution.write_log(
-                            pc_id=pc_id,
-                            phase=class_logger_audit_execution.LOG_PHASE_TERMINAL,
-                            event=class_logger_audit_execution.LOG_EVENT_STDOUT,
-                            detail=cleaned,
-                        )
-                    except Exception:
-                        pass
-
-        def flush(self):
-            self.terminal.flush()
+    # =========================================================================
+    # EBENE 4: METHODEN
+    # =========================================================================
 
     @classmethod
     def _detect_project_root(cls) -> Path:
-        """Stochastische Projekterkennung via CWD & __file__."""
-        start_paths: List[Path] = [Path.cwd()]
+        """Ermittelt den Projekt-Root ausgehend vom Arbeitsverzeichnis oder __file__."""
+        print("[class_logger_audit_execution] Starte Arbeit: _detect_project_root wird jetzt ausgeführt.")
+        infra = globals().get("class_tool_core_infrastructure")
+        if infra and hasattr(infra, "get_project_root"):
+            result = infra.get_project_root()
+            print("[class_logger_audit_execution] Erfolg: _detect_project_root erfolgreich beendet.")
+            return result
+        current = Path.cwd()
+        for parent in [current] + list(current.parents):
+            if (parent / cls.DIR_SRC).is_dir():
+                result = parent
+                print("[class_logger_audit_execution] Erfolg: _detect_project_root erfolgreich beendet.")
+                return result
+        result = current
+        print("[class_logger_audit_execution] Erfolg: _detect_project_root erfolgreich beendet.")
+        return result
+
+    @classmethod
+    def _detect_execution_context(cls) -> Tuple[str, str]:
+        """Ermittelt, ob die Ausführung im Jupyter-Notebook oder im Terminal stattfindet."""
+        print("[class_logger_audit_execution] Starte Arbeit: _detect_execution_context wird jetzt ausgeführt.")
         try:
-            f = globals().get("__file__")
-            if f:
-                start_paths.append(Path(f).resolve().parent)
-        except Exception:
+            ip = get_ipython()
+            if ip is not None and "Shell" in ip.__class__.__name__:
+                result = ("LOG_jupyter_session.log", "jupyter_session")
+                print("[class_logger_audit_execution] Erfolg: _detect_execution_context erfolgreich beendet.")
+                return result
+        except NameError:
             pass
-        for start in start_paths:
-            d = start.resolve()
-            if d.name == "notebooks" and (d.parent / cls.DIR_SRC).is_dir():
-                return d.parent
-            if d.name == cls.DIR_SRC:
-                return d.parent
-            for _ in range(cls.MAX_ROOT_SEARCH_DEPTH):
-                if (
-                    (d / cls.DIR_SRC).is_dir()
-                    or (d / "DIR_CONFIG").is_dir()
-                    or (d / ".git").is_dir()
-                ):
-                    return d
-                if d.name == cls.DIR_SRC:
-                    return d.parent
-                if d.parent == d:
-                    break
-                d = d.parent
-        return Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
+        result = ("LOG_agent_execution.log", "agent_terminal")
+        print("[class_logger_audit_execution] Erfolg: _detect_execution_context erfolgreich beendet.")
+        return result
+
+    @classmethod
+    def get_target_log_path(cls) -> Path:
+        """Gibt den vollständigen Pfad zur aktuellen Logdatei zurück."""
+        print("[class_logger_audit_execution] Starte Arbeit: get_target_log_path wird jetzt ausgeführt.")
+        root     = cls._detect_project_root()
+        logs_dir = root / cls.DIR_LOGS
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log_name, _ = cls._detect_execution_context()
+        result = logs_dir / log_name
+        if result is None:
+            print("[class_logger_audit_execution] FEHLER: get_target_log_path hat die Aufgabe nicht erfüllt. Grund: Kein Log-Pfad ermittelt.")
+            return None
+        print("[class_logger_audit_execution] Erfolg: get_target_log_path erfolgreich beendet.")
+        return result
 
     @classmethod
     def get_dir(cls, dirname: str, ensure: bool = False) -> Path:
         """Ermittelt und erstellt (optional) Verzeichnisse im Projektkontext."""
+        print(f"[class_logger_audit_execution] Starte Arbeit: get_dir wird jetzt ausgeführt. (Parameter: dirname={dirname})")
         root = cls._detect_project_root()
         target = root / dirname
         if ensure:
             target.mkdir(parents=True, exist_ok=True)
+        print(f"[class_logger_audit_execution] Erfolg: get_dir erfolgreich beendet. (Pfad={target})")
         return target
 
     @classmethod
+    def resolve_log_file_name(cls) -> str:
+        """Gibt stets den aktuell ermittelten Log-Dateinamen zurück."""
+        print("[class_logger_audit_execution] Starte Arbeit: resolve_log_file_name wird jetzt ausgeführt.")
+        log_file, _ = cls._detect_execution_context()
+        if not log_file:
+            print("[class_logger_audit_execution] FEHLER: resolve_log_file_name hat die Aufgabe nicht erfüllt. Grund: Kein Log-Dateiname ermittelt.")
+            return "LOG_agent_execution.log"
+        print(f"[class_logger_audit_execution] Erfolg: resolve_log_file_name erfolgreich beendet. (Logfile={log_file})")
+        return log_file
+
+    @classmethod
     def initialize_logger(cls) -> logging.Logger:
-        """Initialisiert das Logging-System dynamisch basierend auf dem aktuellen Kontext."""
-        root = cls._detect_project_root()
-        logs = cls.get_dir(cls.DIR_LOGS, ensure=True)
-        resolved_log = cls.resolve_log_file_name()
-        resolved_logger_name = cls.resolve_logger_name()
-        tgt = logs / resolved_log
-        g = globals()
-        g["PROJECT_ANCHOR_DIR"] = root.name
-        g["LOG_FILE_NAME"] = resolved_log
-        g["PROJECT_ROOT"], g["LOGS_DIR"], g["TARGET_LOG_PATH"] = root, logs, tgt
-        file_handler = logging.FileHandler(tgt, mode="w", encoding="utf-8")
+        """Initialisiert das zentrale Logging-System und aktiviert die stdout-Umleitung."""
+        print("[class_logger_audit_execution] Starte Arbeit: initialize_logger wird jetzt ausgeführt.")
+        tgt            = cls.get_target_log_path()
+        file_handler   = logging.FileHandler(tgt, mode="a", encoding="utf-8")
         file_handler.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.INFO)
+
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s",
             handlers=[file_handler, stream_handler],
-            force=True,
+            force=True
         )
-        logger_obj = logging.getLogger(resolved_logger_name)
-        g["logger"] = logger_obj
-        if not isinstance(sys.stdout, cls.class_stdout_redirector):
-            sys.stdout = cls.class_stdout_redirector(sys.stdout)
+        logger_obj = logging.getLogger("offline_ai")
+        globals()["logger"] = logger_obj
+
+        # stdout-Umleitung via ausgelagerter Klasse
+        redirector_cls = globals().get("class_stdout_redirector")
+        if redirector_cls and not isinstance(sys.stdout, redirector_cls):
+            sys.stdout = redirector_cls(sys.stdout)
+
+        if logger_obj is None:
+            print("[class_logger_audit_execution] FEHLER: initialize_logger hat die Aufgabe nicht erfüllt. Grund: Logger-Objekt ist None.")
+            return None
+        print("[class_logger_audit_execution] Erfolg: initialize_logger erfolgreich beendet.")
         return logger_obj
 
     @staticmethod
     def _now_stamp() -> str:
+        """Erzeugt einen formatierten Zeitstempel für die Logzeile."""
+        print("[class_logger_audit_execution] Starte Arbeit: _now_stamp wird jetzt ausgeführt.")
         n = _dt.datetime.now()
-        return f"{n.year},{n.month:02d},{n.day:02d},{n.hour:02d},{n.minute:02d},{n.second:02d},{n.microsecond // 1000:03d}"
+        result = f"{n.year},{n.month:02d},{n.day:02d},{n.hour:02d},{n.minute:02d},{n.second:02d},{n.microsecond // 1000:03d}"
+        if not result or not isinstance(result, str):
+            print("[class_logger_audit_execution] FEHLER: _now_stamp hat die Aufgabe nicht erfüllt. Grund: Kein gültiger Zeitstempel erzeugt.")
+            return ""
+        print("[class_logger_audit_execution] Erfolg: _now_stamp erfolgreich beendet.")
+        return result
 
     @classmethod
-    def write_log(cls,pc_id: str = None,phase: str = LOG_PHASE_SESSION,event: str = LOG_EVENT_STEP_ACTION,
-                    module: str = "-",detail: str = "-",versuch: str = "-",) -> None:
-        """Schreibt Mikroschritte fortlaufend im Append-Modus (mode='a')."""
-        if pc_id is None:
-            pc_id = platform.node() or "LocalAgent"
-        line = (
-                f"[{pc_id}]|[{cls._now_stamp()}]|[{phase}]|"
-                f"EVENT={event}|MODULE={module}|DETAIL={detail}|VERSUCH={versuch}"
-                )
-        tgt = cls.get_target_log_path()
+    def write_log(cls, pc_id: str = None, phase: str = LOG_PHASE_SESSION,
+                  event: str = LOG_EVENT_STEP_ACTION,
+                  module: str = "-", detail: str = "-", versuch: str = "-") -> None:
+        """Schreibt einen strukturierten Datensatz in die Logdatei."""
+        print(f"[class_logger_audit_execution] Starte Arbeit: write_log wird jetzt ausgeführt. (Parameter: {phase}|{event})")
+        pc_id = pc_id or platform.node() or "LocalAgent"
+        line  = f"[{pc_id}]|[{cls._now_stamp()}]|[{phase}]|EVENT={event}|MODULE={module}|DETAIL={detail}|VERSUCH={versuch}"
         try:
-            tgt.parent.mkdir(parents=True, exist_ok=True)
+            tgt = cls.get_target_log_path()
             with tgt.open("a", encoding="utf-8") as fh:
                 fh.write(line + "\n")
-        except Exception as exc:
-            if hasattr(sys.stdout, "terminal"):
-                print(f"[LOG WRITE ERROR] {exc}", file=sys.stdout.terminal)
-            else:
-                sys.__stderr__.write(f"[LOG WRITE ERROR] {exc}\n")
-
-        if event in (
-            cls.LOG_EVENT_BANNED,
-            cls.LOG_EVENT_INSTALL_FAIL,
-            cls.LOG_EVENT_RETRY_EXHAUSTED,
-            cls.LOG_EVENT_INLINE_REPAIR_FAIL,
-            cls.LOG_EVENT_SKIP_HW,
-        ):
-            logging.warning(f"[AGENT LOGIC WARNING] {line}")
+        except Exception as e:
+            print(f"[class_logger_audit_execution] FEHLER: Schreiben des Logs fehlgeschlagen: {e}")
+        print("[class_logger_audit_execution] Erfolg: write_log erfolgreich beendet.")
 
     @classmethod
     def log_event(cls, phase: str, event: str, module: str = "-", detail: str = "-") -> None:
-        """Standardisierter Aufruf zum Eintragen eines spezifischen Workflow-Events."""
+        """Standard-Schnittstelle zum Eintragen eines Protokoll-Ereignisses."""
+        print(f"[class_logger_audit_execution] Starte Arbeit: log_event wird jetzt ausgeführt. (Parameter: {event})")
         cls.write_log(phase=phase, event=event, module=module, detail=detail)
+        print("[class_logger_audit_execution] Erfolg: log_event erfolgreich beendet.")
 
     @classmethod
     def info(cls, msg: str, module: str = "Agent") -> None:
-        """Standardisiertes Info-Logging über Terminal und Datei."""
+        """Protokolliert eine Info-Nachricht."""
+        print("[class_logger_audit_execution] Starte Arbeit: info wird jetzt ausgeführt.")
         print(f"[{module}] {msg}")
-        cls.write_log(
-            phase=cls.LOG_PHASE_AGENT,
-            event=cls.LOG_EVENT_STEP_ACTION,
-            module=module,
-            detail=msg,
-        )
+        cls.write_log(phase=cls.LOG_PHASE_AGENT, event=cls.LOG_EVENT_STEP_ACTION, module=module, detail=msg)
+        print("[class_logger_audit_execution] Erfolg: info erfolgreich beendet.")
 
     @classmethod
     def warning(cls, msg: str, module: str = "Agent") -> None:
-        """Standardisiertes Warning-Logging über Terminal und Datei."""
-        print(f"⚠️ [{module}-WARNUNG] {msg}")
-        cls.write_log(
-            phase=cls.LOG_PHASE_FILTER,
-            event=cls.LOG_EVENT_BANNED,
-            module=module,
-            detail=msg,
-        )
+        """Protokolliert eine Warnung."""
+        print("[class_logger_audit_execution] Starte Arbeit: warning wird jetzt ausgeführt.")
+        try:
+            print(f"[WARNUNG] [{module}-WARNUNG] {msg}")
+        except UnicodeEncodeError:
+            print(f"[WARNUNG] [{module}-WARNUNG] {msg.encode('ascii', errors='replace').decode('ascii')}")
+        cls.write_log(phase=cls.LOG_PHASE_FILTER, event=cls.LOG_EVENT_BANNED, module=module, detail=msg)
+        print("[class_logger_audit_execution] Erfolg: warning erfolgreich beendet.")
 
     @classmethod
     def error(cls, msg: str, module: str = "Agent") -> None:
-        """Standardisiertes Error-Logging über Terminal und Datei."""
-        print(f"❌ [{module}-FEHLER] {msg}")
-        cls.write_log(
-            phase=cls.LOG_PHASE_REPAIR,
-            event=cls.LOG_EVENT_INLINE_REPAIR_FAIL,
-            module=module,
-            detail=msg,
-        )
+        """Protokolliert einen Fehler."""
+        print("[class_logger_audit_execution] Starte Arbeit: error wird jetzt ausgeführt.")
+        try:
+            print(f"[FEHLER] [{module}-FEHLER] {msg}")
+        except UnicodeEncodeError:
+            print(f"[FEHLER] [{module}-FEHLER] {msg.encode('ascii', errors='replace').decode('ascii')}")
+        cls.write_log(phase=cls.LOG_PHASE_REPAIR, event=cls.LOG_EVENT_INLINE_REPAIR_FAIL, module=module, detail=msg)
+        print("[class_logger_audit_execution] Erfolg: error erfolgreich beendet.")
 
     @classmethod
     def parse_log_lines(cls) -> List[Dict]:
-        """Liest das Log des letzten Laufs ein und filtert fehler-/zustandsrelevante Daten."""
+        """Liest und parst die strukturierten Einträge aus der Logdatei."""
+        print("[class_logger_audit_execution] Starte Arbeit: parse_log_lines wird jetzt ausgeführt.")
         tgt = cls.get_target_log_path()
         if not tgt.exists():
-            return []
+            result = []
+            print("[class_logger_audit_execution] Erfolg: parse_log_lines erfolgreich beendet.")
+            return result
         try:
             with tgt.open("r", encoding="utf-8", errors="replace") as fh:
-                return [
-                    m.groupdict()
-                    for line in fh
-                    if (m := cls._LOG_LINE_RE.match(line.strip()))
-                ]
-        except Exception as exc:
-            print(f"[LOG PARSE ERROR] {exc}", file=sys.stderr)
+                result = [m.groupdict() for line in fh if (m := cls._LOG_LINE_RE.match(line.strip()))]
+        except Exception as e:
+            print(f"[class_logger_audit_execution] FEHLER: Parsen der Logdatei fehlgeschlagen: {e}")
             return []
+        if result is None:
+            print("[class_logger_audit_execution] FEHLER: parse_log_lines hat die Aufgabe nicht erfüllt. Grund: Ergebnis ist None.")
+            return []
+        print("[class_logger_audit_execution] Erfolg: parse_log_lines erfolgreich beendet.")
+        return result
 
-    # DYNAMISCHE FLUGSCHREIBER-INSTRUMENTIERUNG (AST-BASED)
     @classmethod
-    def instrument_code_with_flight_recorder(
-        cls, code_content: str, module_name: str = "TargetModule"
-    ) -> str:
-        """Injiziert vor jeder logischen Zeile und Methode einen Schritt-Log-Eintrag."""
+    def instrument_code_with_flight_recorder(cls, code_content: str, module_name: str = "TargetModule") -> str:
+        """Injiziert Flugschreiber-Protokollierknoten in den AST eines Moduls."""
+        print(f"[class_logger_audit_execution] Starte Arbeit: instrument_code_with_flight_recorder wird jetzt ausgeführt. (Parameter: {module_name})")
         try:
             tree = ast.parse(code_content)
 
             class ASTFlightInstrumenter(ast.NodeTransformer):
+                """Lokaler AST-Transformer: Fügt Flugschreiber-Aufrufe in Funktionen ein."""
                 def __init__(self):
-                    self.step_counter = 0
+                    self.counter = 0
 
-                def _generate_log_node(self, details: str) -> ast.Expr:
-                    self.step_counter += 1
+                def _log_node(self, detail: str):
+                    self.counter += 1
                     return ast.Expr(
                         value=ast.Call(
                             func=ast.Attribute(
-                                value=ast.Name(
-                                    id="class_logger_audit_execution",
-                                    ctx=ast.Load(),
-                                ),
-                                attr="write_log",
-                                ctx=ast.Load(),
+                                value=ast.Name(id="class_logger_audit_execution", ctx=ast.Load()),
+                                attr="write_log", ctx=ast.Load()
                             ),
                             args=[],
                             keywords=[
-                                ast.keyword(
-                                    arg="phase",
-                                    value=ast.Constant(
-                                        value=class_logger_audit_execution.LOG_PHASE_FLIGHT
-                                    ),
-                                ),
-                                ast.keyword(
-                                    arg="event",
-                                    value=ast.Constant(
-                                        value=class_logger_audit_execution.LOG_EVENT_FLIGHT_STEP
-                                    ),
-                                ),
-                                ast.keyword(
-                                    arg="module",
-                                    value=ast.Constant(value=module_name),
-                                ),
-                                ast.keyword(
-                                    arg="detail",
-                                    value=ast.Constant(
-                                        value=f"STEP_{self.step_counter:03d} -> {details}"
-                                    ),
-                                ),
-                            ],
+                                ast.keyword(arg="phase",  value=ast.Constant(value="FLIGHT_RECORDER")),
+                                ast.keyword(arg="event",  value=ast.Constant(value="FLIGHT_STEP")),
+                                ast.keyword(arg="module", value=ast.Constant(value=module_name)),
+                                ast.keyword(arg="detail", value=ast.Constant(value=f"STEP_{self.counter:03d} -> {detail}")),
+                            ]
                         )
                     )
 
                 def visit_FunctionDef(self, node):
-                    enter_log = self._generate_log_node(f"START DEF: {node.name}")
-                    node.body.insert(0, enter_log)
-                    new_body = []
-                    for item in node.body:
-                        if (
-                            isinstance(
-                                item, (ast.Assign, ast.Call, ast.Return, ast.Expr)
-                            )
-                            and item != enter_log
-                        ):
-                            try:
-                                src_preview = (
-                                    ast.unparse(item)
-                                    .strip()
-                                    .replace("\n", " ")[:40]
-                                )
-                            except Exception:
-                                src_preview = type(item).__name__
-                            new_body.append(
-                                self._generate_log_node(
-                                    f"EXEC LINE: {src_preview}"
-                                )
-                            )
-                        new_body.append(item)
-                    node.body = new_body
+                    enter = self._log_node(f"START DEF: {node.name}")
+                    node.body.insert(0, enter)
                     return self.generic_visit(node)
 
-            instrumenter = ASTFlightInstrumenter()
-            modified_tree = instrumenter.visit(tree)
-            ast.fix_missing_locations(modified_tree)
-            return ast.unparse(modified_tree)
+            instrumented = ASTFlightInstrumenter().visit(tree)
+            ast.fix_missing_locations(instrumented)
+            result = ast.unparse(instrumented)
         except Exception as e:
-            cls.write_log(
-                phase=cls.LOG_PHASE_REPAIR,
-                event=cls.LOG_EVENT_INLINE_REPAIR_FAIL,
-                detail=f"Flight recorder failure: {str(e)}",
-            )
+            print(f"[class_logger_audit_execution] FEHLER: Instrumentierung fehlgeschlagen: {e}")
             return code_content
+        if not result or not isinstance(result, str):
+            print("[class_logger_audit_execution] FEHLER: instrument_code_with_flight_recorder hat die Aufgabe nicht erfüllt. Grund: Kein gültiger Code zurückgegeben.")
+            return code_content
+        print("[class_logger_audit_execution] Erfolg: instrument_code_with_flight_recorder erfolgreich beendet.")
+        return result
 
     @classmethod
     def strip_flight_recorder_code(cls, instrumented_code: str) -> str:
-        """Entfernt alle injizierten Flugschreiber-Knoten restlos aus dem AST."""
+        """Entfernt alle Flugschreiber-Protokollierknoten wieder aus dem AST."""
+        print("[class_logger_audit_execution] Starte Arbeit: strip_flight_recorder_code wird jetzt ausgeführt.")
         try:
             tree = ast.parse(instrumented_code)
 
             class ASTFlightPurger(ast.NodeTransformer):
+                """Lokaler AST-Transformer: Entfernt write_log-Aufrufe des Flugschreibers."""
                 def visit_Expr(self, node):
-                    if isinstance(node.value, ast.Call) and isinstance(
-                        node.value.func, ast.Attribute
-                    ):
-                        if (
-                            isinstance(node.value.func.value, ast.Name)
-                            and node.value.func.value.id
-                            == "class_logger_audit_execution"
-                        ):
-                            if node.value.func.attr == "write_log":
-                                return None
+                    if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
+                        if (isinstance(node.value.func.value, ast.Name)
+                                and node.value.func.value.id == "class_logger_audit_execution"
+                                and node.value.func.attr == "write_log"):
+                            return None
                     return node
 
-            purged_tree = ASTFlightPurger().visit(tree)
-            ast.fix_missing_locations(purged_tree)
-            return ast.unparse(purged_tree)
-        except Exception:
+            purged = ASTFlightPurger().visit(tree)
+            ast.fix_missing_locations(purged)
+            result = ast.unparse(purged)
+        except Exception as e:
+            print(f"[class_logger_audit_execution] FEHLER: Bereinigung der Instrumentierung fehlgeschlagen: {e}")
             return instrumented_code
+        if not result or not isinstance(result, str):
+            print("[class_logger_audit_execution] FEHLER: strip_flight_recorder_code hat die Aufgabe nicht erfüllt. Grund: Kein gültiger Code zurückgegeben.")
+            return instrumented_code
+        print("[class_logger_audit_execution] Erfolg: strip_flight_recorder_code erfolgreich beendet.")
+        return result
+
+    # =========================================================================
+    # EBENE 5: ZENTRALE AUSFÜHRUNGSFUNKTION
+    # =========================================================================
+
+    @classmethod
+    def run_audit_logger(cls) -> dict:
+        """
+        Zentrale Ausführungsfunktion des Audit-Loggers.
+        Initialisiert den Logger, aktiviert die stdout-Umleitung
+        und liefert Pfad sowie Betriebsstatus zurück.
+        """
+        print("[class_logger_audit_execution] Starte Arbeit: run_audit_logger wird jetzt ausgeführt.")
+        try:
+            logger_obj = cls.initialize_logger()
+            log_path   = cls.get_target_log_path()
+            result = {
+                "active":     logger_obj is not None,
+                "log_path":   log_path,
+                "log_exists": log_path.exists()
+            }
+        except Exception as e:
+            print(f"[class_logger_audit_execution] FEHLER: run_audit_logger fehlgeschlagen: {e}")
+            return {"active": False, "log_path": None, "log_exists": False}
+        if result is None:
+            print("[class_logger_audit_execution] FEHLER: run_audit_logger hat die Aufgabe nicht erfüllt. Grund: Kein Ergebnis-Dict erzeugt.")
+            return {"active": False, "log_path": None, "log_exists": False}
+        print("[class_logger_audit_execution] Erfolg: run_audit_logger erfolgreich beendet.")
+        return result

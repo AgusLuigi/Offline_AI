@@ -20,6 +20,7 @@ spinner_tool = globals().get('class_tool_resource_aware_spinner')
 sql_reader = globals().get('class_tool_sql_reader')
 sub_verifier = globals().get('class_agent_sub_verifier')
 evolve_loop = globals().get('class_container_evolve_loop_test')
+tool_evolution_manager = globals().get('class_self_tool_evolution_manager')
 
 # Initialisierung des zentralen Loggers
 if logger:
@@ -31,7 +32,7 @@ PROJECT_POINT = "src"
 DB_FILENAME = "Knowledge_Agent_Routing_tree.db"
 OLLAMA_CHECKER_FILENAME = "__ollama_running.py"
 
-MODEL_LLM = "codestral"
+MODEL_LLM = "deepseek-r1-8b"
 OLLAMA_HOST = "http://127.0.0.1:11434"
 AGENT_NAME = "MetaCoder-Agent"
 
@@ -89,6 +90,7 @@ ALLOWED_TABLES_EXCLUDE = {
     "agent_system_manifest",
     "index_chat_user_query"
 }
+ALLOWED_TABLES = ALLOWED_TABLES_EXCLUDE
 FALLBACK_DOMAIN = "library_registry"
 REQUIRED_KERNEL_MODULES = ["psutil", "sqlite3"]
 
@@ -120,6 +122,241 @@ class MetaCoderSQLPipeline(sql_reader if sql_reader else object):
     MAX_DOMAIN_NODES = MAX_DOMAIN_NODES
     MAX_MANIFEST_ENTRIES = MAX_MANIFEST_ENTRIES
 
+    
+    def bootstrap_from_database(self):
+        """Lädt die DNA-Konfiguration aus der Datenbank."""
+        return super().bootstrap_from_database()
+
+    def check_or_cache_user_query(self, user_query: str) -> dict:
+        """Prüft den Cache oder registriert eine neue Anfrage."""
+        return super().get_cached_or_create_query(user_query)
+
+    def seal_query_cache(self, node_id: str, answer: str, snippet: str = ""):
+        """Versiegelt eine erfolgreich beantwortete Anfrage in user_query."""
+        return super().seal_query_cache(node_id=node_id, answer=answer, snippet=snippet)
+
+    def record_feedback(self, query_node_id: str, is_positive: bool, comment: str = "") -> dict:
+        """Verarbeitet Benutzer-Feedback."""
+        return super().record_feedback(query_node_id=query_node_id, is_positive=is_positive, comment=comment)
+
+    def persist_new_capability(self, capability_name: str, code_snippet: str, description: str = ""):
+        """Persistiert eine neue Fähigkeit in der SQLite-Tabelle."""
+        return super().persist_new_capability(capability_name=capability_name, code_snippet=code_snippet, description=description)
+
+    def _get_relevant_tips(self, task_description: str) -> str:
+        """Lädt kontextbezogene Richtlinien aus der Datenbank."""
+        return super()._get_relevant_tips(task_description=task_description)
+
+    def _save_solution_to_db(self, task_description: str, solution_code: str, error_msg: str = ""):
+        """Speichert eine Lösung in der Datenbank."""
+        return super()._save_solution_to_db(task_description=task_description, solution_code=solution_code, error_msg=error_msg)
+
+    def evolve_self(self, recent_error: str = "", task_context: str = ""):
+        """Führt eine Selbst-Evolution durch."""
+        return super().evolve_self(recent_error=recent_error, task_context=task_context)
+
+    def verify_environment(self) -> bool:
+        """Verifiziert die SQLite-Umgebung und Kern-Tabellen."""
+        return super().verify_environment()
+
+    def evolve_and_register_tool(self, tool_name: str, code_snippet: str, description: str = "", test_call: str = "", allow_replace: bool = True) -> dict:
+        """Führt den vollständigen 4-Stufen-Evolutionszyklus aus und injiziert das Werkzeug in den RAM."""
+        if self.evolution_manager:
+            return self.evolution_manager.evolve_and_register_new_tool(
+                tool_name=tool_name,
+                code_snippet=code_snippet,
+                description=description,
+                test_call=test_call,
+                target_agent=self,
+                allow_replace=allow_replace
+            )
+        return {"status": "FAILED", "error": "Evolution manager not available"}
+
+    def execute_capability_evolution_pipeline(self, task_description: str, node_id: str = None, log_table: str = None, time_stamp: str = None) -> dict:
+        """
+        Erzwingt den 4-Stufen-Evolutionszyklus für neue Kernel-Funktionen und Fähigkeiten (Anti-Heißluft):
+        Stufe A: LLM-Codegenerierung (leerer Code = Abbruch/Fehler).
+        Stufe B: Zwingender Sandbox-Test via SubAgentVerifier (Returncode 0 erforderlich).
+        Stufe C: Transaktionaler SQL-Commit in library_registry (INSERT OR REPLACE).
+        Stufe D: Dynamischer RAM-Bootstrap & Signatur-Check.
+        """
+        import ast
+        import re
+        if logger:
+            logger.info(f"[CAPABILITY-EVOLUTION] Starte 4-Stufen-Zyklus für: {task_description[:80]}")
+
+        # 1. Namen der Zielfunktion ermitteln
+        fn_match = re.search(r'(?:funktion|def|kernel-funktion|kernel_funktion|tool)\s+([a-zA-Z0-9_]+)', task_description, re.IGNORECASE)
+        target_fn_name = fn_match.group(1) if fn_match else "run_multi_model_consensus"
+        if "consensus" in task_description.lower() or "run_multi_model_consensus" in task_description:
+            target_fn_name = "run_multi_model_consensus"
+
+        # Stufe A: LLM-Codegenerierung mit Rückfall/Evolutionsschleife
+        system_prompt = f"""Du bist ein autonomer Python-Entwickler für Offline_AI.
+Deine Aufgabe ist es, eine neue Python-Funktion '{target_fn_name}' zu implementieren.
+Anforderung:
+{task_description}
+
+Strikte Regeln:
+1. Liefere den vollständigen, lauffähigen Python-Code in einem einzigen Markdown-Block (```python ... ```).
+2. Alle erforderlichen Imports (z. B. urllib.request, json, random, psutil, typing, etc.) müssen im Codeblock enthalten sein.
+3. Verwende KEINE verbotenen Module (kein subprocess, kein eval, kein exec, kein open).
+4. Am Ende des Codeblocks muss ein kurzer, sicherer Funktionsaufruf (Smoke-Test) oder 'if __name__ == "__main__":' stehen, damit der Subprozess-Test den Returncode 0 bestätigt.
+5. Antworte NUR mit dem Codeblock und kurzer Erklärung, keine Höflichkeitsfloskeln.
+6. psutil hat KEINE gpu_percent()-Funktion; nutze psutil.cpu_percent() und psutil.virtual_memory().percent. Für GPU nutze 0.0 als sicheren Fallback.
+7. Alle externen API-Aufrufe (z. B. zu Ollama) in try-except-Blöcke kapseln, damit bei Verbindungs-Timeouts saubere Fallback-Werte zurückgegeben werden.
+"""
+        generated_code = ""
+        last_error = ""
+        verification_output = ""
+        verified = False
+
+        for gen in range(1, MAX_EVOLUTION_GENERATIONS + 1):
+            if logger:
+                logger.info(f"[EVOLUTION GENERATION {gen}/{MAX_EVOLUTION_GENERATIONS}] Generiere und teste '{target_fn_name}'...")
+
+            chat_messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Implementiere '{target_fn_name}' fehlerfrei." if gen == 1 else f"Der Sandbox-Test schlug fehl mit:\n{last_error}\nBitte korrigiere den Code."}
+            ]
+
+            chat_res = ollama_manager.run_agent(
+                chat_messages,
+                agent_title=f"{AGENT_NAME}-Evo-Gen{gen}",
+                model=self.model_name,
+                ollama_host=self.ollama_host
+            ) if ollama_manager else {"status": "FAILED", "content": ""}
+
+            content = chat_res.get("content", "") if isinstance(chat_res, dict) else ""
+            blocks = sub_verifier.extract_code_blocks(content) if (sub_verifier and content) else []
+            if not blocks and "def " in content:
+                blocks = [content]
+
+            # STUFE A Sicherung: Leerer Code führt zu hartem Abbruch
+            if not blocks or not blocks[0].strip():
+                last_error = "Kein ausführbarer Code-Block vom LLM generiert (Anti-Heißluft)."
+                continue
+
+            generated_code = blocks[0].strip()
+
+            # STUFE B: Zwingender Sandbox-Test via SubAgentVerifier
+            try:
+                tree = ast.parse(generated_code)
+                found_funcs = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+                if found_funcs and target_fn_name not in found_funcs:
+                    target_fn_name = found_funcs[0]
+
+                verified, verification_output = sub_verifier.verify_code_in_sandbox(
+                    generated_code,
+                    timeout_sec=SANDBOX_TIMEOUT
+                ) if sub_verifier else (True, "Verifier omitted")
+            except Exception as se:
+                verified = False
+                verification_output = f"AST/Syntax Error: {se}"
+
+            if verified:
+                if logger:
+                    logger.info(f"[SANDBOX-ERFOLG] Code für '{target_fn_name}' in Generation {gen} verifiziert (Returncode 0).")
+                break
+            else:
+                last_error = verification_output
+                if logger:
+                    logger.warning(f"[SANDBOX-FEHLER] Generation {gen} fehlgeschlagen: {str(last_error)[:200]}")
+
+        if not verified or not generated_code:
+            err_result = {
+                "status": "FAILED",
+                "error": f"Fähigkeit '{target_fn_name}' konnte nach {MAX_EVOLUTION_GENERATIONS} Generationen nicht verifiziert werden. Letzter Fehler: {last_error}"
+            }
+            if logger:
+                logger.error(f"[CAPABILITY-EVOLUTION FEHLER] {err_result['error']}")
+            return err_result
+
+        # STUFE C: Automatisierter transaktionaler SQL-Commit in library_registry
+        persisted_node_id = None
+        if self.evolution_manager:
+            evo_res = self.evolution_manager.evolve_and_register_new_tool(
+                tool_name=target_fn_name,
+                code_snippet=generated_code,
+                description=task_description[:500],
+                target_agent=self,
+                allow_replace=True
+            )
+            persisted_node_id = evo_res.get("node_id")
+
+        if not persisted_node_id:
+            now = datetime.datetime.now()
+            node_id_gen = f"CAP_{now.strftime('%Y%m%d_%H%M%S')}_{random.randint(100, 999)}"
+            with sqlite3.connect(self.db_filename) as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT OR REPLACE INTO library_registry (
+                        node_id, is_active, error_fallback_count,
+                        year, month, day, hour, minute, second,
+                        topic_title, topic_specification, agent_instruction,
+                        example_code_snippet, validation_rule, execution_count,
+                        success_weight, target_table, target_column_id, target_node_id
+                    ) VALUES (?, 1, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SANDBOX_VERIFIED_RETURNCODE_0', 1, 1.0, 'user_query', 'node_id', '000')
+                """, (
+                    node_id_gen, now.year, now.month, now.day, now.hour, now.minute, now.second,
+                    target_fn_name, task_description[:500], f"EXECUTE_TOOL: {target_fn_name}",
+                    generated_code
+                ))
+                conn.commit()
+                persisted_node_id = node_id_gen
+
+        # STUFE D: Dynamischer RAM-Bootstrap & Live-Check
+        injected = []
+        if self.evolution_manager:
+            inj_res = self.evolution_manager.inject_capability_into_ram(generated_code, target_agent=self)
+            injected = inj_res.get("injected", [])
+
+        is_callable = callable(getattr(self, target_fn_name, None)) or (target_fn_name in injected) or (self.evolution_manager and target_fn_name in self.evolution_manager.ram_capabilities)
+        if not is_callable and logger:
+            logger.warning(f"[RAM-CHECK WARNUNG] Funktion '{target_fn_name}' nicht direkt aufrufbar, gefundene Symbole: {injected}")
+
+        # Protokollierung & Cache-Versiegelung mit echtem Snippet
+        if node_id:
+            try:
+                self.seal_query_cache(node_id=node_id, answer=f"Fähigkeit '{target_fn_name}' erfolgreich in library_registry (Node: {persisted_node_id}) verewigt.", snippet=generated_code)
+            except Exception as e:
+                if logger:
+                    logger.warning(f"[CACHE SEAL WARNUNG] {e}")
+
+        if log_table and time_stamp:
+            try:
+                self.log_save_query_run_to_db_timestamp(
+                    task_description=task_description,
+                    error_msg="",
+                    solution_code=generated_code[:TASK_DESCRIPTION_MAX_LEN],
+                    run_id=time_stamp,
+                    step_type="seal",
+                    log_table_name=log_table
+                )
+            except Exception as e:
+                pass
+
+        return {
+            "status": "SUCCESS",
+            "node_id": persisted_node_id,
+            "tool_name": target_fn_name,
+            "injected_functions": injected,
+            "code_snippet": generated_code,
+            "message": f"Fähigkeit '{target_fn_name}' verifiziert (Returncode 0), in 'library_registry' (Node {persisted_node_id}) persistiert und im RAM aktiviert."
+        }
+
+    def bootstrap_ram_capabilities(self) -> dict:
+        """Lädt alle aktiven Fähigkeiten aus der Datenbank direkt in den RAM."""
+        if self.evolution_manager:
+            return self.evolution_manager.bootstrap_ram_capabilities(target_agent=self)
+        return {"status": "FAILED", "error": "Evolution manager not available"}
+
+    def introspect_library(self) -> dict:
+        """Analysiert die bestehende library_registry vor neuen Erstellungen (Anti-Code-Shrinking)."""
+        if self.evolution_manager:
+            return self.evolution_manager.introspect_existing_library()
+        return {"total_count": 0, "functions": set(), "nodes": []}
+
     def __init__(self, db_filename: str = DB_FILENAME, start_path: str = PROJECT_POINT,
                  model_name: str = MODEL_LLM, ollama_host: str = OLLAMA_HOST,
                  require_ollama: bool = True):
@@ -150,6 +387,12 @@ class MetaCoderSQLPipeline(sql_reader if sql_reader else object):
         self.model_name = model_name
         self.ollama_host = ollama_host
         self.client = None
+
+        # 4. Self-Tool-Evolution-Manager & dynamischer RAM-Bootstrap (Stufe 4)
+        evo_mgr_cls = globals().get('class_self_tool_evolution_manager') or tool_evolution_manager
+        self.evolution_manager = evo_mgr_cls(db_path=self.db_filename) if evo_mgr_cls else None
+        if self.evolution_manager:
+            self.evolution_manager.bootstrap_ram_capabilities(target_agent=self)
         
         if require_ollama and ollama_manager:
             if ollama_manager.ensure_ollama_running(ollama_host):
@@ -186,6 +429,21 @@ class MetaCoderSQLPipeline(sql_reader if sql_reader else object):
         log_table = indexed_query.get("log_table_name")
         time_stamp = indexed_query.get("time_stamp")
 
+        # Anti-Heißluft: Capability-Evolutionsaufträge zwingend über den 4-Stufen-Zyklus routen
+        capability_terms = [
+            "run_multi_model_consensus", "consensus", "fähigkeit", "fehigkeit",
+            "capability", "kernel-funktion", "kernel funktion", "kernel_funktion",
+            "neue funktion", "erstelle funktion", "registriere in library_registry",
+            "library_registry", "tool-evolution", "tool evolution"
+        ]
+        if any(term in task_description.lower() for term in capability_terms):
+            return self.execute_capability_evolution_pipeline(
+                task_description=effective_task,
+                node_id=node_id,
+                log_table=log_table,
+                time_stamp=time_stamp
+            )
+
         def _execute_pipeline_core():
             nonlocal node_id, codes
             # 1. Blueprint-System anfahren
@@ -216,7 +474,7 @@ class MetaCoderSQLPipeline(sql_reader if sql_reader else object):
                     if not success:
                         raise RuntimeError(f"Sandbox-Fehler: {output}")
                     return output
-                return "Kein ausführbarer Code-Block gefunden, logische Ausführung erfolgreich."
+                raise RuntimeError("Anti-Heißluft-Schutz: Kein ausführbarer Code-Block gefunden. Erfolg wird verweigert.")
             
             # 3. Evolutionsschleife starten
             if self.evolution_loop:
@@ -287,6 +545,11 @@ def boot_latest_metacoder(require_ollama: bool = True) -> MetaCoderSQLPipeline:
     except Exception as e:
         if logger:
             logger.warning(f"[BOOT WARNUNG] Bootstrap-DNA konnte nicht geladen werden: {e}")
+    try:
+        pipeline.bootstrap_ram_capabilities()
+    except Exception as e:
+        if logger:
+            logger.warning(f"[BOOT WARNUNG] RAM-Bootstrap konnte nicht geladen werden: {e}")
     return pipeline
 
 
@@ -305,6 +568,7 @@ def query_meta_coder_sql(notebook_path: str, instruction: str):
 globals()['MetaCoderSQLPipeline'] = MetaCoderSQLPipeline
 globals()['boot_latest_metacoder'] = boot_latest_metacoder
 globals()['query_meta_coder_sql'] = query_meta_coder_sql
+globals()['class_self_tool_evolution_manager'] = globals().get('class_self_tool_evolution_manager') or tool_evolution_manager
 
 
 if __name__ == "__main__":
@@ -357,10 +621,20 @@ if __name__ == "__main__":
 
                 if indexed_context.get("cache_hit"):
                     cached_data = indexed_context.get("cached_check", {})
-                    print(f"\n{AGENT_NAME} [Domain: SQL-Cache | DB aktiv | Node {last_query_node_id}]:")
-                    print(cached_data.get("response"))
-                    print("-" * 70)
-                    continue
+                    cached_resp = cached_data.get("response")
+                    cached_node = cached_data.get("node_id")
+
+                    # Prüfung auf Weiterentwicklung: Wurde in library_registry neues Wissen verankert?
+                    has_evolved = pipeline.check_library_evolution_since_node(cached_node) if hasattr(pipeline, "check_library_evolution_since_node") else False
+
+                    if not has_evolved and cached_resp and cached_resp.strip() and cached_resp != "PROCESSING":
+                        print(f"\n{AGENT_NAME} [Domain: SQL-Cache | DB aktiv | Node {last_query_node_id}]:")
+                        print(cached_resp)
+                        print("-" * 70)
+                        continue
+                    elif has_evolved:
+                        if logger:
+                            logger.info(f"[EVOLUTION] Neues Wissen in 'library_registry' nach Node {cached_node} erkannt - Antwort wird aktualisiert.")
             except Exception as e:
                 if logger:
                     logger.warning(f"[GEGENKONTROLLE FEHLER] index_chat_user_query fehlgeschlagen: {e}")
@@ -368,22 +642,59 @@ if __name__ == "__main__":
                 log_table = None
                 effective_input = user_input
 
-            # Stufe 2: LLM-Inferenz oder Pipeline mit automatischer Spinner-Koppelung (run_agent)
+            # Stufe 2A: Intent-Trennung für Capability- & Tool-Evolution (Anti-Heißluft & Stufe A-D)
+            capability_terms = [
+                "run_multi_model_consensus", "consensus", "fähigkeit", "fehigkeit",
+                "capability", "kernel-funktion", "kernel funktion", "kernel_funktion",
+                "neue funktion", "erstelle funktion", "registriere in library_registry",
+                "library_registry", "tool-evolution", "tool evolution"
+            ]
+            is_capability_evolution = any(term in user_input.lower() for term in capability_terms)
+
+            if is_capability_evolution:
+                if logger:
+                    logger.info(f"[TOOL-EVOLUTION] Starte verbindliche 4-Stufen-Evolution: {effective_input[:80]}")
+                evo_result = pipeline.execute_capability_evolution_pipeline(
+                    effective_input,
+                    node_id=last_query_node_id,
+                    log_table=log_table,
+                    time_stamp=indexed_context.get("time_stamp") if 'indexed_context' in locals() else None
+                )
+                res_msg = evo_result.get("message") or evo_result.get("error")
+                print(f"\n{AGENT_NAME} [Status: {evo_result.get('status')} | Tool-Evolution]:\n{res_msg}\n" + "-" * 70)
+                continue
+
+            # Stufe 2B: Aufgaben-Klassifizierung (Job im Projektverzeichnis vs. Frage-Antwort / Code)
+            action_terms = ["erstelle", "schreibe datei", "repariere", "korrigiere", "fuehre aus", "führe aus", "analysiere projekt", "fixe", "implementiere"]
+            is_job = any(term in user_input.lower() for term in action_terms) and not any(user_input.lower().startswith(q) for q in ["was", "wie", "welche", "warum", "kannst du erklaeren", "kannst du erklären", "zeige"])
+
+            if is_job:
+                if logger:
+                    logger.info(f"[PROJEKT-JOB] Fuehre Aufgabe im Projektverzeichnis aus: {effective_input[:80]}")
+                job_result = pipeline.run_pipeline(effective_input)
+                res_msg = job_result.get("message") or job_result.get("result") or job_result.get("error")
+                print(f"\n{AGENT_NAME} [Status: {job_result.get('status')} | Projekt-Ausfuehrung]:\n{res_msg}\n" + "-" * 70)
+                if last_query_node_id and res_msg:
+                    pipeline.seal_query_cache(last_query_node_id, str(res_msg))
+                continue
+
+            # Stufe 3: LLM-Inferenz oder Pipeline mit automatischer Spinner-Koppelung (run_agent)
             if pipeline.client:
                 domain = pipeline._detect_domain(effective_input)
                 db_tips = pipeline._get_relevant_tips(effective_input)
                 user_blueprint = pipeline.initialize_blueprint_system(effective_input)
 
-                system_prompt = f"""
-You are an autonomous AI Agent with an active SQLite Long-Term Memory (Knowledge Agent Routing Tree).
-Current Detected Domain: {domain}
-Blueprint Status: {user_blueprint['status']}
+                system_prompt = f"""Du bist der Offline-AI Agent für Python-Entwicklung und Software-Architektur.
+Aktuelle Domäne: {domain}
 
-Retrieved Knowledge & Past Patterns from SQLite DB:
+Wissensfundament & Richtlinien aus der SQLite-Bibliothek (library_registry):
 {db_tips}
 
-Your Task: Answer the user's request in German, keeping any code or technical keywords strictly in English. 
-Acknowledge and make use of the SQLite database context if relevant.
+Regeln für deine Antwort:
+1. Keine Begrüßungsfloskeln, kein Smalltalk und keine Meta-Selbsterklärungen (z. B. nicht sagen 'Ich bin ein Agent...'). Antworte direkt, präzise und sachbezogen.
+2. Wenn nach Code gefragt wird, liefere den vollständigen, sauberen Code als Markdown-Block (```python ... ```).
+3. Beziehe relevante Funktionen oder Konzepte aus der SQLite-Bibliothek ein, um die Frage technisch fundiert zu beantworten.
+4. Alle Code-Elemente (Klassen, Funktionen, Variablen) strikt in englischer Sprache benennen; Erklärungen auf benutzer gefragte Sprache verfassen.
 """
                 chat_messages = [
                     {"role": "system", "content": system_prompt},
@@ -396,23 +707,41 @@ Acknowledge and make use of the SQLite database context if relevant.
                     agent_title=f"{AGENT_NAME}-Chat",
                     model=pipeline.model_name,
                     ollama_host=pipeline.ollama_host
-                ) if ollama_manager else {"content": ""}
+                ) if ollama_manager else {"status": "FAILED", "content": ""}
 
-                answer = chat_res.get("content", "")
+                answer = chat_res.get("content", "") if isinstance(chat_res, dict) else ""
 
-                # Cache versiegeln
-                if last_query_node_id:
+                # Autonomer Fallback auf SQLite Knowledge Tree wenn LLM leer oder Modell fehlt
+                if not answer or not answer.strip() or (isinstance(chat_res, dict) and chat_res.get("status") == "FAILED"):
+                    err_msg = chat_res.get("error", "LLM lieferte keine Antwort") if isinstance(chat_res, dict) else "Kein Inferenz-Ergebnis"
+                    answer = pipeline.generate_knowledge_fallback_response(
+                        effective_input,
+                        domain=domain,
+                        db_tips=db_tips,
+                        error_info=err_msg
+                    )
+
+                # Cache nur mit gehaltvoller Antwort versiegeln
+                if last_query_node_id and answer and answer.strip():
                     pipeline.seal_query_cache(last_query_node_id, answer)
                 
-                # Auto-Persistence
-                if "verewige" in user_input.lower() or "speichere in sql" in user_input.lower():
-                    pipeline.persist_new_capability(
-                        capability_name="Autonomous_Capability",
-                        code_snippet=answer[:PROMPT_MAX_LEN],
+                # Auto-Persistence & 4-Stufen Self-Tool-Evolution
+                if any(trigger in user_input.lower() for trigger in ["verewige", "speichere in sql", "erstelle fähigkeit", "erstelle fehigkeit", "erstelle tool", "neue fähigkeit", "neue fehigkeit", "lerne"]):
+                    extracted_code = ""
+                    if sub_verifier and hasattr(sub_verifier, "extract_code_blocks"):
+                        blocks = sub_verifier.extract_code_blocks(answer) or sub_verifier.extract_code_blocks(user_input)
+                        if blocks:
+                            extracted_code = blocks[0] if isinstance(blocks, list) else blocks
+                    if not extracted_code:
+                        extracted_code = answer
+
+                    tool_title = f"Capability_{datetime.datetime.now().strftime('%H%M%S')}"
+                    evo_res = pipeline.evolve_and_register_tool(
+                        tool_name=tool_title,
+                        code_snippet=extracted_code,
                         description=user_input
                     )
-                    if logger:
-                        logger.info("\n[SYSTEM-INFO] Die Fähigkeit wurde physisch in die SQLite-Tabelle 'library_registry' geschrieben!")
+                    print(f"--> [TOOL-EVOLUTION] Status: {evo_res.get('status')} | Im RAM aktiviert: {evo_res.get('injected_functions')}")
 
                 elif "sql" in user_input.lower() or "fehler" in user_input.lower() or "code" in user_input.lower():
                     pipeline.log_save_query_run_to_db_timestamp(

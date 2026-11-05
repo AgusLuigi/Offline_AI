@@ -44,6 +44,15 @@ DIR_NOTEBOOKS=  "notebooks"
 
 SET_FOLDERS= {"DIR_SRC","DIR_LOGS","DIR_CONFIG","DIR_DATA","DIR_MODELS","DIR_NOTEBOOKS"}
 
+DICT_FOLDERS = {
+    "src": DIR_SRC,
+    "logs": DIR_LOGS,
+    "config": DIR_CONFIG,
+    "data": DIR_DATA,
+    "models": DIR_MODELS,
+    "notebooks": DIR_NOTEBOOKS
+}
+
 ACTIVE_MODEL_CONFIG_FILE: str         = "active_model_config.json"
 PC_ID_PREFIX: str             = "PC"
 FALLBACK_PC_ID: str                   = "PC_SYSTEM"

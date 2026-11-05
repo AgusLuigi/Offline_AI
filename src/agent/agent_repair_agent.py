@@ -2,41 +2,41 @@
 # -*- coding: utf-8 -*-
 
 """
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 AUTONOMOUS REPAIR AGENT v4.0  —  The Spine Principle & Micro-Step Surgery
                                   AST-Chirurgical · Zero-Loss · Closed-Loop
                                   + Small-Model Micro-Steps · English Standardization
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 Core Architecture Principles:
-  ① Zero-Code-Loss Policy (Anti-Shrinkage):
+    Zero-Code-Loss Policy (Anti-Shrinkage):
      No code, classes, or functions may ever be deleted or arbitrarily truncated.
      Untouched code is preserved byte-for-byte in its original form.
 
-  ② The Spine Principle (Def-by-Def & Class-by-Class Surgery):
+    The Spine Principle (Def-by-Def & Class-by-Class Surgery):
      The target file is decomposed via AST into an exact sequence of logical
      vertebrae (Wirbel: preamble, functions, classes, methods, entrypoints).
      Only demonstrably faulty vertebrae are isolated and repaired.
      A deterministic assembler rebuilds the complete file in exact hierarchy.
 
-  ③ Granular Micro-Step Planning (Designed for Small Models):
+    Granular Micro-Step Planning (Designed for Small Models):
      Complex tasks are never sent in a single monolithic prompt.
      Prompts are strictly scoped to single vertebrae (< 1500 tokens), enabling
      small, resource-friendly local models (e.g. Qwen 3, Codestral) to achieve
      maximum precision without truncation or hallucination.
      Every single micro-step is validated immediately upon completion.
 
-  ④ Universal Portability & English Standardization:
+    Universal Portability & English Standardization:
      All documentation, function docstrings, technical explanations, and code
      comments are strictly standardized in professional English.
 
-  ⑤ Self-Healing Tool Bootstrap & Architecture E:
+    Self-Healing Tool Bootstrap & Architecture E:
      All core tools are verified and repaired via stdlib-only fallbacks before
      external dependencies are invoked.
 
-  ⑥ Structural-Bug-Intelligence (KnownBugCatalog BUG-01 to BUG-06):
+    Structural-Bug-Intelligence (KnownBugCatalog BUG-01 to BUG-06):
      Maintains deterministic patch recipes for known architectural bottlenecks.
 
-  ⑦ Closed-Loop Subprocess & Semantic Guard Validation:
+    Closed-Loop Subprocess & Semantic Guard Validation:
      Every patch is verified via AST, isolated subprocess, and semantic guard
      before and after writing to disk.
 """
@@ -77,7 +77,7 @@ def _resolve_project_root() -> Path:
     """
     Stochastische Projekterkennung: Wandert von __file__ aufwärts bis
     ein Ordner gefunden wird, der 'src' enthält.
-    Fallback-Kette: __file__ → CWD → CWD.parent
+    Fallback-Kette: __file__ -> CWD -> CWD.parent
     """
     candidates = [Path(__file__).resolve()]
     try:
@@ -193,9 +193,9 @@ def _safe_bootstrap_tools() -> Dict[str, Any]:
             if cls_obj is not None:
                 tool_map[alias] = cls_obj
                 globals()[class_name] = cls_obj
-                print(f"[SELF-HEAL] ✓ Einzellader erfolgreich: {class_name}")
+                print(f"[SELF-HEAL] [OK] Einzellader erfolgreich: {class_name}")
         except Exception as load_err:
-            print(f"[SELF-HEAL] ⚠ Einzellader fehlgeschlagen für {class_name}: {load_err}")
+            print(f"[SELF-HEAL] [WARN] Einzellader fehlgeschlagen für {class_name}: {load_err}")
     return tool_map
 
 _TOOLS = _safe_bootstrap_tools()
@@ -279,7 +279,7 @@ class KnownBugCatalog:
                 if log_file_path.exists():
                     log_content = log_file_path.read_text(encoding="utf-8", errors="replace")
                     if "ALL_CONNECTIONS_VERIFIED_100_PERCENT" in log_content:
-                        print(f"🌟 [PROVABLE SUCCESS] Generation {current_generation} hat alle Systemschnittstellen erfolgreich verifiziert.")
+                        print(f"  [PROVABLE SUCCESS] Generation {current_generation} hat alle Systemschnittstellen erfolgreich verifiziert.")
                         success = True
                     else:
                         # Extrahiere die letzten registrierten Flugschreiber-Schritte im Fehlerfall für präzises Re-Patching
@@ -297,7 +297,7 @@ class KnownBugCatalog:
         new_block = '''\
                 # [AUTO-PATCH BUG-03] Pragmatische Erfolgslogik: kein Exception = Erfolg
                 success = True
-                print(f"✅ [VERIFIED] Generation {current_generation} erfolgreich abgeschlossen.")
+                print(f"  [VERIFIED] Generation {current_generation} erfolgreich abgeschlossen.")
                 if log_file_path.exists():
                     log_content = log_file_path.read_text(encoding="utf-8", errors="replace")
                     steps = re.findall(r"DETAIL=STEP_(\\d+ -> .*)", log_content)
@@ -314,7 +314,7 @@ class KnownBugCatalog:
         return pattern.sub(
             '# [AUTO-PATCH BUG-03] Pragmatische Erfolgslogik\n'
             '                success = True\n'
-            '                print(f"✅ [VERIFIED] Generation {current_generation} erfolgreich.")',
+            '                print(f"  [VERIFIED] Generation {current_generation} erfolgreich.")',
             content
         )
 
@@ -338,7 +338,7 @@ class KnownBugCatalog:
         sichere No-Op-Implementierungen (Guard-Pattern).
         """
         guard_methods = '''
-    #─ [AUTO-PATCH BUG-04] Guard-Implementierungen für fehlende DB-Methoden─
+    #- [AUTO-PATCH BUG-04] Guard-Implementierungen für fehlende DB-Methoden-
     def get_db_connection(self, filename: str = None):
         """Guard: Gibt None zurück, wenn keine echte DB-Verbindung verfügbar."""
         if self.registry_db_path:
@@ -395,7 +395,7 @@ class KnownBugCatalog:
             return {"status": "deactivated", "node_id": node_id, "reason": failure_reason}
         except Exception as e:
             return {"status": "failed", "error": str(e)}
-    #─ Ende Guard-Implementierungen─
+    #- Ende Guard-Implementierungen-
 '''
         # Einfügen direkt nach dem __init__-Block der class_container_evolve_loop_test
         target_pattern = re.compile(
@@ -421,7 +421,7 @@ class KnownBugCatalog:
     def detect_bug_06_mro_conflict_dynamic_bases(content: str, file_path: Path) -> bool:
         """BUG-06: Dynamische Basisklassen erzeugen MRO-Konflikt wenn Toolklasse None ist.
         Muster: class Foo(tool_a if tool_a else object, tool_b if tool_b else object)
-        → wenn tool_a=None: (object, tool_b) → MRO-Konflikt wenn tool_b von object erbt.
+        -> wenn tool_a=None: (object, tool_b) -> MRO-Konflikt wenn tool_b von object erbt.
         """
         if file_path.name == "agent_repair_agent.py":
             return False
@@ -445,7 +445,7 @@ class KnownBugCatalog:
         if not matches:
             return content
         # Helper-Blöcke sammeln und Matches rückwärts ersetzen (keine Offset-Verschiebung)
-        helper_block_lines = ["\n#─ [AUTO-PATCH BUG-06] MRO-sichere Basisklassen-Builder─\n"]
+        helper_block_lines = ["\n#- [AUTO-PATCH BUG-06] MRO-sichere Basisklassen-Builder-\n"]
         for m in matches:
             class_name = m.group(1)
             bases_str  = m.group(2)
@@ -477,7 +477,7 @@ class KnownBugCatalog:
     def patch_bug_05(content: str) -> str:
         """Fügt _insert_routing_node als vollständige Methode in class_tool_sql_reader ein."""
         insert_method = '''
-    #─ [AUTO-PATCH BUG-05] Fehlende Kern-Methode _insert_routing_node─
+    #- [AUTO-PATCH BUG-05] Fehlende Kern-Methode _insert_routing_node-
     def _insert_routing_node(self, conn, table_name: str, node_id: str,
                              topic_title: str = "", topic_specification: str = "",
                              agent_instruction: str = "", example_code_snippet: str = "",
@@ -545,7 +545,7 @@ class KnownBugCatalog:
         except Exception as e:
             print(f"[SELF-EVOLUTION] DB-Protokollierung fehlgeschlagen: {e}")
         return {"status": "EVOLUTION_TRIGGERED", "error_logged": recent_error[:100]}
-    #─ Ende _insert_routing_node─
+    #- Ende _insert_routing_node-
 '''
         # Einfügen nach def verify_environment in class_tool_sql_reader
         insert_after = re.search(
@@ -783,7 +783,7 @@ class ASTSurgery:
           'skeleton_text'   : formattierter String für LLM-Prompt
           'function_names'  : Set aller Funktionsnamen
           'class_names'     : Set aller Klassennamen
-          'global_constants': Dict mit Konstantennamen → Wert-Preview
+          'global_constants': Dict mit Konstantennamen -> Wert-Preview
         """
         result: Dict[str, Any] = {
             "skeleton_text": "",
@@ -823,7 +823,7 @@ class ASTSurgery:
                 if args.kwarg:
                     parts.append(f"**{args.kwarg.arg}")
                 return ", ".join(parts)
-            skeleton_lines = [f"# ═══ MANDATORY SKELETON für {file_name} ═══"]
+            skeleton_lines = [f"# === MANDATORY SKELETON für {file_name} ==="]
             for node in tree.body:
                 # Globale Konstanten (Assign auf Modul-Ebene)
                 if isinstance(node, ast.Assign):
@@ -891,7 +891,7 @@ class ASTSurgery:
             result["skeleton_text"] = "\n".join(skeleton_lines)
         return result
 
-    # ARCHITEKTUR C: Non-Destructive Namespace Safeguard─
+    # ARCHITEKTUR C: Non-Destructive Namespace Safeguard-
     @staticmethod
     def rewrite_misplaced_globals(content: str) -> Tuple[str, List[str]]:
         """
@@ -979,7 +979,7 @@ class ASTSurgery:
         patched_lines.insert(insert_at, injection_block)
         return "".join(patched_lines), fixed_names
 
-    # ARCHITEKTUR D: Flight-Recorder Injector─
+    # ARCHITEKTUR D: Flight-Recorder Injector-
     @staticmethod
     def inject_flight_recorder(content: str, target_functions: Optional[List[str]] = None,
                                 log_var: str = "print") -> str:
@@ -1065,9 +1065,9 @@ class ASTSurgery:
         return res
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # THE SPINE PRINCIPLE & MICRO-STEP RECONSTRUCTION ENGINE
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 
 class Vertebra:
     """
@@ -1356,7 +1356,7 @@ class SpineSurgery:
             retry_feedback = ""
             if attempt > 1 and last_rejection:
                 retry_feedback = (
-                    f"\n⚠️ CRITICAL REJECTION FEEDBACK FROM PREVIOUS ATTEMPT {attempt - 1}:\n"
+                    f"\n[WARN]  CRITICAL REJECTION FEEDBACK FROM PREVIOUS ATTEMPT {attempt - 1}:\n"
                     f"{last_rejection}\n"
                     f"You MUST NOT shrink, omit, or summarize existing logic. Keep all statements, conditions, "
                     f"helper calls, and docstrings intact. ONLY repair the targeted defect.\n"
@@ -1509,19 +1509,19 @@ class SubprocessValidator:
     def validate_content_in_tempfile(content: str, project_root: Path,
                                      timeout: int = None) -> Tuple[bool, str]:
         """
-        Schreibt content in eine temporäre Datei im scratch/-Ordner und führt
+        Schreibt content in eine temporäre Datei im temp/-Ordner und führt
         einen Syntax-Check via Subprocess durch.
         """
         import tempfile
         if timeout is None:
             timeout = SANDBOX_TIMEOUT_SEC
-        scratch_dir = project_root / "scratch"
-        scratch_dir.mkdir(parents=True, exist_ok=True)
+        temp_dir = project_root / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
         tmp_path = None
         try:
             with tempfile.NamedTemporaryFile(
                 suffix=".py", mode="w", encoding="utf-8",
-                dir=str(scratch_dir), delete=False
+                dir=str(temp_dir), delete=False
             ) as f:
                 f.write(content)
                 tmp_path = Path(f.name)
@@ -1616,23 +1616,23 @@ class ProjectScanner:
         ok_count = sum(1 for r in results if r["syntax_ok"] and not r["known_bugs"])
         bug_count = sum(1 for r in results if r["known_bugs"])
         syntax_err_count = sum(1 for r in results if not r["syntax_ok"])
-        print("\n" + "═" * 70)
-        print(f"  📋 PROJEKT-SCAN BERICHT — {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print(f"    PROJEKT-SCAN BERICHT — {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 70)
         print(f"  Gescannte Dateien   : {total}")
-        print(f"  ✅ Fehlerfrei        : {ok_count}")
-        print(f"  ⚠️  Bekannte Bugs    : {bug_count}")
-        print(f"  ❌ Syntax-Fehler     : {syntax_err_count}")
-        print("─" * 70)
+        print(f"    Fehlerfrei        : {ok_count}")
+        print(f"  [WARN]   Bekannte Bugs    : {bug_count}")
+        print(f"    Syntax-Fehler     : {syntax_err_count}")
+        print("-" * 70)
         for r in results:
-            status_icon = "✅" if (r["syntax_ok"] and not r["known_bugs"]) else "❌"
+            status_icon = " " if (r["syntax_ok"] and not r["known_bugs"]) else " "
             print(f"\n  {status_icon} {r['relative']}")
             print(f"     Zeilen: {r['line_count']} | Bytes: {r['byte_size']}")
             if not r["syntax_ok"]:
-                print(f"     🔴 SYNTAX-FEHLER: {r['syntax_error']}")
+                print(f"       SYNTAX-FEHLER: {r['syntax_error']}")
             for bug in r["known_bugs"]:
-                print(f"     🐛 {bug['id']} [{bug['severity']}]: {bug['name']}")
-        print("\n" + "═" * 70)
+                print(f"       {bug['id']} [{bug['severity']}]: {bug['name']}")
+        print("\n" + "=" * 70)
 
 # SEKTION 8 — HAUPT-REPAIR-ENGINE (MonolithicRepairAgent)
 class MonolithicRepairAgent:
@@ -1760,12 +1760,12 @@ class MonolithicRepairAgent:
             try:
                 val = input(prompt_str).strip()
                 if val.lower() in ["quit", "exit"]:
-                    print("\n👋 Sitzung auf Benutzeranfrage beendet.")
+                    print("\n  Sitzung auf Benutzeranfrage beendet.")
                     self.log_action("INFO", "Sitzung via quit/exit beendet.")
                     sys.exit(0)
                 return val
             except KeyboardInterrupt:
-                print("\n⚠️ [SAFEGUARD] CTRL+C abgefangen. Sitzung läuft weiter (Type 'quit' zum Beenden).")
+                print("\n[WARN]  [SAFEGUARD] CTRL+C abgefangen. Sitzung läuft weiter (Type 'quit' zum Beenden).")
                 continue
 
     def resolve_project_dependencies(self, file_content: str) -> str:
@@ -1870,7 +1870,7 @@ class MonolithicRepairAgent:
                 removed = sum(1 for l in diff_lines if l.startswith("-") and not l.startswith("---"))
                 self.log_action("INFO",
                     f"[{patch_id}] Diff-Report: +{added} Zeilen hinzugefügt, -{removed} Zeilen entfernt. "
-                    f"→ {diff_report_path.name}",
+                    f"-> {diff_report_path.name}",
                     extra={"diff_file": str(diff_report_path), "added": added, "removed": removed}
                 )
         except Exception as diff_err:
@@ -1878,7 +1878,7 @@ class MonolithicRepairAgent:
         # 6. Schreiben
         try:
             target_path.write_text(patched_content, encoding="utf-8")
-            self.log_action("INFO", f"[{patch_id}] ✅ Patch erfolgreich geschrieben: {target_path.name}")
+            self.log_action("INFO", f"[{patch_id}]   Patch erfolgreich geschrieben: {target_path.name}")
             return True
         except Exception as e:
             self.log_action("ERROR", f"[{patch_id}] Schreib-Fehler: {e}")
@@ -1902,7 +1902,7 @@ class MonolithicRepairAgent:
         Args:
             dry_run: True = nur Diagnose, kein Schreiben
         """
-        self.log_action("INFO", f"═══ AUTONOMER VOLLREPAIR  START (dry_run={dry_run}) ═══")
+        self.log_action("INFO", f"=== AUTONOMER VOLLREPAIR  START (dry_run={dry_run}) ===")
         report = {
             "timestamp": self.timestamp_str,
             "project_root": str(self.project_root),
@@ -1916,33 +1916,33 @@ class MonolithicRepairAgent:
             "skipped": [],
         }
         # PHASE 0: Self-Healing Tool-Fallback (Architektur E)
-        print("\n" + "═" * 70)
-        print("  🔩 PHASE 0/5: SELF-HEALING TOOL-FALLBACK (Architektur E)")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print("    PHASE 0/5: SELF-HEALING TOOL-FALLBACK (Architektur E)")
+        print("=" * 70)
         if not dry_run:
             tool_results = self.self_heal_broken_tools()
             report["tool_heal_results"] = tool_results
             ok   = sum(1 for v in tool_results.values() if v == "OK")
             rep  = sum(1 for v in tool_results.values() if v in ("REPAIRED", "STUB_CREATED"))
             fail = sum(1 for v in tool_results.values() if v.startswith("FAILED"))
-            print(f"  ✅ Intakt: {ok} | 🔧 Repariert/Erstellt: {rep} | ❌ Fehlgeschlagen: {fail}")
+            print(f"    Intakt: {ok} |   Repariert/Erstellt: {rep} |   Fehlgeschlagen: {fail}")
         else:
             print("  [DRY-RUN] Tool-Heal übersprungen.")
-        print("\n" + "═" * 70)
-        print("  📡 PHASE 1/5: VOLLSTÄNDIGER PROJEKT-SCAN")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print("    PHASE 1/5: VOLLSTÄNDIGER PROJEKT-SCAN")
+        print("=" * 70)
         scan_results = self.scanner.scan_all_agents()
         self.scanner.print_scan_report(scan_results)
         report["scanned"] = len(scan_results)
-        print("\n" + "═" * 70)
-        print("  🔧 PHASE 2/5: BEKANNTE BUGS PATCHEN (KnownBugCatalog)")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print("    PHASE 2/5: BEKANNTE BUGS PATCHEN (KnownBugCatalog)")
+        print("=" * 70)
         for diag in scan_results:
             file_path: Path = diag["file"]
             known_bugs: List[Dict] = diag["known_bugs"]
             if not known_bugs:
                 continue
-            print(f"\n  📄 {diag['relative']}")
+            print(f"\n  [DOC] {diag['relative']}")
             try:
                 original_content = file_path.read_text(encoding="utf-8", errors="replace")
             except Exception as e:
@@ -1972,7 +1972,7 @@ class MonolithicRepairAgent:
                         continue
                     patched_content = new_content
                     patch_applied = True
-                    print(f"     ✅ {bug_id} — Patch vorbereitet.")
+                    print(f"       {bug_id} — Patch vorbereitet.")
                 except Exception as e:
                     self.log_action("ERROR", f"{bug_id}: Patch-Funktion Ausnahme: {e}")
                     report["failed_patches"].append({
@@ -1986,7 +1986,7 @@ class MonolithicRepairAgent:
                     )
                     if success:
                         report["patched_known_bugs"].append(diag["relative"])
-                        print(f"     💾 Patch geschrieben: {file_path.name}")
+                        print(f"     [DISK] Patch geschrieben: {file_path.name}")
                     else:
                         report["failed_patches"].append({
                             "file": diag["relative"], "reason": "safe_write_rejected"
@@ -1994,16 +1994,16 @@ class MonolithicRepairAgent:
                 else:
                     print(f"     [DRY-RUN] Patch würde geschrieben: {file_path.name}")
                     report["patched_known_bugs"].append(f"[DRY-RUN] {diag['relative']}")
-        print("\n" + "═" * 70)
-        print("  🤖 PHASE 3/5: LLM-TIEFENREPARATUR (Syntax-Fehler)")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print("  [ROBOT] PHASE 3/5: LLM-TIEFENREPARATUR (Syntax-Fehler)")
+        print("=" * 70)
         syntax_broken = [d for d in scan_results if not d["syntax_ok"]]
         if not syntax_broken:
-            print("  ✅ Keine Syntax-Fehler gefunden — Phase 3 übersprungen.")
+            print("    Keine Syntax-Fehler gefunden — Phase 3 übersprungen.")
         else:
             for diag in syntax_broken:
                 file_path = diag["file"]
-                print(f"\n  🔴 LLM-Repair: {diag['relative']} — {diag['syntax_error']}")
+                print(f"\n    LLM-Repair: {diag['relative']} — {diag['syntax_error']}")
                 success = self._llm_repair_file(
                     file_path, error_hint=diag["syntax_error"], dry_run=dry_run
                 )
@@ -2013,21 +2013,21 @@ class MonolithicRepairAgent:
                     report["failed_patches"].append({
                         "file": diag["relative"], "reason": "llm_repair_failed"
                     })
-        print("\n" + "═" * 70)
-        print("  🏗️  PHASE 4/5: FEHLENDE HILFSAGENTEN KONSTRUIEREN")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print("      PHASE 4/5: FEHLENDE HILFSAGENTEN KONSTRUIEREN")
+        print("=" * 70)
         self._check_and_construct_missing_agents(report, dry_run)
-        print("\n" + "═" * 70)
-        print("  📊 PHASE 5/5: ABSCHLUSS-REPORT")
-        print("═" * 70)
+        print("\n" + "=" * 70)
+        print("  [CHART] PHASE 5/5: ABSCHLUSS-REPORT")
+        print("=" * 70)
         self._save_autonomous_report(report)
-        print("\n  🌟 AUTONOMER VOLLREPAIR ABGESCHLOSSEN!")
+        print("\n    AUTONOMER VOLLREPAIR ABGESCHLOSSEN!")
         print(f"     Gescannt     : {report['scanned']}")
         print(f"     Bug-Patches  : {len(report['patched_known_bugs'])}")
         print(f"     LLM-Patches  : {len(report['patched_llm'])}")
         print(f"     Fehlgeschl.  : {len(report['failed_patches'])}")
         print(f"     Neue Agenten : {len(report['new_agents_created'])}")
-        print("═" * 70 + "\n")
+        print("=" * 70 + "\n")
         self.log_action("INFO",
             f"Autonomer Vollrepair abgeschlossen: "
             f"{report['patched_known_bugs']} Bug-Patches, "
@@ -2123,7 +2123,7 @@ class MonolithicRepairAgent:
             if success:
                 spine.replace_vertebra(v.v_id, repaired_code)
                 any_mutation = True
-                self.log_action("INFO", f"[SPINE-STEP] ✅ Vertebra [{v.v_id}] successfully repaired.")
+                self.log_action("INFO", f"[SPINE-STEP]   Vertebra [{v.v_id}] successfully repaired.")
             else:
                 self.log_action("WARNING", f"[SPINE-STEP] Micro-step for [{v.v_id}] failed: {err_msg}")
 
@@ -2141,7 +2141,7 @@ class MonolithicRepairAgent:
                 if success and new_v:
                     spine.insert_new_vertebra(new_v)
                     any_mutation = True
-                    self.log_action("INFO", f"[SPINE-STEP] ✅ Missing vertebra `{missing_fn}` constructed and inserted.")
+                    self.log_action("INFO", f"[SPINE-STEP]   Missing vertebra `{missing_fn}` constructed and inserted.")
                 else:
                     self.log_action("WARNING", f"[SPINE-STEP] Could not construct missing vertebra `{missing_fn}`.")
 
@@ -2245,7 +2245,7 @@ class MonolithicRepairAgent:
             retry_feedback_section = ""
             if attempt > 1 and last_rejection_detail:
                 retry_feedback_section = (
-                    f"\n⚠️ REJECTION FEEDBACK FROM ATTEMPT {attempt - 1}:\n"
+                    f"\n[WARN]  REJECTION FEEDBACK FROM ATTEMPT {attempt - 1}:\n"
                     f"{last_rejection_detail}\n"
                     f"You MUST fix the above issue. Do NOT repeat the same mistake.\n"
                 )
@@ -2279,7 +2279,7 @@ class MonolithicRepairAgent:
                 f"3. DO NOT OMIT, TRUNCATE, OR DELETE any existing classes, functions, logic, or methods.\n"
                 f"4. Return the COMPLETE, fully working Python file inside a single ```python ... ``` block.\n"
                 f"5. CRITICAL: The repaired file must be at least 80% the length of the original "
-                f"({len(original_content)} chars → minimum {int(len(original_content)*0.8)} chars).\n"
+                f"({len(original_content)} chars -> minimum {int(len(original_content)*0.8)} chars).\n"
                 f"6. ALL functions listed in MANDATORY SKELETON must exist with exact same name in output.\n"
                 f"7. Do NOT indent top-level constants (like ALLOWED_TABLES) inside a class body.\n"
             )
@@ -2321,7 +2321,7 @@ class MonolithicRepairAgent:
             raw = res.get("content", "")
             # FLIGHT-RECORDER D: Antwort-Preview + Block-Zähler
             blocks = re.findall(r"```(?:python|py)?\s*(.*?)\s*```", raw, re.DOTALL)
-            raw_preview = raw[:300].replace("\n", "↵")
+            raw_preview = raw[:300].replace("\n", " ")
             self.log_action("INFO",
                 f"[FLIGHT-REC] LLM-Antwort erhalten: "
                 f"Gesamt-Zeichen={len(raw)}, Code-Blöcke={len(blocks)}, "
@@ -2461,7 +2461,7 @@ class MonolithicRepairAgent:
             "failure_reasons": failure_reasons,
             "missing_functions": missing_funcs,
             "prior_failure_count": prior_count,
-            "is_bug_candidate": prior_count >= 1,  # Nach 2 Failures → Bug-Kandidat
+            "is_bug_candidate": prior_count >= 1,  # Nach 2 Failures -> Bug-Kandidat
             "pre_structure_functions": list(pre_structure.get("functions", set())),
         }
         self._append_failure_registry(entry)
@@ -2473,9 +2473,9 @@ class MonolithicRepairAgent:
         )
         if entry["is_bug_candidate"]:
             self.log_action("WARNING",
-                f"[AUTO-CATALOG] ⚠️ Bug-Kandidat erkannt: '{missing_funcs}' "
+                f"[AUTO-CATALOG] [WARN]  Bug-Kandidat erkannt: '{missing_funcs}' "
                 f"fehlt wiederholt in LLM-Antworten für {file_path.name}. "
-                f"→ Manuell in KnownBugCatalog aufnehmen oder AST-Fallback prüfen."
+                f"-> Manuell in KnownBugCatalog aufnehmen oder AST-Fallback prüfen."
             )
 
     def _ast_surgical_fallback(self, file_path: Path, current_content: str,
@@ -2570,14 +2570,14 @@ class MonolithicRepairAgent:
         success = self._safe_write_patch(file_path, current_content, merged_content, "AST-FALLBACK")
         return success
 
-    # ARCHITEKTUR E: Self-Healing Tool-Fallback─
+    # ARCHITEKTUR E: Self-Healing Tool-Fallback-
     def self_heal_broken_tools(self) -> Dict[str, str]:
         """
         Architektur E — Self-Healing Fallback für defekte Werkzeuge:
         Prüft alle kritischen Tool-Module unter agent_universal_skript/ auf:
-          1. Existenz (fehlendes Modul → Stub generieren)
-          2. Syntax-Integrität (kaputte Syntax → Stub-Restore)
-          3. Minimale Klassen-Signatur (fehlende Kernmethoden → Guard-Injection)
+          1. Existenz (fehlendes Modul -> Stub generieren)
+          2. Syntax-Integrität (kaputte Syntax -> Stub-Restore)
+          3. Minimale Klassen-Signatur (fehlende Kernmethoden -> Guard-Injection)
         Arbeitet ausschließlich mit Python-Standardbibliotheken (ast, pathlib,
         subprocess, re, textwrap). Kein externer LLM-Aufruf notwendig.
         Returns: Dict {modul_name: "OK" | "REPAIRED" | "STUB_CREATED" | "FAILED"}
@@ -2868,7 +2868,7 @@ class MonolithicRepairAgent:
             for m in methods
         )
         return (
-            f"#─ [ARCH-E GUARD] Fehlende Klasse '{class_name}'─\n"
+            f"#- [ARCH-E GUARD] Fehlende Klasse '{class_name}'-\n"
             f"class {class_name}:\n"
             f"    \"\"\"Auto-generierter Guard-Stub (Self-Healing Fallback).\"\"\"\n"
             f"{method_bodies}\n"
@@ -2879,7 +2879,7 @@ class MonolithicRepairAgent:
         blocks = []
         for m in methods:
             blocks.append(
-                f"    #─ [ARCH-E GUARD METHOD] {m}─\n"
+                f"    #- [ARCH-E GUARD METHOD] {m}-\n"
                 f"    def {m}(self, *args, **kwargs):\n"
                 f"        \"\"\"[ARCH-E GUARD] {m} — Auto-generierter No-Op.\"\"\"\n"
                 f"        return None\n"
@@ -2923,10 +2923,10 @@ class MonolithicRepairAgent:
                 continue
 
             self.log_action("WARNING", f"Fehlendes kritisches Modul: {module_name} — Konstruktion gestartet.")
-            print(f"\n  🏗️  Konstruiere fehlendes Modul: {module_name}")
+            print(f"\n      Konstruiere fehlendes Modul: {module_name}")
 
             if not ollama_manager or not hasattr(ollama_manager, "generate"):
-                print(f"     ⚠️ LLM nicht verfügbar — {module_name} kann nicht konstruiert werden.")
+                print(f"     [WARN]  LLM nicht verfügbar — {module_name} kann nicht konstruiert werden.")
                 continue
 
             prompt = f"""You are an expert autonomous Python architect.
@@ -2959,7 +2959,7 @@ Requirements:
                             target_dir.mkdir(parents=True, exist_ok=True)
                             target_path.write_text(candidate, encoding="utf-8")
                             report["new_agents_created"].append(str(target_path))
-                            print(f"     ✅ Modul konstruiert: {module_name}")
+                            print(f"       Modul konstruiert: {module_name}")
                             self.log_action("INFO", f"Neues Modul konstruiert: {module_name}")
                         elif dry_run:
                             print(f"     [DRY-RUN] Modul würde konstruiert: {module_name}")
@@ -3003,7 +3003,7 @@ Dry-Run: {report['dry_run']}
 """
         try:
             report_path.write_text(content, encoding="utf-8")
-            print(f"\n  📄 Report gespeichert: {report_path}")
+            print(f"\n  [DOC] Report gespeichert: {report_path}")
             self.log_action("INFO", f"Report gespeichert: {report_path}")
         except Exception as e:
             self.log_action("ERROR", f"Report-Speicherung fehlgeschlagen: {e}")
@@ -3013,9 +3013,9 @@ Dry-Run: {report['dry_run']}
         Interaktiver Terminal-Modus für gezielten Repair einzelner Agenten.
         Vollständige 5-Schritt-Pipeline mit Bestätigung.
         """
-        print(f"\n{'═'*70}")
-        print(f"  🤖 {self.AGENT_NAME} — INTERAKTIVER TERMINAL-MODUS")
-        print(f"{'═'*70}")
+        print(f"\n{'='*70}")
+        print(f"  [ROBOT] {self.AGENT_NAME} — INTERAKTIVER TERMINAL-MODUS")
+        print(f"{'='*70}")
         self.log_action("INFO", "Interaktive Brainstorm-Sitzung gestartet.")
         # STEP 1: Target Selection
         print("\n[STEP 1/5] Ziel-Agenten-Auswahl")
@@ -3025,20 +3025,20 @@ Dry-Run: {report['dry_run']}
         if not available_agents and self.path_src.exists():
             available_agents = sorted([f for f in self.path_src.rglob("*.py") if f.is_file()])
         if not available_agents:
-            print(f"❌ Keine Python-Agenten in '{self.path_agent}' gefunden.")
+            print(f"  Keine Python-Agenten in '{self.path_agent}' gefunden.")
             self.log_action("ERROR", f"Keine Agenten-Dateien in {self.path_agent} gefunden.")
             return False
-        print(f"\n📂 Verfügbare Agenten in '{self.DIR_SRC}/{self.DIR_AGENT}/':")
+        print(f"\n  Verfügbare Agenten in '{self.DIR_SRC}/{self.DIR_AGENT}/':")
         for idx, agent_path in enumerate(available_agents, 1):
             print(f"  [{idx}] {agent_path.name}")
-        selection_input = self.safe_input(f"\n👉 Index (1-{len(available_agents)}) oder Dateiname eingeben: ")
+        selection_input = self.safe_input(f"\n  Index (1-{len(available_agents)}) oder Dateiname eingeben: ")
         if selection_input.isdigit():
             sel_idx = int(selection_input) - 1
             if 0 <= sel_idx < len(available_agents):
                 self.target_file_path = available_agents[sel_idx]
                 self.target_agent_name = self.target_file_path.name
             else:
-                print("❌ Ungültiger Index.")
+                print("  Ungültiger Index.")
                 return False
         else:
             if not selection_input.endswith(".py"):
@@ -3050,21 +3050,21 @@ Dry-Run: {report['dry_run']}
                     break
         if not self.target_file_path or not self.target_file_path.exists():
             self.log_action("ERROR", f"Ziel-Agent '{self.target_agent_name}' nicht gefunden!")
-            print(f"❌ Datei '{self.target_agent_name}' nicht gefunden.")
+            print(f"  Datei '{self.target_agent_name}' nicht gefunden.")
             return False
         self.log_action("INFO", f"Ziel-Agent ausgewählt: {self.target_file_path}")
-        print(f"✅ Ausgewählte Zieldatei: {self.target_file_path}")
+        print(f"  Ausgewählte Zieldatei: {self.target_file_path}")
         # Schnell-Diagnose anzeigen
         diag = self.scanner._diagnose_file(self.target_file_path)
-        print(f"\n  🔍 Schnell-Diagnose:")
-        print(f"     Syntax-OK: {'✅' if diag['syntax_ok'] else '❌'}")
+        print(f"\n    Schnell-Diagnose:")
+        print(f"     Syntax-OK: {' ' if diag['syntax_ok'] else ' '}")
         if diag["syntax_error"]:
             print(f"     Fehler: {diag['syntax_error']}")
         for bug in diag["known_bugs"]:
-            print(f"     🐛 {bug['id']} [{bug['severity']}]: {bug['name']}")
+            print(f"       {bug['id']} [{bug['severity']}]: {bug['name']}")
         # STEP 2: Issue Capture
         print("\n[STEP 2/5] FEHLERBESCHREIBUNG & BRAINSTORMING")
-        print("ℹ️  Beschreibung eingeben (mehrzeilig möglich).")
+        print("    Beschreibung eingeben (mehrzeilig möglich).")
         print("   Beenden mit **START**, **FINISH** oder **DONE** auf neuer Zeile.")
         error_lines = []
         while True:
@@ -3081,10 +3081,10 @@ Dry-Run: {report['dry_run']}
         print("\n[STEP 3/5] Fehler-Report-Tabelle in temp/ generieren...")
         self.generate_error_table(error_description)
         # STEP 4: Confirmation
-        print(f"\n📄 Report erstellt: {self.table_file_path}")
-        second_check = self.safe_input("👉 Report und Reparatur-Ansatz akzeptieren? [yes/no]: ")
+        print(f"\n[DOC] Report erstellt: {self.table_file_path}")
+        second_check = self.safe_input("  Report und Reparatur-Ansatz akzeptieren? [yes/no]: ")
         if second_check.lower() not in ["yes", "y", "ja"]:
-            print("🛑 Vorgang durch Benutzer abgebrochen.")
+            print("  Vorgang durch Benutzer abgebrochen.")
             self.log_action("WARNING", "Vorgang nach Report-Prüfung abgebrochen.")
             return False
         self.log_action("INFO", "Zweite Bestätigung erteilt. Starte Mikro-Schritte.")
@@ -3128,7 +3128,7 @@ Target File Path: `{self.target_file_path}`
             with open(self.table_file_path, "w", encoding="utf-8") as tf:
                 tf.write(table_content)
             self.log_action("INFO", f"Report gespeichert: {self.table_file_path}")
-            print(f"📊 Report gespeichert: {self.table_file_path}")
+            print(f"[CHART] Report gespeichert: {self.table_file_path}")
         except Exception as e:
             self.log_action("ERROR", f"Report-Schreib-Fehler: {e}")
     def execute_micro_step_repair_loop(self):
@@ -3139,23 +3139,23 @@ Target File Path: `{self.target_file_path}`
             ("M3", "KnownBugCatalog Recipes & Pre-Write Namespace Fixes"),
             ("M4", "Spine Assembly, English Standardization & Safe Write"),
         ]
-        print("\n══════════════════════════════════════════════════════════════════════")
-        print("  🧬 SPINE PRINCIPLE MICRO-STEP REPAIR LOOP")
-        print("══════════════════════════════════════════════════════════════════════")
+        print("\n======================================================================")
+        print("    SPINE PRINCIPLE MICRO-STEP REPAIR LOOP")
+        print("======================================================================")
         self.log_action("INFO", "Spine Principle micro-step repair loop started.")
         for step_id, step_desc in micro_steps:
-            print(f"\n─── Checkpoint [{step_id}]: {step_desc} ───")
+            print(f"\n--- Checkpoint [{step_id}]: {step_desc} ---")
             self.log_action("INFO", f"Checking step {step_id}: {step_desc}")
             decision = self.safe_input("Execute this micro-step now? [yes/no]: ").lower()
             if decision in ["yes", "y", "ja"]:
                 self.log_action("INFO", f"Executing micro-step {step_id}.")
-                print(f"🔧 Applying micro-step {step_id}...")
+                print(f"  Applying micro-step {step_id}...")
                 self.apply_micro_step_fix(step_id)
-                print(f"✅ Micro-step {step_id} completed.")
+                print(f"  Micro-step {step_id} completed.")
             else:
                 self.log_action("INFO", f"Step {step_id} skipped.")
-                print("⏭️ Next step.")
-        print("\n🎉 All confirmed micro-steps finished!")
+                print("   Next step.")
+        print("\n  All confirmed micro-steps finished!")
         self.log_action("INFO", "Micro-step repair loop finished.")
 
     def apply_micro_step_fix(self, step_id: str, closed_loop_error: str = None):
@@ -3173,14 +3173,14 @@ Target File Path: `{self.target_file_path}`
                     content = "# -*- coding: utf-8 -*-\n" + content
                 syntax_ok, syntax_err = ASTSurgery.validate_syntax(content)
                 if syntax_ok:
-                    print("✅ AST syntax validation passed.")
+                    print("  AST syntax validation passed.")
                 else:
-                    print(f"⚠️ Syntax issue detected: {syntax_err}")
+                    print(f"[WARN]  Syntax issue detected: {syntax_err}")
                     self.log_action("WARNING", f"M1 syntax warning: {syntax_err}")
 
                 # Decompose into Spine and display vertebral breakdown
                 spine = ASTSpine.decompose(content, self.target_file_path)
-                print(f"🧬 Spine Decomposition: {len(spine.vertebrae)} top-level vertebrae identified:")
+                print(f"  Spine Decomposition: {len(spine.vertebrae)} top-level vertebrae identified:")
                 for v in spine.vertebrae:
                     sub_count = len(v.sub_vertebrae)
                     sub_info = f" ({sub_count} methods)" if sub_count > 0 else ""
@@ -3188,22 +3188,22 @@ Target File Path: `{self.target_file_path}`
 
             elif step_id == "M2":
                 # Vertebra-by-Vertebra Spine Surgery
-                print("🔍 Starting Spine-Guided Micro-Step Surgery (Designed for Small Models)...")
+                print("  Starting Spine-Guided Micro-Step Surgery (Designed for Small Models)...")
                 error_desc = closed_loop_error or " ".join(self.reported_errors)
                 success = self.repair_file_via_spine(self.target_file_path, error_hint=error_desc, dry_run=False)
                 if not success:
-                    print("ℹ️ Spine surgery deferred or no isolated vertebra found. Running skeleton-guided pass...")
+                    print("   Spine surgery deferred or no isolated vertebra found. Running skeleton-guided pass...")
                     success = self._llm_repair_file(self.target_file_path, error_hint=error_desc, dry_run=False)
 
                 if success:
-                    print("✨ Micro-step code patch successfully verified and written with zero-loss.")
+                    print("  Micro-step code patch successfully verified and written with zero-loss.")
                 else:
-                    print("⚠️ Micro-step repair could not complete — original file preserved.")
+                    print("[WARN]  Micro-step repair could not complete — original file preserved.")
                 return
 
             elif step_id == "M3":
                 # Known-Bug-Catalog Recipes (Namespace-C rewriting is intentionally suppressed here)
-                print("🔧 Applying KnownBugCatalog recipes...")
+                print("  Applying KnownBugCatalog recipes...")
                 patched = False
                 for recipe in KnownBugCatalog.get_all_recipes():
                     if recipe["target_file_pattern"].lower() in self.target_file_path.name.lower() or recipe["target_file_pattern"] == "*":
@@ -3214,16 +3214,16 @@ Target File Path: `{self.target_file_path}`
                                     # Validate the recipe patch preserves structure
                                     struct_ok_r, struct_msg_r = ASTSurgery.check_structure_loss(content, new_content)
                                     if not struct_ok_r:
-                                        print(f"  ⚠️ {recipe['id']}: Rejected — structure loss after patch: {struct_msg_r}")
+                                        print(f"  [WARN]  {recipe['id']}: Rejected — structure loss after patch: {struct_msg_r}")
                                     else:
                                         content = new_content
                                         patched = True
-                                        print(f"  ✅ {recipe['id']}: {recipe['name']}")
+                                        print(f"    {recipe['id']}: {recipe['name']}")
                         except Exception as e:
-                            print(f"  ⚠️ {recipe['id']}: Error: {e}")
+                            print(f"  [WARN]  {recipe['id']}: Error: {e}")
 
                 if not patched:
-                    print("  ℹ️ No known bug recipes applicable.")
+                    print("     No known bug recipes applicable.")
 
             elif step_id == "M4":
                 # Spine Assembly, English Standardization & Safe Write
@@ -3238,11 +3238,11 @@ Target File Path: `{self.target_file_path}`
                     self.target_file_path, original_content, content, step_id
                 )
                 if not success:
-                    print(f"❌ Patch for {step_id} rejected by safety guards. Original preserved.")
+                    print(f"  Patch for {step_id} rejected by safety guards. Original preserved.")
 
         except Exception as e:
             self.log_action("ERROR", f"Error in apply_micro_step_fix({step_id}): {e}")
-            print(f"❌ Micro-step execution failed: {e}")
+            print(f"  Micro-step execution failed: {e}")
             traceback.print_exc()
 
     def run_qualification_pipeline(self):
@@ -3252,7 +3252,7 @@ Target File Path: `{self.target_file_path}`
           - GAP-06: Pre/Post-Delta-Check mit echtem Vorher-Snapshot statt
             self-comparison (verhindert FAST_PATH-Phantom-OK).
         """
-        print("🛡️ Starte Qualifikations-Pipeline...", flush=True)
+        print("   Starte Qualifikations-Pipeline...", flush=True)
         self.log_action("INFO", "Qualifikations-Pipeline gestartet.")
         try:
             code_text = self.target_file_path.read_text(encoding="utf-8", errors="replace")
@@ -3279,7 +3279,7 @@ Target File Path: `{self.target_file_path}`
                         }
                     )
                     if lost_funcs:
-                        print(f"  ⚠️ [QUAL-DELTA] Struktur-Verlust gegenüber Backup: {lost_funcs}", flush=True)
+                        print(f"  [WARN]  [QUAL-DELTA] Struktur-Verlust gegenüber Backup: {lost_funcs}", flush=True)
                 except Exception as delta_err:
                     self.log_action("WARNING", f"[QUAL-DELTA] Delta-Berechnung fehlgeschlagen: {delta_err}")
             else:
@@ -3289,14 +3289,14 @@ Target File Path: `{self.target_file_path}`
                 try:
                     analyzer = dependency_analyzer_cls()
                     dep_report = analyzer.analyze_deep_dependencies(code_text)
-                    print(f"📊 Dependency Audit: {dep_report.get('status')}", flush=True)
-                    print(f"🔍 Details: Total={dep_report.get('total_definitions', 0)}, "
+                    print(f"[CHART] Dependency Audit: {dep_report.get('status')}", flush=True)
+                    print(f"  Details: Total={dep_report.get('total_definitions', 0)}, "
                           f"Dead Code={dep_report.get('dead_code_count', 0)}", flush=True)
                     self.log_action("INFO", f"Dependency Audit: {dep_report}")
                 except Exception as dep_err:
-                    print(f"⚠️ Dependency Analyzer Fehler: {dep_err}", flush=True)
+                    print(f"[WARN]  Dependency Analyzer Fehler: {dep_err}", flush=True)
             # 2. Semantic Guard — GAP-06 Fix: pre_code_text vs code_text (echter Vergleich)
-            print("🛡️ Semantic Guard Audit...", flush=True)
+            print("   Semantic Guard Audit...", flush=True)
             if semantic_guard_cls and ollama_manager:
                 try:
                     guard = semantic_guard_cls(
@@ -3306,39 +3306,39 @@ Target File Path: `{self.target_file_path}`
                     # Echter Vergleich: Backup (pre) vs. aktueller Code (post)
                     valid, final_code, msg = guard.evaluate_and_repair(pre_code_text, code_text)
                     if not valid:
-                        print(f"❌ Semantic Guard abgelehnt: {msg}", flush=True)
+                        print(f"  Semantic Guard abgelehnt: {msg}", flush=True)
                         self.log_action("ERROR", f"Semantic Guard Ablehnung: {msg}")
                         return False
                     else:
-                        print(f"✅ Semantic Guard bestanden: {msg}", flush=True)
+                        print(f"  Semantic Guard bestanden: {msg}", flush=True)
                         self.log_action("INFO", f"Semantic Guard bestanden: {msg}")
                 except Exception as sg_err:
-                    print(f"⚠️ Semantic Guard Fehler: {sg_err}", flush=True)
+                    print(f"[WARN]  Semantic Guard Fehler: {sg_err}", flush=True)
             else:
-                print("⏭️ Semantic Guard übersprungen (Klasse oder Ollama-Manager fehlt).", flush=True)
+                print("   Semantic Guard übersprungen (Klasse oder Ollama-Manager fehlt).", flush=True)
             # 3. Subprocess-Validierung als Closed-Loop-Test
-            print("🧪 Subprocess-Closed-Loop-Test...", flush=True)
+            print("  Subprocess-Closed-Loop-Test...", flush=True)
             sub_ok, sub_msg = SubprocessValidator.validate_file_via_subprocess(
                 self.target_file_path, timeout=self.SANDBOX_TIMEOUT_SEC
             )
             if sub_ok:
-                print(f"✅ Subprocess-Test erfolgreich: {sub_msg}", flush=True)
+                print(f"  Subprocess-Test erfolgreich: {sub_msg}", flush=True)
             else:
-                print(f"⚠️ Subprocess-Test Warnung (kein kritischer Fehler): {sub_msg}", flush=True)
+                print(f"[WARN]  Subprocess-Test Warnung (kein kritischer Fehler): {sub_msg}", flush=True)
                 self.log_action("WARNING", f"Subprocess-Test: {sub_msg}")
                 # Closed-Loop: Retry via LLM
-                print("🔄 Closed-Loop-Trigger: Starte LLM-Nachbesserung...", flush=True)
+                print("  Closed-Loop-Trigger: Starte LLM-Nachbesserung...", flush=True)
                 self._llm_repair_file(
                     self.target_file_path,
                     error_hint=sub_msg,
                     dry_run=False
                 )
-            print("🌟 Qualifikations-Pipeline erfolgreich abgeschlossen!", flush=True)
+            print("  Qualifikations-Pipeline erfolgreich abgeschlossen!", flush=True)
             self.log_action("INFO", "Qualifikations-Pipeline erfolgreich abgeschlossen.")
             return True
         except Exception as e:
             self.log_action("ERROR", f"Qualifikations-Pipeline Fehler: {e}")
-            print(f"❌ Qualifikation fehlgeschlagen: {e}", flush=True)
+            print(f"  Qualifikation fehlgeschlagen: {e}", flush=True)
             return False
 
     # Neuen Hilfsagenten konstruieren
@@ -3400,7 +3400,7 @@ Requirements:
                     continue
                 target_path.write_text(candidate, encoding="utf-8")
                 self.log_action("INFO", f"Neuer Agent konstruiert: {target_path}")
-                print(f"✅ Neuer Agent konstruiert: {target_path.name}")
+                print(f"  Neuer Agent konstruiert: {target_path.name}")
                 return target_path
             except Exception as e:
                 self.log_action("ERROR", f"Agenten-Konstruktion Versuch {attempt} Fehler: {e}")
@@ -3410,8 +3410,8 @@ Requirements:
 
 # SEKTION 9 — ENTRY POINT
 def _print_menu():
-    print("  🤖 AUTONOMOUS REPAIR AGENT ")
-    print(" ─ Architekturen: Skeleton-A · Retry-Feedback-B · Namespace-C · FlightRec-D · SelfHeal-E")
+    print("  [ROBOT] AUTONOMOUS REPAIR AGENT ")
+    print(" - Architekturen: Skeleton-A · Retry-Feedback-B · Namespace-C · FlightRec-D · SelfHeal-E")
     print("  [1] Autonomer Vollrepair (gesamtes Projekt, inkl. Tool-Heal Phase 0)")
     print("  [2] Autonomer Vollrepair (Dry-Run — kein Schreiben)")
     print("  [3] Interaktiver Modus (gezielter Repair)")
@@ -3446,7 +3446,7 @@ if __name__ == "__main__":
         if choice is None:
             _print_menu()
             try:
-                choice = input("👉 Auswahl: ").strip()
+                choice = input("  Auswahl: ").strip()
             except (EOFError, KeyboardInterrupt):
                 print("\n[INFO] Non-interactive execution — defaulting to Dry-Run.")
                 choice = "2"
@@ -3463,35 +3463,35 @@ if __name__ == "__main__":
         elif choice == "5":
             # Failure-Registry anzeigen (Auto-Catalog Lernschleife)
             registry = agent._failure_registry_cache
-            print(f"\n{'═'*70}")
-            print(f"  📋 FAILURE-REGISTRY — {len(registry)} Einträge")
-            print(f"{'═'*70}")
+            print(f"\n{'='*70}")
+            print(f"    FAILURE-REGISTRY — {len(registry)} Einträge")
+            print(f"{'='*70}")
             for entry in registry[-20:]:  # letzte 20 Einträge
-                is_candidate = "⚠️ BUG-KANDIDAT" if entry.get("is_bug_candidate") else "  "
+                is_candidate = "[WARN]  BUG-KANDIDAT" if entry.get("is_bug_candidate") else "  "
                 print(f"  {is_candidate} {entry.get('ts','?')[:16]} | {entry.get('file','?')} | "
                       f"Failures gesamt={entry.get('prior_failure_count', 0)+1} | "
                       f"Fehlende-Fns='{entry.get('missing_functions','')}'")
-            print(f"{'═'*70}\n")
+            print(f"{'='*70}\n")
         elif choice == "6":
             # Self-Healing Tool-Check standalone (Architektur E)
-            print(f"\n{'═'*70}")
-            print("  🔩 SELF-HEALING TOOL-CHECK (Architektur E)")
-            print(f"{'═'*70}")
+            print(f"\n{'='*70}")
+            print("    SELF-HEALING TOOL-CHECK (Architektur E)")
+            print(f"{'='*70}")
             tool_results = agent.self_heal_broken_tools()
             for mod, status in tool_results.items():
-                icon = "✅" if status == "OK" else ("🔧" if status in ("REPAIRED","STUB_CREATED") else "❌")
+                icon = " " if status == "OK" else (" " if status in ("REPAIRED","STUB_CREATED") else " ")
                 print(f"  {icon} {mod}: {status}")
-            print(f"{'═'*70}\n")
+            print(f"{'='*70}\n")
         elif choice == "0":
-            print("👋 Auf Wiedersehen.")
+            print("  Auf Wiedersehen.")
         else:
             # Fallback: Autonomer Vollrepair
-            print("ℹ️ Unbekannte Auswahl — Starte autonomen Vollrepair.")
+            print("   Unbekannte Auswahl — Starte autonomen Vollrepair.")
             agent.run_autonomous_full_repair(dry_run=False)
     except KeyboardInterrupt:
-        print("\n\n👋 Sitzung durch Benutzer via CTRL+C beendet.")
+        print("\n\n  Sitzung durch Benutzer via CTRL+C beendet.")
         agent.log_action("INFO", "Sitzung via KeyboardInterrupt beendet.")
     except Exception as ex:
         agent.log_action("ERROR", f"Kritischer Agent-Laufzeitfehler: {ex}")
-        print(f"\n❌ Unerwarteter Fehler: {ex}")
+        print(f"\n  Unerwarteter Fehler: {ex}")
         traceback.print_exc()

@@ -824,7 +824,7 @@ class MetaCoderSQLPipeline(class_sql_reader):
             return None
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-        history_dir = self.root_path / "src" / "agent" / "metacoder_history"
+        history_dir = self.root_path / "temp" / "meta_coder_history"
         history_dir.mkdir(parents=True, exist_ok=True)
         new_filename = history_dir / f"MetaCodeBase_{timestamp}.py"
         tips_text = self._get_relevant_tips(task_context)

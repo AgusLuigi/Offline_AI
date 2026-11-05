@@ -122,7 +122,7 @@ class SubAgentVerifier:
         Gibt (success: bool, output: str) zurück.
         """
         import tempfile
-        sandbox_dir = MetaCodeBase.get_project_root() / "scratch"
+        sandbox_dir = MetaCodeBase.get_project_root() / "temp"
         sandbox_dir.mkdir(parents=True, exist_ok=True)
         
         temp_file = None
@@ -815,7 +815,7 @@ class MetaCodeBase:
 
     def evolve_self(self, recent_error: str, task_context: str) -> Path:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        history_dir = Path("src/agent/metacoder_history")
+        history_dir = Path("temp/meta_coder_history")
         history_dir.mkdir(parents=True, exist_ok=True)
         new_filename = history_dir / f"MetaCodeBase_{timestamp}.py"
         tips_text = self._get_relevant_tips(task_context)
@@ -1049,7 +1049,7 @@ def deactivate_and_reroute_node(table_name: str, node_id: str, failure_reason: s
     }
 
 def boot_latest_metacoder(require_ollama: bool = True):
-    history_dir = Path("src/agent/metacoder_history")
+    history_dir = Path("temp/meta_coder_history")
     history_dir.mkdir(parents=True, exist_ok=True)
     return MetaCodeBase(require_ollama=require_ollama)
 

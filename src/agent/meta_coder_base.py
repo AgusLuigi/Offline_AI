@@ -37,7 +37,7 @@ class MetaCodeBase:
         self.ollama_host = ollama_host
         
         self.root_path = Path(core_infra.get_project_root()) if core_infra else Path(os.getcwd())
-        self.history_dir = self.root_path / "src" / "agent" / "metacoder_history"
+        self.history_dir = self.root_path / "temp" / "meta_coder_history"
         self.history_dir.mkdir(parents=True, exist_ok=True)
         
         # SQLite Wissensdatenbank-Setup im vorgegebenen Ordner: knowledge/meta_coder_base/
@@ -159,6 +159,33 @@ Do not lose core functions like test_and_evolve_loop, SQLite database handling, 
             logger.info(f"[EVOLUTION] Neue Version erfolgreich gespeichert unter: {new_filename}")
         return new_filename
 
+    def _run_script(self, filepath: Path) -> tuple[bool, str]:
+        """Führt ein Skript im Projektkontext aus und liefert Status und Ausgabe."""
+        try:
+            if sub_verifier and hasattr(sub_verifier, "verify_code_in_sandbox"):
+                content = Path(filepath).read_text(encoding="utf-8", errors="replace")
+                return sub_verifier.verify_code_in_sandbox(content, project_root=self.root_path)
+            res = subprocess.run([sys.executable, str(filepath)], capture_output=True, text=True, timeout=30)
+            return (res.returncode == 0), (res.stderr.strip() or res.stdout.strip())
+        except Exception as e:
+            return False, str(e)
+
+    def _extract_code_block(self, text: str) -> str:
+        """Extrahiert den ersten Python-Codeblock aus der LLM-Antwort."""
+        if sub_verifier and hasattr(sub_verifier, "extract_code_blocks"):
+            blocks = sub_verifier.extract_code_blocks(text)
+            if blocks:
+                return blocks[0]
+        if "```python" in text:
+            parts = text.split("```python")
+            if len(parts) > 1:
+                return parts[1].split("```")[0].strip()
+        elif "```" in text:
+            parts = text.split("```")
+            if len(parts) > 1:
+                return parts[1].strip()
+        return text.strip()
+
     def test_and_evolve_loop(self, specialization: str, task_description: str, base_filename: str, max_generations: int = 3):
         """
         Steuert den Erstellungsprozess mit Fallback-Kette (Rollback bei Fehlschlag) 
@@ -225,7 +252,7 @@ Mandatory Rules:
 
             if success:
                 if logger:
-                    logger.info(f"\n[✓] Agent '{filepath.name}' erfolgreich verifiziert!")
+                    logger.info(f"\n✓ Agent '{filepath.name}' erfolgreich verifiziert!")
                 return filepath
             else:
                 if logger:
@@ -249,7 +276,7 @@ Mandatory Rules:
                     success = True
                 if success:
                     if logger:
-                        logger.info(f"[✓] Fallback erfolgreich auf: {old_file.name}")
+                        logger.info(f"✓ Fallback erfolgreich auf: {old_file.name}")
                     return old_file
 
         if logger:
@@ -259,7 +286,7 @@ Mandatory Rules:
 
 def boot_latest_metacoder() -> MetaCodeBase:
     """Bootet die neueste MetaCodeBase-Instanz."""
-    history_dir = Path("src/agent/metacoder_history")
+    history_dir = Path("temp/meta_coder_history")
     history_dir.mkdir(parents=True, exist_ok=True)
     
     versions = sorted(history_dir.glob("MetaCodeBase_*.py"))
