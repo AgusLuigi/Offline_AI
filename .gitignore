@@ -1,43 +1,17 @@
 # Log Folder
-logs/*
 
 # Notebooks Folder
-notebooks/import_master.py
-notebooks/xxx.py
 
 # Temporary files
-temp/*
 
 # Test files
-test/*
 
-# Folder SRC/*
+# Folder
+data/*
+logs/*
+privacy/*
 src/__pycache__/*
 src/agent/__pycache__/*
 src/agent/agent_universal_skript/__pycache__/*
-src/docker/__pycache__/*
-src/install/__pycache__/*
-src/jarvis/__pycache__/*
-src/security/__pycache__/*
-src/docker_py/__pycache__/*
-
-
-
-
-LAYA.py
-import.py
-import_master.py
-xxx.py
-notebooks/Ollama& GGUF Management.py
-data/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
-tests/__pycache__/
-*.pyc
-data/models/Qwen3.8-27B-UD-Q8_K_XL.gguf
-output.txt
-data/models/Qwen2.5-32B-Instruct-Q8_0.gguf
-data/models/Qwen3-Coder-Next-UD-Q4_K_XL.gguf
-data/models/Modelfile_Qwen3-Coder-Next-UD-Q4_K_XL
-data/models/DeepSeek-R1-0528-Qwen3-8B-BF16.gguf
-data/models/Qwen3.5-122B-A10B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf
-src/agent/agent_src_defult_and_individual_global_analyse.txt
-src/agent/globalisierung_analyse.txt
+src/Install/__pycache__/*
+temp/*
