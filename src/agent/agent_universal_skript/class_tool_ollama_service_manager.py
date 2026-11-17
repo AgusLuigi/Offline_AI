@@ -198,8 +198,8 @@ class class_tool_ollama_service_manager:
     @classmethod
     def ensure_ollama_running(cls,ollama_host: str = None) -> bool:
         """
-        Prüft autonom, ob Ollama läuft, und synchronisiert die Konfiguration 
-        sauber und kompakt über das globale _AGENT_CONFIG-Dictionary.
+        Prüft autonom, ob Ollama läuft, verhindert Mehrfachstarts (und CMD-Fenster) 
+        und greift sauber auf die globalen Einstellungen zu.
         """
         def is_port_open(ip, port, timeout):
             try:
@@ -208,48 +208,69 @@ class class_tool_ollama_service_manager:
             except (socket.timeout, ConnectionRefusedError, OSError):
                 return False
 
-        host_ip = cls.OLLAMA_HOST.replace("http://", "").replace("https://", "").split(":")[0]
+        def is_ollama_process_running():
+            """Prüft, ob bereits ein Ollama-Prozess im System läuft (verhindert neue CMD-Fenster)."""
+            if os.name != "nt":
+                return False
+            try:
+                output = subprocess.check_output("tasklist /fi \"imagename eq ollama.exe\"", shell=True, text=True)
+                return "ollama.exe" in output.lower()
+            except Exception:
+                return False
+        target_host = ollama_host or cls.OLLAMA_HOST
+        host_ip = target_host.replace("http://", "").replace("https://", "").split(":")[0]
         try:
-            port = int(cls.OLLAMA_HOST.split(":")[-1])
+            port = int(target_host.split(":")[-1])
         except ValueError:
             port = cls.PORT_DEFAULT
-
-        # 1. Schritt: Prüfen, ob der Dienst bereits läuft und antwortet
+        # 1. Schritt: Prüfen, ob der Port offen ist und die API antwortet
         if is_port_open(host_ip, port, timeout=cls.SOCKET_TIMEOUT):
             try:
-                req = urllib.request.Request(f"{cls.OLLAMA_HOST}/api/tags")
+                req = urllib.request.Request(f"{target_host}/api/tags")
                 with urllib.request.urlopen(req, timeout=cls.API_TIMEOUT) as resp:
                     if resp.status == 200:
                         return True
             except Exception:
                 pass
-
-        # 2. Schritt: Dienst läuft nicht -> Autonomer Startversuch im Hintergrund
+        # 2. Schritt: Prozess-Check – Läuft ollama.exe bereits im System?
+        if is_ollama_process_running():
+            # Prozess existiert, aber Port antwortet noch nicht ganz -> Geduldig warten ohne neuen Start
+            for _ in range(cls.MAX_START_RETRIES):
+                time.sleep(cls.RETRY_WAIT_SEC)
+                if is_port_open(host_ip, port, timeout=cls.SOCKET_TIMEOUT):
+                    try:
+                        req = urllib.request.Request(f"{target_host}/api/tags")
+                        with urllib.request.urlopen(req, timeout=cls.API_TIMEOUT) as resp:
+                            if resp.status == 200:
+                                return True
+                    except Exception:
+                        pass
+            return False
+        # 3. Schritt: Wirklich nicht da -> Erst jetzt einmalig im Hintergrund starten (ohne sichtbares Fenster)
         try:
             if os.name == "nt":
-                flags = 0x08000000 | 0x00000200 | 0x00000008
+                flags = 0x08000000 | 0x00000200 | 0x00000008  # CREATE_NO_WINDOW Flags
                 subprocess.Popen(["ollama", "serve"], creationflags=flags, close_fds=True)
             else:
                 subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         except FileNotFoundError:
-            print(f"\n[class_tool_ollama_service_manager] Der Befehl 'ollama' wurde im System-PATH nicht gefunden. Bitte Ollama installieren.")
+            print("\n[class_tool_ollama_service_manager] Der Befehl 'ollama' wurde im System-PATH nicht gefunden. Bitte Ollama installieren.")
             return False
         except Exception as e:
             print(f"\n[class_tool_ollama_service_manager] Unerwarteter Systemfehler beim Starten des Ollama-Prozesses: {e}")
             return False
-
-        # 3. Schritt: Warten / Polling bis der Server erreichbar ist
+        # 4. Schritt: Warten / Polling bis der neu gestartete Server erreichbar ist
         for _ in range(cls.MAX_START_RETRIES):
             time.sleep(cls.RETRY_WAIT_SEC)
             if is_port_open(host_ip, port, timeout=cls.SOCKET_TIMEOUT):
                 try:
-                    req = urllib.request.Request(f"{cls.OLLAMA_HOST}/api/tags")
+                    req = urllib.request.Request(f"{target_host}/api/tags")
                     with urllib.request.urlopen(req, timeout=cls.API_TIMEOUT) as resp:
                         if resp.status == 200:
                             return True
                 except Exception:
                     pass
-        print(f"\n[class_tool_ollama_service_manager] Timeout: Der Ollama-Dienst konnte nach {MAX_START_RETRIES * RETRY_WAIT_SEC} Sekunden nicht erfolgreich gestartet werden.")
+        print(f"\n[class_tool_ollama_service_manager] Timeout: Der Ollama-Dienst konnte nach {cls.MAX_START_RETRIES * cls.RETRY_WAIT_SEC} Sekunden nicht erfolgreich gestartet werden.")
         return False
 
     @classmethod
