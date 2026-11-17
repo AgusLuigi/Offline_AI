@@ -15,3 +15,4 @@ src/agent/__pycache__/*
 src/agent/agent_universal_skript/__pycache__/*
 src/Install/__pycache__/*
 temp/*
+cache/ollama_models_catalog_cache.json
