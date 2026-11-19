@@ -59,84 +59,312 @@ def check(cmd):
     """Prüft, ob ein Befehl existiert / erfolgreich ist."""
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace").returncode == 0   
 
-MIN_RAM_TIERS = [8, 12, 16, 24, 32, 48, 64, 80, 128]
+MIN_RAM_TIERS = [8, 12, 16, 24, 32, 48, 64, 80, 128, 256]
+
+RAM_TIERS = {
+    "16gb":  {"name": "Kompakt (<= 16 GB RAM)",    "badge": "⚡ [16 GB]",  "min_ram": 16,  "order": 1},
+    "32gb":  {"name": "Mid-Range (32 GB RAM)",     "badge": "🚀 [32 GB]",  "min_ram": 32,  "order": 2},
+    "64gb":  {"name": "High-End (64 GB RAM)",      "badge": "💎 [64 GB]",  "min_ram": 64,  "order": 3},
+    "128gb": {"name": "Extreme (128 GB RAM)",      "badge": "🔥 [128 GB]", "min_ram": 128, "order": 4},
+    "256gb": {"name": "Enterprise (256 GB RAM)",   "badge": "👑 [256 GB]", "min_ram": 256, "order": 5},
+}
+
+DOMAINS = {
+    "code":      {"name": "Coding & Entwicklung",      "badge": "[💻 CODE]",     "order": 1},
+    "logik":     {"name": "Logik & Reasoning",         "badge": "[🧠 LOGIK]",    "order": 2},
+    "vision":    {"name": "Vision & Multimodal",       "badge": "[👁️ VISION]",   "order": 3},
+    "planung":   {"name": "Planung & Architektur",     "badge": "[🎯 PLANUNG]",  "order": 4},
+    "tools":     {"name": "Tools & MCP-Agenten",       "badge": "[🛠️ TOOLS]",    "order": 5},
+    "embed":     {"name": "Embeddings & Vektor-RAG",   "badge": "[🔍 EMBED]",    "order": 6},
+    "smalltalk": {"name": "Leichtbau & Basis",         "badge": "[⚡ BASIS]",    "order": 7},
+}
 
 AVAILABLE_MODELS = [
-    # CODE
-    {"id": "qwen3-coder-next",  "label": "Qwen3 Coder Next (80B)",  "desc": "Top Coding – 58,7% SWE-bench, 256K Kontext",
-     "size_gb": 45.0, "min_ram": 48, "forge": True,  "tags": ["code", "system"]},
-    {"id": "qwen3.8:27b",       "label": "Qwen3.8 (27B)",           "desc": "Bestes Allround-Coding, Image-Input",
-     "size_gb": 18.0, "min_ram": 24, "forge": False, "tags": ["code", "vision"]},
-    {"id": "qwen3.6:27b",       "label": "Qwen3.6 (27B)",           "desc": "Agentic Coding, MTP (schneller)",
-     "size_gb": 17.0, "min_ram": 24, "forge": True,  "tags": ["code", "system"]},
-    {"id": "qwen3-coder:30b",   "label": "Qwen3 Coder (30B)",       "desc": "High-End Coding & Software-Architektur",
-     "size_gb": 22.4, "min_ram": 24, "forge": True,  "tags": ["code", "system"]},
-    {"id": "qwen3:32b",         "label": "Qwen3 (32B)",             "desc": "Coding + Reasoning (Thinking-Mode)",
-     "size_gb": 20.0, "min_ram": 24, "forge": False, "tags": ["code", "logik"]},
-    {"id": "devstral:24b",      "label": "Devstral Small 2 (24B)",  "desc": "Agentic Multi-File-Edits, 46,8% SWE-bench",
-     "size_gb": 14.0, "min_ram": 16, "forge": False, "tags": ["code", "system"]},
-    {"id": "gpt-oss:20b",       "label": "GPT-OSS (20B)",           "desc": "OpenAI Open-Weight, Tool-Use + Reasoning",
-     "size_gb": 14.0, "min_ram": 16, "forge": False, "tags": ["code", "system", "logik"]},
-    {"id": "gemma4:26b-a4b",    "label": "Gemma 4 (26B A4B)",       "desc": "Schnellstes Coding (MoE, ~136 tok/s)",
-     "size_gb": 16.0, "min_ram": 16, "forge": False, "tags": ["code", "vision"]},
-    {"id": "glm-4.7-flash",     "label": "GLM-4.7-Flash",           "desc": "198K Kontext, MIT-Lizenz, MCP + Tool-Use",
-     "size_gb": 19.0, "min_ram": 24, "forge": False, "tags": ["code", "system"]},
+    # TIER 1: KOMPAKT (<= 16 GB RAM) | VRAM: 8–12 GB
+    {"id": "qwen2.5-coder:7b",   "label": "Qwen 2.5 Coder (7B)",
+     "desc": "Top 1 Coder [16GB] – FIM, SWE-bench & Multi-File Refactorings",
+     "size_gb": 4.7,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 6,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge", "autocomplete"]},
+    {"id": "codestral:22b",       "label": "Codestral (22B)",
+     "desc": "Top 2 Coder [16GB] – 80+ Sprachen, Fill-in-the-Middle IDE-Erkennung",
+     "size_gb": 14.0, "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": False, "domain": "code",      "tags": ["code", "autocomplete"]},
+    {"id": "deepseek-r1:8b",     "label": "DeepSeek R1 (8B)",
+     "desc": "Top 1 Logik [16GB] – Deduktive CoT-Logik & mathematische Problemlösung",
+     "size_gb": 4.9,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 6,
+     "forge": True,  "domain": "logik",     "tags": ["logik", "forge", "cot"]},
+    {"id": "qwen2.5:7b",         "label": "Qwen 2.5 (7B)",
+     "desc": "Top 2 Logik [16GB] – Zuverlässige Instruktionsbefolgung & Argumentation",
+     "size_gb": 4.5,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 6,
+     "forge": False, "domain": "logik",     "tags": ["logik"]},
+    {"id": "minicpm-v:8b",       "label": "MiniCPM-V (8B)",
+     "desc": "Top Vision [16GB] – OCR, UI-Screenshots, Video-Frames (GPU empfohlen)",
+     "size_gb": 5.5,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "gpu",   "vram_min": 8,
+     "forge": True,  "domain": "vision",    "tags": ["vision", "forge"]},
+    {"id": "moondream:1.8b",     "label": "Moondream (1.8B)",
+     "desc": "Top Leichtbau-Vision [16GB] – Schnelle Bildprüfung auf minimaler CPU/GPU",
+     "size_gb": 1.7,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "F16", "hw": "both",  "vram_min": 2,
+     "forge": False, "domain": "vision",    "tags": ["vision", "smalltalk"]},
+    {"id": "qwen2.5:14b",        "label": "Qwen 2.5 (14B)",
+     "desc": "Top Planung [16GB] – Ausgeglichene Systemarchitektur & Ablaufpläne",
+     "size_gb": 9.0,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "planung",   "tags": ["planung", "forge"]},
+    {"id": "hermes3:8b",         "label": "Hermes 3 (8B)",
+     "desc": "Top Tools [16GB] – Fehlerfreie JSON-Function-Calls & MCP-Agenten",
+     "size_gb": 4.9,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 6,
+     "forge": True,  "domain": "tools",     "tags": ["tools", "forge", "mcp"]},
+    {"id": "nomic-embed-text",   "label": "Nomic Embed Text (v1.5)",
+     "desc": "Top RAG [16GB] – Semantische Codebase-Indexierung, 8192 Token Kontext",
+     "size_gb": 0.3,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "F32", "hw": "both",  "vram_min": 1,
+     "forge": True,  "domain": "embed",     "tags": ["embed", "forge", "rag"]},
+    {"id": "llama3.2:3b",        "label": "Llama 3.2 (3B)",
+     "desc": "Top Basis [16GB] – Ultraschnelle Dialoge, Smalltalk & Terminal-Interaktion",
+     "size_gb": 2.0,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 2,
+     "forge": False, "domain": "smalltalk", "tags": ["smalltalk"]},
 
-    # LOGIK / REASONIN
-    {"id": "qwen3.5:122b",      "label": "Qwen3.5 (122B-A10B)",     "desc": "MoE 10B aktiv – schnell + starkes Reasoning",
-     "size_gb": 73.0, "min_ram": 80, "forge": False, "tags": ["logik", "planung"]},
-    {"id": "deepseek-r1:70b",   "label": "DeepSeek R1 (70B)",       "desc": "Bestes Reasoning – Chain-of-Thought, Mathe, Logik",
-     "size_gb": 43.0, "min_ram": 48, "forge": False, "tags": ["logik"]},
-    {"id": "qwen2.5:72b",       "label": "Qwen 2.5 (72B)",          "desc": "Top Reasoning + Multilingual (DE/EN)",
-     "size_gb": 47.0, "min_ram": 48, "forge": False, "tags": ["logik", "planung"]},
-    {"id": "deepseek-r1:32b",   "label": "DeepSeek R1 (32B)",       "desc": "Starkes Reasoning – schneller als 70B",
-     "size_gb": 20.0, "min_ram": 24, "forge": False, "tags": ["logik"]},
-    {"id": "deepseek-r1:8b",    "label": "DeepSeek R1 (8B)",        "desc": "Logik & Reasoning (sparsam)",
-     "size_gb": 6.5,  "min_ram": 8,  "forge": False, "tags": ["logik"]},
+    # TIER 2: MID-RANGE (32 GB RAM) | VRAM: 12–24 GB
+    # Zielgruppe: Entwickler-Workstations,
+    {"id": "qwen2.5-coder:14b",  "label": "Qwen 2.5 Coder (14B)",
+     "desc": "Top 1 Coder [32GB] – Perfekte Balance aus Tiefe und Geschwindigkeit",
+     "size_gb": 9.0,  "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q5", "hw": "both",  "vram_min": 12,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge"]},
+    {"id": "devstral:24b",       "label": "Devstral Small 2 (24B)",
+     "desc": "Top 2 Coder [32GB] – Agentic Multi-File-Edits & Codebase-Refactoring",
+     "size_gb": 14.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "both",  "vram_min": 24,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge"]},
+    {"id": "deepseek-r1:14b",    "label": "DeepSeek R1 (14B)",
+     "desc": "Top 1 Logik [32GB] – Hohe analytische Tiefe für Algorithmen & Debugging",
+     "size_gb": 9.0,  "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q5", "hw": "both",  "vram_min": 12,
+     "forge": True,  "domain": "logik",     "tags": ["logik", "forge", "cot"]},
+    {"id": "deepseek-r1:32b",    "label": "DeepSeek R1 (32B)",
+     "desc": "Top 2 Logik [32GB] – Gründliche Chain-of-Thought Beweisführung",
+     "size_gb": 20.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 24,
+     "forge": False, "domain": "logik",     "tags": ["logik", "cot"]},
+    {"id": "llama3.2-vision:11b","label": "Llama 3.2 Vision (11B)",
+     "desc": "Top Vision [32GB] – Diagramme, Architektur-Skizzen, multimodale Dokumente",
+     "size_gb": 7.9,  "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "gpu",   "vram_min": 12,
+     "forge": True,  "domain": "vision",    "tags": ["vision", "forge"]},
+    {"id": "qwen2.5:32b",        "label": "Qwen 2.5 (32B)",
+     "desc": "Top 1 Planung [32GB] – Umfassende Projektkonzeption, PRD & Code-Audits",
+     "size_gb": 19.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "both",  "vram_min": 24,
+     "forge": True,  "domain": "planung",   "tags": ["planung", "forge"]},
+    {"id": "gemma2:27b",         "label": "Gemma 2 (27B)",
+     "desc": "Top 2 Planung [32GB] – Präzise logische Konsistenz und Strukturierung",
+     "size_gb": 16.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "both",  "vram_min": 24,
+     "forge": False, "domain": "planung",   "tags": ["planung"]},
+    {"id": "command-r:35b",      "label": "Command-R (35B)",
+     "desc": "Top Tools [32GB] – Optimiert für Multi-Turn Tool-Einsatz & RAG-Synthese",
+     "size_gb": 20.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "tools",     "tags": ["tools", "forge", "rag"]},
+    {"id": "bge-m3",             "label": "BGE-M3 (Multilingual)",
+     "desc": "Top RAG [32GB] – Dense & Lexical Retrieval (100+ Sprachen)",
+     "size_gb": 1.2,  "ram_tier": "32gb", "min_ram": 32,
+     "quant": "F32", "hw": "both",  "vram_min": 2,
+     "forge": True,  "domain": "embed",     "tags": ["embed", "forge", "rag"]},
+    {"id": "gemma3:4b",          "label": "Gemma 3 (4B)",
+     "desc": "Top Basis [32GB] – Natürlicher Sprachfluss, Textpolitur & Zusammenfassungen",
+     "size_gb": 3.2,  "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "both",  "vram_min": 4,
+     "forge": False, "domain": "smalltalk", "tags": ["smalltalk"]},
 
-    # ALLROUNDER / PLANUNG
-    {"id": "qwen3:30b",         "label": "Qwen3 (30B)",             "desc": "Königsklasse – logisches Denken, Planung, Jarvis",
-     "size_gb": 22.0, "min_ram": 24, "forge": False, "tags": ["allrounder", "planung", "system"]},
-    {"id": "qwen3:14b",         "label": "Qwen3 (14B)",             "desc": "Starker Allrounder",
-     "size_gb": 11.2, "min_ram": 16, "forge": False, "tags": ["allrounder", "planung"]},
-    {"id": "gemma4:31b",        "label": "Gemma 4 (31B)",           "desc": "Kreatives Schreiben, RP, Architektur-Design",
-     "size_gb": 20.0, "min_ram": 24, "forge": False, "tags": ["kreativ", "planung"]},
+    # TIER 3: HIGH-END (64 GB RAM) | VRAM: 24–48 GB
+    # Zielgruppe: KI-Workstations,
 
-    # VISION / VIDEO
-    {"id": "qwen3-vl:8b",       "label": "Qwen3-VL (8B)",           "desc": "Video + Bild-Verständnis, OCR, UI-Analyse",
-     "size_gb": 6.2,  "min_ram": 8,  "forge": False, "tags": ["vision"]},
-    {"id": "gemma4:e4b",        "label": "Gemma 4 (E4B)",           "desc": "Vision + Text, MMMU 52,6%, läuft auf 8 GB",
-     "size_gb": 7.0,  "min_ram": 8,  "forge": False, "tags": ["vision", "smalltalk"]},
-    {"id": "minicpm-v",         "label": "MiniCPM-V (8B)",          "desc": "Multi-Image + Video-Understanding",
-     "size_gb": 6.0,  "min_ram": 8,  "forge": False, "tags": ["vision"]},
-    {"id": "llama4:scout",      "label": "Llama 4 Scout (109B MoE)","desc": "17B aktiv, 10M Kontext, Video-Frames",
-     "size_gb": 62.0, "min_ram": 64, "forge": False, "tags": ["vision", "allrounder"]},
-    {"id": "moondream",         "label": "Moondream (1.8B)",        "desc": "Ultrakompakt – Vision auf jedem Gerät",
-     "size_gb": 1.7,  "min_ram": 4,  "forge": False, "tags": ["vision", "smalltalk"]},
+    {"id": "qwen2.5-coder:32b",  "label": "Qwen 2.5 Coder (32B)",
+     "desc": "Top 1 Coder [64GB] – Open-Source Benchmark-Champion für Agenten",
+     "size_gb": 20.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q5", "hw": "both",  "vram_min": 24,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge"]},
+    {"id": "deepseek-coder-v2:16b","label": "DeepSeek Coder V2 (16B MoE)",
+     "desc": "Top 2 Coder [64GB] – 338 Sprachen, MoE-Architektur, 128k Kontext",
+     "size_gb": 8.9,  "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "gpu",   "vram_min": 24,
+     "forge": False, "domain": "code",      "tags": ["code"]},
+    {"id": "deepseek-r1:70b",    "label": "DeepSeek R1 (70B)",
+     "desc": "Top 1 Logik [64GB] – Elite-Klasse CoT auf Augenhöhe mit Spitzenmodellen",
+     "size_gb": 43.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 48,
+     "forge": True,  "domain": "logik",     "tags": ["logik", "forge", "cot"]},
+    {"id": "qwen2.5:72b",        "label": "Qwen 2.5 (72B)",
+     "desc": "Top 2 Logik [64GB] – Höchstes Sprachverständnis & Multilingual (DE/EN)",
+     "size_gb": 47.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 48,
+     "forge": False, "domain": "logik",     "tags": ["logik"]},
+    {"id": "qwen2.5-vl:72b",     "label": "Qwen 2.5 VL (72B)",
+     "desc": "Top 1 Vision [64GB] – Hochauflösendes Video-Verständnis & UI-Audits (GPU)",
+     "size_gb": 47.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "gpu",   "vram_min": 48,
+     "forge": True,  "domain": "vision",    "tags": ["vision", "forge"]},
+    {"id": "llama3.2-vision:90b","label": "Llama 3.2 Vision (90B)",
+     "desc": "Top 2 Vision [64GB] – Enterprise-grade Bildextraktion & komplexe Tabellen",
+     "size_gb": 55.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": False, "domain": "vision",    "tags": ["vision"]},
+    {"id": "llama3.3:70b",       "label": "Llama 3.3 (70B)",
+     "desc": "Top 1 Planung [64GB] – 128k Kontext, strategische Roadmap & Systemarchitektur",
+     "size_gb": 43.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 48,
+     "forge": True,  "domain": "planung",   "tags": ["planung", "forge"]},
+    {"id": "mistral-large:123b", "label": "Mistral Large 2 (123B)",
+     "desc": "Top Tools [64GB] – Native Funktionsaufrufe, präzise JSON-Governance",
+     "size_gb": 45.0, "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "tools",     "tags": ["tools", "forge", "mcp"]},
+    {"id": "bge-large-en-v1.5",  "label": "BGE-Large-EN (v1.5)",
+     "desc": "Top RAG [64GB] – Maximale Vektordichte & Präzision für Codebase-Embeddings",
+     "size_gb": 1.3,  "ram_tier": "64gb", "min_ram": 64,
+     "quant": "F32", "hw": "both",  "vram_min": 2,
+     "forge": False, "domain": "embed",     "tags": ["embed", "rag"]},
+    {"id": "phi4:14b",           "label": "Phi-4 (14B)",
+     "desc": "Top Basis [64GB] – Microsofts Effizienz-Champion, STEM & Coding-Dialoge",
+     "size_gb": 9.1,  "ram_tier": "64gb", "min_ram": 64,
+     "quant": "Q5", "hw": "both",  "vram_min": 12,
+     "forge": False, "domain": "smalltalk", "tags": ["smalltalk"]},
 
-    # AUTOCOMPLETE / IDE
-    {"id": "codestral:22b",     "label": "Codestral (22B)",         "desc": "FIM 94,1%, HumanEval 88,4% – IDE Tab-Completion",
-     "size_gb": 14.0, "min_ram": 16, "forge": False, "tags": ["autocomplete", "code"]},
+    # TIER 4: EXTREME (128 GB RAM) | VRAM: 48–80 GB
+    # Zielgruppe: Dual-GPU-Systeme,
+    {"id": "qwen3-coder-next",   "label": "Qwen3 Coder Next (80B)",
+     "desc": "Top 1 Coder [128GB] – 58,7% SWE-bench, 256k Kontext, Multi-Repo Edits",
+     "size_gb": 48.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 48,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge"]},
+    {"id": "codestral:latest",   "label": "Codestral FP16 (22B Full)",
+     "desc": "Top 2 Coder [128GB] – Maximale F16-Präzision, kein Quantisierungsverlust",
+     "size_gb": 45.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "F16", "hw": "gpu",   "vram_min": 48,
+     "forge": False, "domain": "code",      "tags": ["code"]},
+    {"id": "deepseek-r1:latest", "label": "DeepSeek R1 Q8 (70B)",
+     "desc": "Top 1 Logik [128GB] – Q8-Präzision, verlustfreies mathematisches Reasoning",
+     "size_gb": 75.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q8", "hw": "cpu",   "vram_min": 80,
+     "forge": True,  "domain": "logik",     "tags": ["logik", "forge", "cot"]},
+    {"id": "qwen3.5:122b",       "label": "Qwen 3.5 (122B-A10B MoE)",
+     "desc": "Top 2 Logik [128GB] – MoE: 10B aktiv, ultraschnelles High-End Reasoning",
+     "size_gb": 73.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": False, "domain": "logik",     "tags": ["logik"]},
+    {"id": "llama4:scout",       "label": "Llama 4 Scout (109B MoE)",
+     "desc": "Top Vision [128GB] – 10M Token Kontext, Frame-by-Frame Videoanalyse (GPU)",
+     "size_gb": 62.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q4", "hw": "gpu",   "vram_min": 48,
+     "forge": True,  "domain": "vision",    "tags": ["vision", "forge"]},
+    {"id": "command-r-plus:104b","label": "Command-R+ (104B)",
+     "desc": "Top 1 Planung [128GB] – Multi-Step Task-Planung mit Quellenverweisen",
+     "size_gb": 60.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "planung",   "tags": ["planung", "forge", "tools"]},
+    {"id": "nemotron-4:340b",    "label": "Nemotron-4 (340B Instruct)",
+     "desc": "Top 2 Planung [128GB] – Höchste synthetische Qualität für Architektur",
+     "size_gb": 75.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": False, "domain": "planung",   "tags": ["planung"]},
+    {"id": "qwen3:72b-instruct", "label": "Qwen3 Instruct (72B)",
+     "desc": "Top Tools [128GB] – Schema-Treue bei komplexen Tool-Calls & MCP-Chains",
+     "size_gb": 47.0, "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q4", "hw": "both",  "vram_min": 48,
+     "forge": True,  "domain": "tools",     "tags": ["tools", "forge", "mcp"]},
+    {"id": "mxbai-embed-large",  "label": "mxbai-embed-large (v1)",
+     "desc": "Top RAG [128GB] – Asymmetrisches Retrieval für Millionen Zeilen Quellcode",
+     "size_gb": 1.5,  "ram_tier": "128gb", "min_ram": 128,
+     "quant": "F32", "hw": "both",  "vram_min": 2,
+     "forge": True,  "domain": "embed",     "tags": ["embed", "forge", "rag"]},
+    {"id": "mistral-nemo:12b",   "label": "Mistral NeMo (12B)",
+     "desc": "Top Basis [128GB] – Kompakter Allrounder für schnelle Konversation",
+     "size_gb": 7.1,  "ram_tier": "128gb", "min_ram": 128,
+     "quant": "Q5", "hw": "both",  "vram_min": 8,
+     "forge": False, "domain": "smalltalk", "tags": ["smalltalk"]},
 
-    # SMALLTALK / LEICHTGEWICHT
-    {"id": "gemma3:4b",         "label": "Gemma 3 (4B)",            "desc": "Leichtgewicht / schnelle Basis",
-     "size_gb": 3.2,  "min_ram": 8,  "forge": False, "tags": ["smalltalk"]},
+    # TIER 5: ENTERPRISE (256 GB RAM) | VRAM: 80 GB+ (Multi-GPU)
+    # Zielgruppe: H100/A100 Multi-GPU-Cluster, Mac Studio Ultra Pro (192+ GB)
+    {"id": "deepseek-coder-v2:236b", "label": "DeepSeek Coder V2 (236B MoE)",
+     "desc": "Top 1 Coder [256GB] – 21B aktiv, unübertroffene Code-Synthese & Systemanalyse",
+     "size_gb": 135.0, "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge"]},
+    {"id": "qwen2.5-coder:72b",      "label": "Qwen 2.5 Coder (72B Full)",
+     "desc": "Top 2 Coder [256GB] – Dichte 72B Q8-Architektur für fehlerfreie Großprojekte",
+     "size_gb": 85.0,  "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q8", "hw": "cpu",   "vram_min": 80,
+     "forge": False, "domain": "code",      "tags": ["code"]},
+    {"id": "deepseek-r1:671b",       "label": "DeepSeek R1 (671B MoE)",
+     "desc": "Top 1 Logik [256GB] – Ultimatives Flaggschiff für formale Logik & Deduktion",
+     "size_gb": 140.0, "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "logik",     "tags": ["logik", "forge", "cot"]},
+    {"id": "wizard-math:70b",        "label": "WizardMath (70B)",
+     "desc": "Top 2 Logik [256GB] – Spezialisiert auf Mathematik, Theoreme & Optimierung",
+     "size_gb": 80.0,  "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q8", "hw": "cpu",   "vram_min": 80,
+     "forge": False, "domain": "logik",     "tags": ["logik"]},
+    {"id": "internvl2-pro:78b",      "label": "InternVL 2 Pro (78B)",
+     "desc": "Top Vision [256GB] – Wissenschaftliche Diagramme, Video-Sequenzen (GPU)",
+     "size_gb": 85.0,  "ram_tier": "256gb", "min_ram": 256,
+     "quant": "F16", "hw": "gpu",   "vram_min": 80,
+     "forge": True,  "domain": "vision",    "tags": ["vision", "forge"]},
+    {"id": "deepseek-v3:671b",       "label": "DeepSeek V3 (671B MoE)",
+     "desc": "Top 1 Planung [256GB] – Umfassendstes Wissen für Software-Großprojekte",
+     "size_gb": 140.0, "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": True,  "domain": "planung",   "tags": ["planung", "forge"]},
+    {"id": "falcon-180b:latest",     "label": "Falcon (180B)",
+     "desc": "Top 2 Planung [256GB] – Monumentales Allround-Modell für Strategie & Konzeption",
+     "size_gb": 105.0, "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q4", "hw": "cpu",   "vram_min": 0,
+     "forge": False, "domain": "planung",   "tags": ["planung"]},
+    {"id": "hermes3:70b",            "label": "Hermes 3 (70B)",
+     "desc": "Top Tools [256GB] – Vollautonome Multi-Agenten-Orchestrierung & Swarm-Control",
+     "size_gb": 45.0,  "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q8", "hw": "both",  "vram_min": 48,
+     "forge": True,  "domain": "tools",     "tags": ["tools", "forge", "mcp"]},
+    {"id": "text-embedding-3-large", "label": "Embedding 3 Large (Local)",
+     "desc": "Top RAG [256GB] – 3072 Dimensionen für enterprise-weite Wissensgraphen",
+     "size_gb": 2.5,   "ram_tier": "256gb", "min_ram": 256,
+     "quant": "F32", "hw": "both",  "vram_min": 4,
+     "forge": False, "domain": "embed",     "tags": ["embed", "rag"]},
+    {"id": "qwen2.5:72b-instruct",   "label": "Qwen 2.5 (72B Instruct)",
+     "desc": "Top Basis [256GB] – Eloquente, nuancierte Konversation in Q8-Qualität",
+     "size_gb": 85.0,  "ram_tier": "256gb", "min_ram": 256,
+     "quant": "Q8", "hw": "cpu",   "vram_min": 80,
+     "forge": True,  "domain": "smalltalk", "tags": ["smalltalk", "forge"]},
 ]
 
 # TAG-BESCHREIBUNG (für UI / Auswahl)
 TAG_LABELS = {
-    "code":         "Code",
-    "logik":        "Logik / Reasoning",
+    "code":         "Code & Refactoring",
+    "logik":        "Logik & Reasoning",
     "allrounder":   "Allrounder",
-    "planung":      "Planung / Architektur",
-    "system":       "System / Automatisierung",
-    "vision":       "Vision / Video",
-    "kreativ":      "Kreativ / RP",
+    "planung":      "Planung & Architektur",
+    "system":       "System & Automatisierung",
+    "vision":       "Vision & Multimodal",
+    "tools":        "Tools & MCP",
+    "embed":        "Embeddings & RAG",
+    "kreativ":      "Kreativ & Synthese",
     "autocomplete": "Autocomplete / IDE",
-    "smalltalk":    "Smalltalk",
+    "smalltalk":    "Smalltalk & Basis",
 }
 
-OLLAMA_MODEL_DEFAULT = "qwen3.6:27b"
+# Offizieller OpenCode-Standard für lokale Ollama-Nutzung:
+# → 'ollama launch opencode --model devstral' ist der offizielle Quickstart-Befehl
+# → devstral ist fine-tuned für agentic Tool-Calls, File-Edits & 128k Kontext
+OLLAMA_MODEL_DEFAULT = "devstral:24b"
 
 def get_installed_models() -> list:
     """
@@ -176,29 +404,43 @@ def get_model_status(model_id: str, installed_models: list) -> str:
 
 def build_model_entries(installed_models: list) -> list:
     """
-    Baut die vollständige, einheitliche Modell-Auswahlliste:
-      1. ALLE lokal vorhandenen Modelle (Status '[local]') – inklusive solcher Modelle,
-         die nicht in der statischen Offline-Bibliothek (AVAILABLE_MODELS) stehen
-         (z. B. selbst geladene Custom-Modelle).
-      2. Alle verfügbaren Offline-Modelle (Status '[download]', falls lokal nicht vorhanden;
-         Status '[local]', falls bereits lokal vorhanden).
-    So werden nicht nur 'mögliche' Modelle, sondern auch die 'vorhandenen' Modelle angezeigt.
+    Baut die strukturierte, nach Hardware-RAM-Tiers und Domänen gegliederte
+    und alphanumerisch sortierte Modell-Auswahlliste auf.
+    Jeder Eintrag enthält:
+      - id, label, desc, size_gb, status ('[local]' oder '[download]')
+      - domain, domain_name, domain_badge, domain_order
+      - ram_tier, ram_tier_name, ram_badge, min_ram
+      - forge (bool), forge_badge
+      - quant  → Quantisierungsstufe (Q4/Q5/Q8/F16/F32)
+      - hw     → Primäre Hardware ('cpu' | 'gpu' | 'both')
+      - vram_min → Mindest-VRAM für GPU-Betrieb in GB (0 = kein GPU nötig)
+      - hw_badge → Lesbare Hardware-Anzeige mit VRAM-Info
     """
     installed = [str(m).strip().lower() for m in (installed_models or []) if m and str(m).strip()]
     entries = []
     seen_ids = set()
     pool_lookup = {}
-    # Lookup: Modellname (ohne Tag) -> Bibliotheks-Metadaten
     for m in AVAILABLE_MODELS:
         mid = str(m.get("id") or "").strip().lower()
         pool_lookup[mid.split(":")[0].strip()] = m
 
+    def hw_badge(hw: str, quant: str, vram_min: int) -> str:
+        """Erzeugt das Hardware-Anzeige-Badge: Modus + Quant + VRAM-Hinweis."""
+        icons = {"cpu": "🖥️ CPU", "gpu": "🎮 GPU", "both": "⚡ CPU+GPU"}
+        base = icons.get(hw, "🖥️ CPU")
+        q = f"[{quant}]" if quant else ""
+        v = f" ≥{vram_min}GB VRAM" if vram_min > 0 and hw in ("gpu", "both") else ""
+        return f"{base} {q}{v}".strip()
 
-    def add_entry(model_id: str, label: str, desc: str, size_gb, status: str, installed_flag: bool, from_pool: bool) -> None:
+    def add_entry(model_id: str, label: str, desc: str, size_gb, status: str, installed_flag: bool,
+                  from_pool: bool, domain: str = "code", ram_tier: str = "16gb", min_ram: int = 16,
+                  forge: bool = False, quant: str = "Q4", hw: str = "cpu", vram_min: int = 0) -> None:
         clean_id = str(model_id).strip().lower()
         if clean_id in seen_ids:
             return
         seen_ids.add(clean_id)
+        dom_meta = DOMAINS.get(domain, DOMAINS["code"])
+        tier_meta = RAM_TIERS.get(ram_tier, RAM_TIERS["16gb"])
         entries.append({
             "id": clean_id,
             "label": label,
@@ -207,9 +449,25 @@ def build_model_entries(installed_models: list) -> list:
             "status": status,
             "installed": installed_flag,
             "from_pool": from_pool,
+            "domain": domain,
+            "domain_name": dom_meta["name"],
+            "domain_badge": dom_meta["badge"],
+            "domain_order": dom_meta["order"],
+            "ram_tier": ram_tier,
+            "ram_tier_name": tier_meta["name"],
+            "ram_badge": tier_meta["badge"],
+            "min_ram": min_ram,
+            "tier_order": tier_meta["order"],
+            "forge": forge,
+            "forge_badge": "⭐[CF]" if forge else "🌐[COM]",
+            "quant": quant,
+            "hw": hw,
+            "vram_min": vram_min,
+            "hw_badge": hw_badge(hw, quant, vram_min),
         })
-    # 1) Alle lokal vorhandenen Modelle anzeigen
-    for name in sorted(set(installed)):
+
+    # 1) Alle lokal vorhandenen Modelle
+    for name in installed:
         meta = pool_lookup.get(name.split(":")[0].strip())
         if meta:
             add_entry(
@@ -220,9 +478,20 @@ def build_model_entries(installed_models: list) -> list:
                 "[local]",
                 True,
                 False,
+                domain=meta.get("domain", "code"),
+                ram_tier=meta.get("ram_tier", "16gb"),
+                min_ram=meta.get("min_ram", 16),
+                forge=meta.get("forge", False),
+                quant=meta.get("quant", "Q4"),
+                hw=meta.get("hw", "cpu"),
+                vram_min=meta.get("vram_min", 0),
             )
         else:
-            add_entry(name, name, "Lokal vorhanden", None, "[local]", True, False)
+            add_entry(name, name, "Lokal vorhanden", None, "[local]", True, False,
+                      domain="code", ram_tier="16gb", min_ram=16, forge=False,
+                      quant="Q4", hw="cpu", vram_min=0)
+
+    # 2) Alle verfügbaren Bibliotheks-Modelle
     for m in AVAILABLE_MODELS:
         mid = str(m.get("id") or "").strip().lower()
         base = mid.split(":")[0].strip()
@@ -237,35 +506,113 @@ def build_model_entries(installed_models: list) -> list:
             "[download]",
             False,
             True,
+            domain=m.get("domain", "code"),
+            ram_tier=m.get("ram_tier", "16gb"),
+            min_ram=m.get("min_ram", 16),
+            forge=m.get("forge", False),
+            quant=m.get("quant", "Q4"),
+            hw=m.get("hw", "cpu"),
+            vram_min=m.get("vram_min", 0),
         )
+
+    # Sortierung: 1. RAM-Tier, 2. Domäne, 3. Label alphanumerisch
+    entries.sort(key=lambda e: (e["tier_order"], e["domain_order"], e["label"].lower()))
     return entries
 
 
 def prompt_model_selection(default_model: str = OLLAMA_MODEL_DEFAULT) -> list:
     """
-    Interaktive Modell-Auswahl, bevor das Offline-Modell geladen wird.
-    Zeigt ALLE lokal vorhandenen Modelle sowie alle verfügbaren Offline-Modelle an –
-    jeweils mit Status:
-      [local]    -> Modell ist bereits lokal vorhanden
-      [download] -> Modell ist ladbar (verfügbar) und kann via 'ollama pull' geladen werden
-      [online]   -> Modell ist online bzw. im Katalog verfügbar, lokal nicht vorhanden
-    Der Nutzer kann eine Nummer aus der Liste wählen ([1] ... [n]), einen eigenen
-    Modellnamen eingeben oder Enter drücken (Default).
+    Interaktive Modell-Auswahl strukturiert nach Hardware-RAM-Tiers & Fachdomänen.
+    Unterstützt:
+      - Einzelne oder kommagetrennte Nummern (z. B. '1, 4, 12, 25')
+      - Domänen-Filter (z. B. 'code', 'logik', 'vision', 'planung', 'tools', 'embed', 'smalltalk')
+      - RAM-Tier-Filter (z. B. '16gb', '32gb', '64gb', '128gb', '256gb')
+      - Schnellfilter: 'forge' oder 'codeforge' (wählt alle CodeForge-zertifizierten Modelle)
+      - 'all' (wählt alle gelisteten Modelle)
+      - Direkte Eingabe von Modellbezeichnungen
     """
-    print("\n[5/6] Modell-Auswahl (Mehrfachauswahl mit Komma möglich):")
+    print("\n╔══════════════════════════════════════════════════════════════════════════════╗")
+    print("║          [5/6] MODELL-AUSWAHL – 50 KURATIERTE TOP-MODELLE                    ║")
+    print("╠══════════════════════════════════════════════════════════════════════════════╣")
+    print("║  RAM-KLASSEN (Mindest-Systemspeicher inkl. KV-Cache & Overhead):             ║")
+    print("║   ⚡ [16 GB]  → Kompakt-Laptops & Standard-PCs          (≤ 16 GB RAM)        ║")
+    print("║   🚀 [32 GB]  → Produktive Entwickler-Workstations       (≤ 32 GB RAM)       ║")
+    print("║   💎 [64 GB]  → High-End KI-Systeme & Dual-Channel-RAM   (≤ 64 GB RAM)       ║")
+    print("║   🔥 [128 GB] → Extreme Workstations & Dual-GPU-Setups   (≤ 128 GB RAM)      ║")
+    print("║   👑 [256 GB] → Enterprise-Server & Multi-GPU-Cluster    (≤ 256 GB RAM)      ║")
+    print("╠══════════════════════════════════════════════════════════════════════════════╣")
+    print("║  VRAM-KLASSEN (dedizierter GPU-Speicher für GPU-optimierte Modelle):         ║")
+    print("║   🎮  8 GB VRAM → Consumer (RTX 3060/4060)  |  12 GB → RTX 3080/4070         ║")
+    print("║   🎮 24 GB VRAM → RTX 3090/4090 (Top-Consumer)                               ║")
+    print("║   🎮 48 GB VRAM → RTX 6000 Ada / L40S (Profi-Workstation)                    ║")
+    print("║   🎮 80 GB VRAM → A100/H100 (Enterprise-GPU, Multi-GPU Cluster)              ║")
+    print("╠══════════════════════════════════════════════════════════════════════════════╣")
+    print("║  QUANTISIERUNG:  Q4/Q5 → 4-5 Bit (CPU/RAM-effizient)                         ║")
+    print("║                  Q8    → 8 Bit (höhere Qualität, mehr RAM/VRAM nötig)        ║")
+    print("║                  F16   → 16 Bit Float (GPU-nativ, braucht viel VRAM)         ║")
+    print("╠══════════════════════════════════════════════════════════════════════════════╣")
+    print("║  ZERTIFIZIERUNG: ⭐[CF]  = CodeForge-getestet für autonome Agenten           ║")
+    print("║                  🌐[COM] = Community-Modell, offline nutzbar                 ║")
+    print("╠══════════════════════════════════════════════════════════════════════════════╣")
+    print("║  HARDWARE:  🖥️ CPU = läuft im System-RAM  |  🎮 GPU = bevorzugt VRAM          ║")
+    print("║             ⚡ CPU+GPU = läuft gut auf beiden (je nach VRAM-Verfügbarkeit)   ║")
+    print("╚══════════════════════════════════════════════════════════════════════════════╝")
     installed_models = get_installed_models()
     entries = build_model_entries(installed_models)
+
+    current_tier = None
     for idx, e in enumerate(entries, start=1):
-        size_txt = f" ({e.get('size_gb')} GB)" if e.get("size_gb") else ""
-        source_txt = " [library]" if e.get("from_pool") else ""
-        print(f"  [{idx}] {e['status']} {e['label']} – {e['desc']}{size_txt}{source_txt}")
-    choice = input(
-        f"  → Modell(e) auswählen [1-{len(entries)}, z.B. 3 oder 24,26,12,25], eigene Eingabe oder Enter für Standard '{default_model}': "
-    ).strip().lower()
+        if e["ram_tier"] != current_tier:
+            current_tier = e["ram_tier"]
+            tier_desc = {
+                "16gb":  "Kompakt · Laptops & Standard-PCs · Modelle ≤ 12 GB on-disk · VRAM 8–12 GB",
+                "32gb":  "Mid-Range · Entwickler-WS · Modelle ≤ 20 GB on-disk · VRAM 12–24 GB",
+                "64gb":  "High-End · KI-Systeme · Modelle ≤ 50 GB on-disk · VRAM 24–48 GB",
+                "128gb": "Extreme · Dual-GPU/Unified-Memory · Modelle ≤ 100 GB on-disk · VRAM 48–80 GB",
+                "256gb": "Enterprise · Multi-GPU-Cluster & Server · Modelle ≤ 200 GB on-disk · VRAM 80 GB+",
+            }.get(e["ram_tier"], "")
+            print("\n  ┌──────────────────────────────────────────────────────────────────────────────┐")
+            print(f"  │  {e['ram_badge']}  {e['ram_tier_name'].upper()}")
+            print(f"  │  {tier_desc}")
+            print("  └──────────────────────────────────────────────────────────────────────────────┘")
+        size_txt = f"{e.get('size_gb', '?'):>5.1f} GB" if e.get("size_gb") else "  ?   GB"
+        vram_txt = f"VRAM≥{e['vram_min']}GB" if e.get("vram_min", 0) > 0 else "       "
+        hw_icon  = {"cpu": "🖥️ ", "gpu": "🎮 ", "both": "⚡ "}.get(e.get("hw", "cpu"), "🖥️ ")
+        quant    = e.get("quant", "Q4")
+        print(f"    [{idx:2d}] {e['status']:10s} {e['forge_badge']} {e['domain_badge']:14s}"
+              f" {hw_icon}[{quant:<3}] {vram_txt}  {size_txt}  {e['label']}")
+        print(f"         └─ {e['desc']}\n")
+
+    print("\n  ┌───────────────────────────────────────────────────────────────────────────────┐")
+    print("  │  FILTER & AUSWAHL")
+    print("  │  • Nummern:    Kommagetrennt             z. B.   → 1, 3, 7, 11")
+    print("  │  • Domain:     Kürzel eingeben           z. B.   → code  logik  vision")
+    print("  │  │                                               → planung  tools  embed")
+    print("  │  │                                               → smalltalk")
+    print("  │  • RAM-Tier:   Klasse eingeben           z. B.   → 16gb  32gb  64gb")
+    print("  │  │                                               → 128gb  256gb")
+    print("  │  • forge:      Alle ⭐ CodeForge-zertifizierten Modelle auf einmal")
+    print("  │  • all:        Alle 50 Modelle laden")
+    print(f"  │  • [Enter]:   Standard '{default_model:<37}'")
+    print("  └───────────────────────────────────────────────────────────────────────────────┘")
+    choice = input("  → Deine Auswahl: ").strip().lower()
+
     selected_models = []
     if not choice:
         selected_models = [default_model]
         print(f"  ✓ Gewählt (Standard): '{default_model}'")
+    elif choice in ("forge", "codeforge"):
+        selected_models = [e["id"] for e in entries if e["forge"]]
+        print(f"  ✓ Schnellfilter 'CODEFORGE' gewählt ({len(selected_models)} Modelle zertifiziert für autonome Agenten).")
+    elif choice == "all":
+        selected_models = [e["id"] for e in entries]
+        print(f"  ✓ Alle {len(selected_models)} Modelle ausgewählt.")
+    elif choice in RAM_TIERS:
+        selected_models = [e["id"] for e in entries if e["ram_tier"] == choice]
+        print(f"  ✓ RAM-Klasse '{RAM_TIERS[choice]['name']}' gewählt ({len(selected_models)} Modelle).")
+    elif choice in DOMAINS:
+        selected_models = [e["id"] for e in entries if e["domain"] == choice]
+        print(f"  ✓ Domäne '{DOMAINS[choice]['name']}' gewählt ({len(selected_models)} Modelle).")
     else:
         parts = [p.strip() for p in choice.replace(";", ",").split(",") if p.strip()]
         for part in parts:
@@ -275,16 +622,29 @@ def prompt_model_selection(default_model: str = OLLAMA_MODEL_DEFAULT) -> list:
                     m_id = entries[val - 1]["id"]
                     if m_id not in selected_models:
                         selected_models.append(m_id)
+            elif part in ("forge", "codeforge"):
+                for e in entries:
+                    if e["forge"] and e["id"] not in selected_models:
+                        selected_models.append(e["id"])
+            elif part in RAM_TIERS:
+                for e in entries:
+                    if e["ram_tier"] == part and e["id"] not in selected_models:
+                        selected_models.append(e["id"])
+            elif part in DOMAINS:
+                for e in entries:
+                    if e["domain"] == part and e["id"] not in selected_models:
+                        selected_models.append(e["id"])
             else:
                 cleaned = "".join(c for c in part if c.isalnum() or c in "._-:/")
                 cleaned = cleaned.strip("._-")
                 if cleaned and cleaned not in selected_models:
                     selected_models.append(cleaned)
+
         if not selected_models:
             selected_models = [default_model]
             print(f"  ⚠ Keine gültige Auswahl erkannt. Verwende Standard: '{default_model}'")
         else:
-            print(f"  ✓ Gewählte Modelle: {selected_models}")
+            print(f"  ✓ Gewählte Modelle ({len(selected_models)}): {selected_models}")
     return selected_models
 
 
@@ -372,11 +732,9 @@ def main():
             print("  ⚠ Ollama startet nicht. Starte manuell: ollama serve")
             sys.exit(1)
     print("\n[5/6] Prüfe Modelle...")
-    SELECTED_MODELS = prompt_model_selection()
+    SELECTED_MODELS = prompt_model_selection(OLLAMA_MODEL_DEFAULT)
     prompt_model_cleanup()
     installed_models = get_installed_models()
-    if OLLAMA_MODEL_DEFAULT not in SELECTED_MODELS:
-        SELECTED_MODELS.insert(0, OLLAMA_MODEL_DEFAULT)
     for model in SELECTED_MODELS:
         if get_model_status(model, installed_models) != "[local]":
             print(f"  → Lade Modell '{model}' (kann je nach Größe dauern)...")
@@ -420,21 +778,27 @@ def main():
     if not config_file.exists():
         models_dict = {}
         for m in SELECTED_MODELS:
-            model_meta = next((item for item in AVAILABLE_MODELS if item["id"] == m), None)
-            model_display_name = model_meta["label"] if model_meta else m
-            models_dict[m] = {"name": model_display_name, "tools": True}
+            meta = next((item for item in AVAILABLE_MODELS if item["id"] == m), None)
+            ctx = 131072 if (meta and meta.get("forge")) else 32768
+            models_dict[m] = {
+                "name": meta["label"] if meta else m,
+                "tools": True,
+                "options": {"num_ctx": ctx},
+            }
         config = {
+            "$schema": "https://opencode.ai/config.json",
             "provider": {
                 "ollama": {
                     "npm": "@ai-sdk/openai-compatible",
                     "name": "Ollama (local)",
                     "options": {"baseURL": "http://localhost:11434/v1"},
-                    "models": models_dict
+                    "models": models_dict,
                 }
-            }
+            },
         }
-        config_file.write_text(json.dumps(config, indent=2))
+        config_file.write_text(json.dumps(config, indent=2), encoding="utf-8")
         print(f"\n  ✓ Config geschrieben: {config_file}")
+        print(f"  ✓ Primärmodell: {PRIMARY_MODEL} | Kontext: {models_dict[PRIMARY_MODEL]['options']['num_ctx'] // 1024}k Token")
     print("  ✓ Setup fertig!")
     print(f"\n  Starte mit: opencode --model ollama/{PRIMARY_MODEL}\n")
     ans = input("Soll ich OpenCode jetzt starten? [J/n]: ")
