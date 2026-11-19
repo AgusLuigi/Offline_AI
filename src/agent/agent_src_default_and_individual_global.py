@@ -1548,8 +1548,14 @@ def run_config(src_dir: Optional[str] = None, model: Optional[str] = None, spinn
             has_classes = data["has_classes"]
             has_double_assignments = bool(re.search(r"^\s*([A-Z0-9_]+)\s*=\s*\1\s*$", content, re.MULTILINE))
 
-            # Bereits sauber harmonisierte Dateien ohne Duplikate überspringen
-            if "_cfg.setdefault" in content and not has_double_assignments:
+            # Bereits sauber harmonisierte Dateien oder standardkonforme SSOT-Strukturen ohne Duplikate schützen
+            has_ssot_header = any(marker in content for marker in [
+                "SINGLE SOURCE OF TRUTH (SSOT)",
+                "PROJECT_ROOT = Path(",
+                "ZENTRALE PFAD-STRUKTUR",
+                "Strikte 3-Teilung des Skripts"
+            ])
+            if (("_cfg.setdefault" in content or has_ssot_header) and not has_double_assignments):
                 continue
 
             if not data.get("assignments"):

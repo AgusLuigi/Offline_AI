@@ -8,6 +8,33 @@ import time
 import urllib.request
 from pathlib import Path
 
+# ZENTRALE PFAD-STRUKTUR & SINGLE SOURCE OF TRUTH (SSOT)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+DIR_DATA = PROJECT_ROOT / "data"
+DIR_MODELS = DIR_DATA / "models"
+DIR_MODELS_OLLAMA = DIR_MODELS / "ollama"
+DIR_MODELS_HUGGINGFACE = DIR_MODELS / "huggingface"
+
+# Stelle sicher, dass Ollama IMMER in data/models/ollama speichert
+DIR_MODELS_OLLAMA.mkdir(parents=True, exist_ok=True)
+DIR_MODELS_HUGGINGFACE.mkdir(parents=True, exist_ok=True)
+os.environ["OLLAMA_MODELS"] = str(DIR_MODELS_OLLAMA)
+os.environ["HF_HOME"] = str(DIR_MODELS_HUGGINGFACE)
+
+# Permanent in Windows User-Environment registrieren
+try:
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment", 0, winreg.KEY_READ | winreg.KEY_WRITE) as key:
+            val, _ = winreg.QueryValueEx(key, "OLLAMA_MODELS")
+            if val != str(DIR_MODELS_OLLAMA):
+                winreg.SetValueEx(key, "OLLAMA_MODELS", 0, winreg.REG_SZ, str(DIR_MODELS_OLLAMA))
+    except FileNotFoundError:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment", 0, winreg.KEY_WRITE) as key:
+            winreg.SetValueEx(key, "OLLAMA_MODELS", 0, winreg.REG_SZ, str(DIR_MODELS_OLLAMA))
+except Exception:
+    pass
+
 
 def run(cmd, check=True, visible=False):
     """
@@ -332,15 +359,15 @@ def main():
     print("\n[4/6] Prüfe Ollama-Dienst...")
     try:
         urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
-        print("  ✓ Ollama läuft bereits.")
+        print(f"  ✓ Ollama läuft bereits (Zielordner: {DIR_MODELS_OLLAMA}).")
     except Exception:
-        print("  → Starte Ollama...")
+        print(f"  → Starte Ollama mit Zielverzeichnis {DIR_MODELS_OLLAMA}...")
         subprocess.Popen("ollama serve", shell=True,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)
         try:
             urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
-            print("  ✓ Ollama läuft.")
+            print(f"  ✓ Ollama läuft (Modelle landen in: {DIR_MODELS_OLLAMA}).")
         except Exception:
             print("  ⚠ Ollama startet nicht. Starte manuell: ollama serve")
             sys.exit(1)
