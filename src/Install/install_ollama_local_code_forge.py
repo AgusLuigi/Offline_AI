@@ -131,6 +131,16 @@ AVAILABLE_MODELS = [
      "size_gb": 2.0,  "ram_tier": "16gb", "min_ram": 16,
      "quant": "Q4", "hw": "both",  "vram_min": 2,
      "forge": False, "domain": "smalltalk", "tags": ["smalltalk"]},
+    {"id": "gpt-oss:20b",        "label": "GPT-OSS (20B)",
+     "desc": "OpenAI Open-Weight – Tool-Use & Coding [16GB]",
+     "size_gb": 13.0, "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 12,
+     "forge": False, "domain": "code",      "tags": ["code", "tools"]},
+    {"id": "qwen3:14b",          "label": "Qwen 3 (14B)",
+     "desc": "Starker Allrounder – Architektur & Planung [16GB]",
+     "size_gb": 9.3,  "ram_tier": "16gb", "min_ram": 16,
+     "quant": "Q4", "hw": "both",  "vram_min": 12,
+     "forge": False, "domain": "planung",   "tags": ["planung"]},
 
     # TIER 2: MID-RANGE (32 GB RAM) | VRAM: 12–24 GB
     # Zielgruppe: Entwickler-Workstations,
@@ -184,6 +194,16 @@ AVAILABLE_MODELS = [
      "size_gb": 3.2,  "ram_tier": "32gb", "min_ram": 32,
      "quant": "Q4", "hw": "both",  "vram_min": 4,
      "forge": False, "domain": "smalltalk", "tags": ["smalltalk"]},
+    {"id": "qwen3.6:27b",        "label": "Qwen 3.6 (27B)",
+     "desc": "Agentic Coding, MTP & Reasoning [32GB]",
+     "size_gb": 17.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "both",  "vram_min": 24,
+     "forge": True,  "domain": "code",      "tags": ["code", "forge"]},
+    {"id": "qwen3.8:27b",        "label": "Qwen 3.8 (27B)",
+     "desc": "Bestes Allround-Coding & Image-Input [32GB]",
+     "size_gb": 17.0, "ram_tier": "32gb", "min_ram": 32,
+     "quant": "Q4", "hw": "both",  "vram_min": 24,
+     "forge": False, "domain": "code",      "tags": ["code"]},
 
     # TIER 3: HIGH-END (64 GB RAM) | VRAM: 24–48 GB
     # Zielgruppe: KI-Workstations,
@@ -420,9 +440,13 @@ def build_model_entries(installed_models: list) -> list:
     entries = []
     seen_ids = set()
     pool_lookup = {}
+    base_lookup = {}
     for m in AVAILABLE_MODELS:
         mid = str(m.get("id") or "").strip().lower()
-        pool_lookup[mid.split(":")[0].strip()] = m
+        pool_lookup[mid] = m
+        base = mid.split(":")[0].strip()
+        if base not in base_lookup:
+            base_lookup[base] = m
 
     def hw_badge(hw: str, quant: str, vram_min: int) -> str:
         """Erzeugt das Hardware-Anzeige-Badge: Modus + Quant + VRAM-Hinweis."""
@@ -468,11 +492,15 @@ def build_model_entries(installed_models: list) -> list:
 
     # 1) Alle lokal vorhandenen Modelle
     for name in installed:
-        meta = pool_lookup.get(name.split(":")[0].strip())
+        clean_name = name.strip().lower()
+        meta = pool_lookup.get(clean_name) or base_lookup.get(clean_name.split(":")[0].strip())
         if meta:
+            label_val = str(meta.get("label") or name)
+            if clean_name.endswith(":latest") and not label_val.endswith("(latest)"):
+                label_val = f"{label_val} (latest)"
             add_entry(
                 name,
-                str(meta.get("label") or name),
+                label_val,
                 str(meta.get("desc") or "Lokal vorhanden"),
                 meta.get("size_gb"),
                 "[local]",
